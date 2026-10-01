@@ -1,0 +1,27 @@
+name: Inspect original Android APK
+on:
+  push:
+    branches: [diagnostics/apk-install]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tiny-tavern-android
+          run-id: 36910311936
+          github-token: ${{ github.token }}
+          path: apk
+      - name: Inspect manifest and signing
+        shell: bash
+        run: |
+          AAPT_PATH=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
+          SIGNER_PATH=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$AAPT_PATH" dump badging apk/tiny-tavern.apk
+          "$SIGNER_PATH" verify --verbose apk/tiny-tavern.apk
+          sha256sum apk/tiny-tavern.apk
