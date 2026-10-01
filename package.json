@@ -1,0 +1,1 @@
+{"name":"tiny-tavern-web","private":true,"version":"0.1.0","scripts":{"build":"node --check web/game.js && node --check web/app.js","test":"node tests/web.test.cjs"}}

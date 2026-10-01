@@ -39,3 +39,35 @@ godot --headless --path . --script tests/smoke.gd
 ## ขอบเขตต้นแบบ
 
 ยังไม่มีเส้นทางเดิน พนักงาน วัตถุดิบหลายชนิด เสียง เกมบาลานซ์เต็มรูปแบบ หรือภาพระดับตัวอย่างต้นฉบับ
+
+## เวอร์ชันเว็บสำหรับ iPad / Safari
+
+เพิ่มเกม HTML Canvas ใน `web/` ใช้ระบบเล่นแบบเดียวกับต้นแบบ Godot แต่เป็นเวอร์ชัน JavaScript แยก ไม่ใช่ไฟล์ Godot export โหลดเบา ไม่มี WebAssembly หรือ WebGL และไม่ต้องติดตั้ง APK
+
+แตะเมนูเพื่อทำอาหาร แล้วแตะลูกค้าหรือปุ่มเสิร์ฟ เซฟเงิน/จำนวนเสิร์ฟ/ระดับครัวใน localStorage ของเบราว์เซอร์ ลูกค้าและอาหารเริ่มใหม่เมื่อเปิดเกม เวลาหยุดเมื่อสลับแท็บ การล้างข้อมูลเว็บไซต์จะลบเซฟ เวอร์ชันเว็บและ APK ใช้เซฟแยกกัน
+
+### Cloudflare Workers ที่เชื่อม GitHub ไว้แล้ว
+
+ใน Workers & Pages → `my-game` → Settings → Build ตั้งค่า:
+
+- Repository: `sakagitnat/My-game`
+- Production branch: `main`
+- Root directory: ราก repo (เว้นว่างหรือ `/` ตาม UI)
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+
+ไฟล์ `wrangler.jsonc` ระบุ static assets directory เป็น `./web` แล้ว ไม่มี backend หรือ secrets ที่ต้องตั้งค่า กด Retry build / Deploy หลังบันทึกการตั้งค่า จากนั้นเปิด URL สาธารณะใน Overview ซึ่งลงท้ายด้วย `workers.dev` ผ่าน Safari URL หน้าจัดการ `dash.cloudflare.com` ไม่ใช่ URL เกม
+
+หากใช้ **Cloudflare Pages** แทน Workers: Framework preset `None`, Build command เว้นว่าง, Build output directory `web` และ branch `main` URL จะลงท้ายด้วย `pages.dev`
+
+ตรวจสอบบน iPad จริงหลัง deploy: ทำอาหาร → แตะเสิร์ฟ → รับเงิน → โหลดหน้าใหม่เพื่อดูเซฟ → หมุนหน้าจอ หากขึ้น build error ส่ง log มาให้ตรวจ ไม่ต้องส่ง API token ในแชต
+
+### ทดสอบเว็บบนเครื่องพัฒนา
+
+```sh
+npm run build
+npm test
+python3 -m http.server 8080 --directory web
+```
+
+โค้ดผ่านการทดสอบระบบหลักแล้ว แต่ยังต้องทดสอบ Safari บนอุปกรณ์จริงและตรวจผล deployment ของบัญชีเจ้าของเว็บ

@@ -1,0 +1,20 @@
+name: Check web game
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'tests/web.test.cjs', 'package.json', 'wrangler.jsonc', '.github/workflows/web.yml']
+  pull_request:
+    paths: ['web/**', 'tests/web.test.cjs', 'package.json', 'wrangler.jsonc', '.github/workflows/web.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run build
+      - run: npm test
