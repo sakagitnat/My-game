@@ -20,6 +20,7 @@ func snapshot(gs) -> Dictionary:
 func run() -> void:
 	var gs = root.get_node("/root/GameState")
 	gs.restaurant_active = false
+	gs.ask_names = false
 	gs.spawn_obstacles = true
 	gs.save_path = "user://test_salvora5.json"
 	gs.autosave = false

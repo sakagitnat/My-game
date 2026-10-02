@@ -104,5 +104,12 @@
 	"MSG_BUSY": {"en": "The hens are busy. %s left.", "th": "ไก่ยังไม่ออกไข่ เหลือ %s"},
 	"MSG_NO_FEED": {"en": "Feed the hens 1 wheat first.", "th": "ต้องมีข้าวสาลี 1 ชิ้นเพื่อให้อาหารไก่"},
 	"MSG_FULL": {"en": "Barn is full. Sell something first.", "th": "โกดังเต็ม ขายของก่อน"},
+	"NAME_TITLE": {"en": "Welcome to Salvora", "th": "ยินดีต้อนรับสู่ซัลโวรา"},
+	"NAME_PLAYER": {"en": "Your name", "th": "ชื่อของตัวละคร"},
+	"NAME_RESTAURANT": {"en": "Restaurant name", "th": "ชื่อร้าน"},
+	"NAME_PLAYER_HINT": {"en": "Type your name", "th": "พิมพ์ชื่อของคุณ"},
+	"NAME_RESTAURANT_HINT": {"en": "Type a name for your restaurant", "th": "พิมพ์ชื่อร้านของคุณ"},
+	"BTN_START": {"en": "Start", "th": "เริ่มเกม"},
+	"MSG_WELCOME": {"en": "Welcome, %s! %s is open for business.", "th": "ยินดีต้อนรับ %s! ร้าน %s พร้อมเปิดให้บริการแล้ว"},
 	"MSG_SOLD": {"en": "Sold for %d coins.", "th": "ขายได้ %d เหรียญ"}
 }
