@@ -32,7 +32,7 @@ func reset_state() -> void:
 	next_id = 1
 
 func _grid() -> WorldGrid:
-	return host.grid("restaurant")
+	return host.grid(Catalog.ISLAND)
 
 func _origins(id: String) -> Array:
 	var out: Array = []
@@ -139,7 +139,7 @@ func _collect_finished() -> bool:
 	var moved := false
 	for o in stoves():
 		var st: Dictionary = _grid().states.get(o, {})
-		if st.is_empty() or host.progress("restaurant", o) < 1.0:
+		if st.is_empty() or host.progress(Catalog.ISLAND, o) < 1.0:
 			continue
 		if counter.size() >= int(Catalog.RESTAURANT.counter_slots):
 			break

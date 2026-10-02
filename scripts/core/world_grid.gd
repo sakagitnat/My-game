@@ -15,9 +15,11 @@ var footprints: Dictionary = {}
 var occupied: Dictionary = {}
 var states: Dictionary = {}
 var blocked: Dictionary = {}
+var sale: Dictionary = {}         # parcels the player may buy; empty means every parcel
 
-func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = []) -> void:
+func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = [], sale_parcels: Dictionary = {}) -> void:
 	size = grid_size
+	sale = sale_parcels
 	for p in start_parcels:
 		owned_parcels[p] = true
 	start_parcel_count = owned_parcels.size()
@@ -42,6 +44,8 @@ func bought_count() -> int:
 
 func can_buy_parcel(p: Vector2i) -> bool:
 	if not parcel_in_bounds(p) or owned_parcels.has(p):
+		return false
+	if not sale.is_empty() and not sale.has(p):
 		return false
 	for d in DIRS:
 		if owned_parcels.has(p + d):
