@@ -1,0 +1,167 @@
+extends SceneTree
+
+var failures := 0
+
+func check(cond: bool, label: String) -> void:
+	if not cond:
+		failures += 1
+		printerr("FAIL: ", label)
+
+func _initialize() -> void:
+	call_deferred("run")
+
+func run() -> void:
+	var gs = root.get_node("/root/GameState")
+	var loc = root.get_node("/root/Loc")
+	gs.save_path = "user://test_salvora2.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
+	gs.reset()
+	gs.autosave = false
+	gs.clock_override = 1000.0
+	var plot := Vector2i(4, 4)
+	var plot2 := Vector2i(5, 4)
+	var coop := Vector2i(6, 4)
+
+	check(Catalog.crop_stage(0.0) == 1 and Catalog.crop_stage(0.4) == 2 and Catalog.crop_stage(0.7) == 3 and Catalog.crop_stage(1.0) == 4, "crop stages")
+
+	# Plots only exist once placed; planting is rejected elsewhere
+	check(gs.interact("farm", plot, "wheat") == "invalid", "no plot yet")
+	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.coins == 490, "place plot")
+	check(gs.interact("farm", plot, "bogus") == "invalid", "unknown seed")
+
+	# Plant, grow, harvest
+	check(gs.interact("farm", plot, "wheat") == "planted" and gs.coins == 488, "plant wheat costs 2")
+	check(is_equal_approx(gs.progress("farm", plot), 0.0), "progress starts at 0")
+	gs.clock_override = 1030.0
+	check(is_equal_approx(gs.progress("farm", plot), 0.5) and gs.seconds_left("farm", plot) == 30, "half grown")
+	check(gs.interact("farm", plot, "wheat") == "growing" and gs.inventory.count("wheat") == 0, "cannot harvest early")
+	gs.clock_override = 1060.0
+	check(gs.progress("farm", plot) >= 1.0, "ripe after 60s")
+	check(gs.interact("farm", plot, "wheat") == "harvested" and gs.inventory.count("wheat") == 1, "harvest wheat")
+	check(gs.progress("farm", plot) == -1.0, "plot empty after harvest")
+	gs.clock_override = 500.0
+	gs.interact("farm", plot, "tomato")
+	gs.clock_override = 400.0
+	check(gs.progress("farm", plot) == 0.0, "clock going backwards never gives negative progress")
+	gs.grid("farm").states.erase(plot)
+	gs.clock_override = 1060.0
+
+	# Not enough coins for seed
+	var saved: int = gs.coins
+	gs.coins = 1
+	check(gs.interact("farm", plot, "wheat") == "no_coins" and gs.coins == 1, "seed needs coins")
+	gs.coins = saved
+
+	# Full barn blocks harvest and keeps the crop
+	gs.interact("farm", plot, "wheat")
+	gs.clock_override = 1200.0
+	var cap: int = gs.inventory.capacity
+	gs.inventory.capacity = gs.inventory.total()
+	check(gs.interact("farm", plot, "wheat") == "full" and gs.progress("farm", plot) >= 1.0, "full barn keeps ripe crop")
+	gs.inventory.capacity = cap
+	check(gs.interact("farm", plot, "wheat") == "harvested" and gs.inventory.count("wheat") == 2, "harvest after freeing space")
+
+	# Coop: needs wheat, produces egg
+	check(gs.place_object("farm", coop, "farm_coop_01") == "ok", "place coop")
+	gs.inventory.remove("wheat", 2)
+	check(gs.interact("farm", coop, "wheat") == "no_feed", "coop needs feed")
+	gs.inventory.add("wheat", 1)
+	check(gs.interact("farm", coop, "wheat") == "fed" and gs.inventory.count("wheat") == 0, "feed coop")
+	check(gs.interact("farm", coop, "wheat") == "busy", "coop busy")
+	gs.clock_override += 119.0
+	check(gs.interact("farm", coop, "wheat") == "busy", "coop not ready at 119s")
+	gs.clock_override += 1.0
+	check(gs.interact("farm", coop, "wheat") == "collected" and gs.inventory.count("egg") == 1, "collect egg")
+
+	# Fence and other objects are not interactive
+	check(gs.place_object("farm", plot2, "farm_fence_01") == "ok", "place fence")
+	check(gs.interact("farm", plot2, "wheat") == "invalid", "fence not interactive")
+
+	# Selling
+	gs.inventory.add("wheat", 3)
+	gs.inventory.add("tomato", 2)
+	var before: int = gs.coins
+	check(gs.sell("egg", 5) == 10 and gs.coins == before + 10 and gs.inventory.count("egg") == 0, "sell egg")
+	check(gs.sell("egg", 1) == 0 and gs.sell("bogus", 1) == 0, "cannot sell what you lack")
+	check(gs.sell_all() == 3 * 4 + 2 * 14 and gs.inventory.total() == 0, "sell all")
+
+	# Removing a growing plot discards the crop and clears state
+	gs.interact("farm", plot, "cabbage")
+	check(gs.grid("farm").states.has(plot), "state exists while growing")
+	check(gs.remove_object("farm", plot) == "ok" and not gs.grid("farm").states.has(plot), "remove clears state")
+	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.progress("farm", plot) == -1.0, "re-placed plot is empty")
+
+	# Persistence including offline growth
+	gs.autosave = true
+	gs.clock_override = 5000.0
+	gs.interact("farm", plot, "wheat")
+	gs.save_game()
+	gs.reset()
+	gs.clock_override = 5030.0
+	check(gs.load_game() and gs.grid("farm").states.has(plot), "crop state saved")
+	check(is_equal_approx(gs.progress("farm", plot), 0.5), "progress continues after reload")
+	gs.clock_override = 5100.0
+	check(gs.progress("farm", plot) >= 1.0, "grows while the game is closed")
+	check(gs.grid("farm").objects.get(coop) == "farm_coop_01", "coop persisted")
+
+	# Old phase-1 saves without "states" still load
+	var old := {"version": 1, "coins": 77, "language": "en", "grids": {"farm": {"size": [12, 12], "start": 9, "owned": [[4, 4]], "objects": [[4, 4, "farm_plot_01"]]}}}
+	var f := FileAccess.open(gs.save_path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(old))
+	f.close()
+	gs.reset()
+	check(gs.load_game() and gs.coins == 77 and gs.progress("farm", Vector2i(4, 4)) == -1.0, "old save loads")
+
+	# Every string the farm uses exists in both languages
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(loc.STRINGS_PATH))
+	var names: Array = []
+	for crop in Catalog.CROPS:
+		names.append(Catalog.CROPS[crop].name)
+	for item in Catalog.ITEMS:
+		names.append(Catalog.ITEMS[item].name)
+	for id in Catalog.PLACEABLES:
+		names.append(Catalog.PLACEABLES[id].name)
+	for n in names:
+		check(parsed.has(n) and str(parsed[n].en) != "" and str(parsed[n].th) != "", "string %s present" % n)
+
+	# World scene: tap-to-plant, harvest, barn panel and selling through the UI code
+	gs.reset()
+	gs.autosave = false
+	gs.clock_override = 9000.0
+	var world = load("res://scenes/world.tscn").instantiate()
+	root.add_child(world)
+	await process_frame
+	world.set_zone("farm")
+	check(world.tool == "seed:wheat" and world.tool_buttons.has("seed:tomato") and world.tool_buttons.has("farm_plot_01"), "farm toolbar")
+	world.tool = "farm_plot_01"
+	world._on_tap(Iso.cell_to_world(plot))
+	check(gs.grid("farm").objects.get(plot) == "farm_plot_01", "tap places plot")
+	world.tool = "seed:wheat"
+	world._on_tap(Iso.cell_to_world(plot))
+	check(gs.grid("farm").states.has(plot), "tap plants")
+	world._on_tap(Iso.cell_to_world(plot))
+	check(world.message_key == "MSG_GROWING" and str(world.message_arg) == "1:00", "tap on growing shows countdown")
+	gs.clock_override = 9061.0
+	world.queue_redraw()
+	await process_frame
+	world._on_tap(Iso.cell_to_world(plot))
+	check(gs.inventory.count("wheat") == 1, "tap harvests")
+	world._toggle_barn()
+	check(world.barn_panel.visible and world.barn_rows.get_child_count() >= 2, "barn panel lists items")
+	var coins_before: int = gs.coins
+	world._sell_everything()
+	check(gs.coins == coins_before + 4 and gs.inventory.total() == 0, "barn sells everything")
+	loc.set_language("th")
+	world._refresh_barn()
+	loc.set_language("en")
+	world.set_zone("restaurant")
+	check(not world.tool_buttons.has("seed:wheat") and world.tool == "buy", "restaurant toolbar has no seeds")
+	await process_frame
+
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
+	if failures == 0:
+		print("PASS: phase 2 farm (plots, growth, offline time, coop, barn, selling, UI taps)")
+		quit(0)
+	else:
+		printerr("%d check(s) failed" % failures)
+		quit(1)
