@@ -33,3 +33,14 @@ static func crop_color(crop: String) -> Color:
 
 static func obstacle(kind: String) -> Dictionary:
 	return OBSTACLE.get(kind, {"art": "", "scale": 1.0})
+
+
+const DISH_ART := {
+	"wheat_porridge": "dish_wheat_porridge",
+	"omelet": "dish_omelet",
+	"tomato_soup": "dish_soup",
+	"cabbage_salad": "dish_salad",
+}
+
+static func dish_art(dish: String) -> String:
+	return DISH_ART.get(dish, "")
