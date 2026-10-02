@@ -32,9 +32,10 @@ var clock_override: float = -1.0
 var spawn_obstacles: bool = true
 var restaurant_active: bool = true
 var restaurant: Restaurant = Restaurant.new(self)
-var layouts: Dictionary = {"restaurant": SceneLayout.restaurant(), "farm": SceneLayout.farm()}
+var layouts: Dictionary = {}
 
 func _ready() -> void:
+	load_default_layouts()
 	reset()
 	load_game()
 
@@ -51,17 +52,24 @@ func reset() -> void:
 	for z in Catalog.ZONES:
 		var l := layout_for(z)
 		grids[z] = WorldGrid.new(l.cells, l.starts, l.sale_parcels())
-		for p in l.starts:
-			if l.is_shell_parcel(p):
-				grids[z].styles[p] = "floor"
+		_place_map_objects(z)
 		if spawn_obstacles:
-			scatter_obstacles(z)
+			if l.scatter:
+				scatter_obstacles(z)
+			else:
+				_place_map_obstacles(z)
 	inventory = Inventory.new(60)
 	player_name = ""
 	restaurant_name = ""
 
 func layout_for(zone: String) -> SceneLayout:
 	return layouts[zone]
+
+# The owner's edited maps if there are any, else the ones that ship with the game.
+func load_default_layouts() -> void:
+	layouts = {}
+	for z in Catalog.ZONES:
+		layouts[z] = MapStore.load_layout(z)
 
 # Tests swap in plain 30x30 plots where every block is for sale and takes every item.
 func use_sandbox_layouts() -> void:
@@ -80,8 +88,29 @@ func in_start_clearing(zone: String, c: Vector2i) -> bool:
 			return true
 	return false
 
-# Fills free cells with trees, rocks and bushes: sparse in the open, dense in forest clumps, scaled by what the
-# land block is for (see SceneLayout.LABELS), and always leaving the starting blocks and the beach clear.
+# The map's own trees and rocks, wherever they stand on dry ground.
+func _place_map_obstacles(zone: String) -> void:
+	var g := grid(zone)
+	var l := layout_for(zone)
+	for o in l.obstacles:
+		var c := Vector2i(int(o[0]), int(o[1]))
+		if l.is_solid(c) and not g.occupied.has(c):
+			g.blocked[c] = str(o[2])
+
+# Furniture and other objects the map starts with (free, not owned-land checked: the owner put them there).
+func _place_map_objects(zone: String) -> void:
+	var g := grid(zone)
+	for o in layout_for(zone).objects:
+		var id := str(o[2])
+		var sz: Vector2i = Catalog.size_of(id)
+		var origin := Vector2i(int(o[0]), int(o[1]))
+		if g.footprint_in_bounds(origin, sz) and g.footprint_free(origin, sz):
+			g.objects[origin] = id
+			g.footprints[origin] = sz
+			for c in g.cells_of(origin, sz):
+				g.occupied[c] = origin
+
+# Tests only (layout.scatter): fills free land with random trees, rocks and bushes, leaving the starting blocks clear.
 func scatter_obstacles(zone: String) -> void:
 	var g := grid(zone)
 	var l := layout_for(zone)
@@ -91,13 +120,9 @@ func scatter_obstacles(zone: String) -> void:
 			var c := Vector2i(x, y)
 			if g.occupied.has(c) or in_start_clearing(zone, c) or l.edge_distance(c) < 3 or not l.is_solid(c):
 				continue
-			var info := l.info_of_parcel(WorldGrid.parcel_of(c))
-			var density := float(info.get("density", 1.0))
-			if density <= 0.0:
-				continue
 			var forest := smoothstep(0.5, 0.78, Noise2D.value(x * 0.2, y * 0.2, seed_v))
 			var wild := 0.0 if g.is_owned(c) else 0.04
-			var chance := (0.02 + wild) * density + float(info.get("forest", 0.3)) * forest
+			var chance := (0.02 + wild) + 0.30 * forest
 			if Noise2D.hash2(x, y, seed_v + 1) >= chance:
 				continue
 			var r := Noise2D.hash2(x, y, seed_v + 2)
@@ -148,18 +173,18 @@ func buy_land(zone: String, c: Vector2i) -> String:
 	return "ok"
 
 # Turns an owned land block of the restaurant into indoor floor or back into grass. Returns "ok", "invalid",
-# "locked" (not owned), "fixed" (the starting shop), "same" (already so) or "no_coins".
+# "locked" (not owned), "fixed" (a block owned from the start), "same" (already so) or "no_coins".
 func set_floor(zone: String, c: Vector2i, floor_on: bool) -> String:
 	if zone != "restaurant":
 		return "invalid"
 	var g := grid(zone)
 	var parcel := WorldGrid.parcel_of(c)
 	var l := layout_for(zone)
-	if not g.in_bounds(c) or l.label_of_parcel(parcel) == "=" or l.label_of_parcel(parcel) == "~":
+	if not g.in_bounds(c):
 		return "invalid"
 	if not g.owned_parcels.has(parcel):
 		return "locked"
-	if l.is_shell_parcel(parcel):
+	if l.is_start_parcel(parcel):
 		return "fixed"
 	if g.has_floor(parcel) == floor_on:
 		return "same"
