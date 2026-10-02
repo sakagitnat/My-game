@@ -6,12 +6,31 @@ const FLOOR := {"restaurant": "tile_wood_floor_01", "farm": "tile_grass_01"}
 const LOCKED_TILE := "tile_locked_01"
 const FLOOR_COLOR := {"restaurant": Color("c58a50"), "farm": Color("6fae58")}
 
-# Keys are also the art file names under assets/ (see docs/ASSETS.md).
+# Placeable keys are also art file names under assets/ (see docs/ASSETS.md).
+# "flat" objects are drawn like floor tiles instead of upright sprites.
 const PLACEABLES := {
 	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "name": "ITEM_TABLE", "color": Color("b8793f")},
 	"rest_stove_01": {"zone": "restaurant", "cost": 80, "name": "ITEM_STOVE", "color": Color("6b6f78")},
+	"farm_plot_01": {"zone": "farm", "cost": 10, "name": "ITEM_PLOT", "color": Color("6b4a2f"), "flat": true},
 	"farm_fence_01": {"zone": "farm", "cost": 20, "name": "ITEM_FENCE", "color": Color("d9c7a0")},
 	"farm_coop_01": {"zone": "farm", "cost": 120, "name": "ITEM_COOP", "color": Color("b5503c")},
+}
+
+# time: seconds to grow. seed: coin cost per planting. yield: items per harvest.
+const CROPS := {
+	"wheat": {"time": 60.0, "seed": 2, "yield": 1, "name": "CROP_WHEAT", "color": Color("e6c35c")},
+	"tomato": {"time": 180.0, "seed": 6, "yield": 1, "name": "CROP_TOMATO", "color": Color("d9453b")},
+	"cabbage": {"time": 300.0, "seed": 10, "yield": 1, "name": "CROP_CABBAGE", "color": Color("8fcf6a")},
+}
+
+# A coop turns 1 wheat into 1 egg after `time` seconds.
+const COOP := {"feed": "wheat", "product": "egg", "time": 120.0}
+
+const ITEMS := {
+	"wheat": {"sell": 4, "name": "CROP_WHEAT"},
+	"tomato": {"sell": 14, "name": "CROP_TOMATO"},
+	"cabbage": {"sell": 25, "name": "CROP_CABBAGE"},
+	"egg": {"sell": 10, "name": "ITEM_EGG"},
 }
 
 static func placeables_for(zone: String) -> Array[String]:
@@ -20,3 +39,9 @@ static func placeables_for(zone: String) -> Array[String]:
 		if PLACEABLES[id].zone == zone:
 			out.append(id)
 	return out
+
+# Art id for a crop stage: 1 sprout, 2 growing, 3 almost ripe, 4 ready.
+static func crop_stage(progress: float) -> int:
+	if progress >= 1.0:
+		return 4
+	return 1 + mini(2, int(progress * 3.0))

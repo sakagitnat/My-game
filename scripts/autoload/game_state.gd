@@ -12,6 +12,7 @@ var grids: Dictionary = {}
 var inventory: Inventory = Inventory.new(60)
 var save_path: String = SAVE_PATH
 var autosave: bool = true
+var clock_override: float = -1.0
 
 func _ready() -> void:
 	reset()
@@ -78,6 +79,103 @@ func remove_object(zone: String, c: Vector2i) -> String:
 func refund_for(zone: String, c: Vector2i) -> int:
 	var id: String = grid(zone).objects.get(c, "")
 	return int(Catalog.PLACEABLES[id].cost) / 2 if id != "" else 0
+
+func now() -> float:
+	return clock_override if clock_override >= 0.0 else Time.get_unix_time_from_system()
+
+func _elapsed(state: Dictionary) -> float:
+	return maxf(0.0, now() - float(state.get("t", 0.0)))
+
+# 0..1 while a plot is growing or a coop is producing, 1.0 when ready, -1.0 if idle or not a producer.
+func progress(zone: String, c: Vector2i) -> float:
+	var g := grid(zone)
+	var st: Dictionary = g.states.get(c, {})
+	if st.is_empty():
+		return -1.0
+	var id: String = g.objects.get(c, "")
+	var total := 0.0
+	if id == "farm_plot_01" and Catalog.CROPS.has(st.get("crop", "")):
+		total = Catalog.CROPS[st.crop].time
+	elif id == "farm_coop_01":
+		total = Catalog.COOP.time
+	if total <= 0.0:
+		return -1.0
+	return clampf(_elapsed(st) / total, 0.0, 1.0)
+
+func seconds_left(zone: String, c: Vector2i) -> int:
+	var p := progress(zone, c)
+	if p < 0.0 or p >= 1.0:
+		return 0
+	var st: Dictionary = grid(zone).states[c]
+	var id: String = grid(zone).objects[c]
+	var total: float = Catalog.CROPS[st.crop].time if id == "farm_plot_01" else Catalog.COOP.time
+	return ceili(total - _elapsed(st))
+
+# One tap on a plot or coop. `seed_id` is the crop to plant if the plot is empty.
+# Returns "planted", "harvested", "fed", "collected", "growing", "busy", "no_coins", "no_feed", "full" or "invalid".
+func interact(zone: String, c: Vector2i, seed_id: String) -> String:
+	var g := grid(zone)
+	var id: String = g.objects.get(c, "")
+	if id == "farm_plot_01":
+		return _interact_plot(zone, c, seed_id)
+	if id == "farm_coop_01":
+		return _interact_coop(zone, c)
+	return "invalid"
+
+func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
+	var g := grid(zone)
+	if g.states.has(c):
+		var st: Dictionary = g.states[c]
+		if progress(zone, c) < 1.0:
+			return "growing"
+		var crop: Dictionary = Catalog.CROPS[st.crop]
+		if inventory.add(st.crop, int(crop.yield)) == 0:
+			return "full"
+		g.states.erase(c)
+		_commit()
+		return "harvested"
+	if not Catalog.CROPS.has(seed_id):
+		return "invalid"
+	var cost: int = Catalog.CROPS[seed_id].seed
+	if coins < cost:
+		return "no_coins"
+	coins -= cost
+	g.states[c] = {"crop": seed_id, "t": now()}
+	_commit()
+	return "planted"
+
+func _interact_coop(zone: String, c: Vector2i) -> String:
+	var g := grid(zone)
+	if g.states.has(c):
+		if progress(zone, c) < 1.0:
+			return "busy"
+		if inventory.add(Catalog.COOP.product, 1) == 0:
+			return "full"
+		g.states.erase(c)
+		_commit()
+		return "collected"
+	if not inventory.remove(Catalog.COOP.feed, 1):
+		return "no_feed"
+	g.states[c] = {"t": now()}
+	_commit()
+	return "fed"
+
+func sell(item: String, amount: int) -> int:
+	if not Catalog.ITEMS.has(item):
+		return 0
+	var n := mini(amount, inventory.count(item))
+	if n <= 0 or not inventory.remove(item, n):
+		return 0
+	var earned: int = n * int(Catalog.ITEMS[item].sell)
+	coins += earned
+	_commit()
+	return earned
+
+func sell_all() -> int:
+	var total := 0
+	for item in inventory.items.keys():
+		total += sell(item, inventory.count(item))
+	return total
 
 func set_language(code: String) -> void:
 	language = code

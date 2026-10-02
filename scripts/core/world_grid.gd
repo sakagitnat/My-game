@@ -7,6 +7,7 @@ var size: Vector2i
 var start_owned_count: int = 0
 var owned: Dictionary = {}
 var objects: Dictionary = {}
+var states: Dictionary = {}
 
 func _init(grid_size: Vector2i = Vector2i(10, 10), start_cells: Array = []) -> void:
 	size = grid_size
@@ -37,6 +38,7 @@ func remove(c: Vector2i) -> String:
 		return ""
 	var id: String = objects[c]
 	objects.erase(c)
+	states.erase(c)
 	return id
 
 func can_buy(c: Vector2i) -> bool:
@@ -60,11 +62,15 @@ func to_dict() -> Dictionary:
 	var obj: Array = []
 	for c in objects:
 		obj.append([c.x, c.y, objects[c]])
-	return {"size": [size.x, size.y], "start": start_owned_count, "owned": o, "objects": obj}
+	var st: Array = []
+	for c in states:
+		st.append([c.x, c.y, states[c]])
+	return {"size": [size.x, size.y], "start": start_owned_count, "owned": o, "objects": obj, "states": st}
 
 func load_dict(d: Dictionary) -> void:
 	owned.clear()
 	objects.clear()
+	states.clear()
 	for p in d.get("owned", []):
 		var c := Vector2i(int(p[0]), int(p[1]))
 		if in_bounds(c):
@@ -73,4 +79,8 @@ func load_dict(d: Dictionary) -> void:
 		var c := Vector2i(int(p[0]), int(p[1]))
 		if owned.has(c):
 			objects[c] = str(p[2])
+	for p in d.get("states", []):
+		var c := Vector2i(int(p[0]), int(p[1]))
+		if objects.has(c) and p[2] is Dictionary:
+			states[c] = p[2]
 	start_owned_count = clampi(int(d.get("start", start_owned_count)), 0, owned.size())

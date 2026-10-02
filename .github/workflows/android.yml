@@ -56,6 +56,7 @@ jobs:
           godot --headless --path . --editor --quit
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/smoke.gd
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/phase1.gd
+          XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/phase2.gd
       - name: Export test APK
         run: |
           mkdir -p build
