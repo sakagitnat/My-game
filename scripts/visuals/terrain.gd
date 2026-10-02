@@ -11,7 +11,7 @@ const DRY := Color("cdb860")
 const STONE := Color("b9bcc0")
 const WALL_STEP := 11.0
 
-var zone: String = "restaurant"
+var zone: String = "island"
 # "ground" draws the terrain; a second instance with "signs" sits above objects so prices stay readable.
 var layer: String = "ground"
 var _colors: Dictionary = {}
@@ -21,22 +21,56 @@ func set_zone(z: String) -> void:
 	_colors.clear()
 	queue_redraw()
 
-func _corner_color(vx: int, vy: int) -> Color:
-	var key := vx * 100 + vy
-	if _colors.has(key):
-		return _colors[key]
+# d: whole cells from this corner to the water (0 on the shoreline itself).
+func _color_at(vx: int, vy: int, d: float) -> Color:
 	var n := Noise2D.value(vx * 0.15, vy * 0.15, 11)
 	var m := Noise2D.value(vx * 0.65, vy * 0.65, 23)
 	var t := clampf(n * 0.75 + m * 0.25, 0.0, 1.0)
 	var grass := GRASS_DARK.lerp(GRASS_LIGHT, t)
-	if zone == "restaurant":
-		grass = grass.lerp(Color("b4d860"), 0.22)
-	var gs := GameState.GRID_SIZE
-	var d := mini(mini(vx, vy), mini(gs.x - vx, gs.y - vy))
-	var beach := clampf((2.6 - float(d)) / 1.8, 0.0, 1.0)
-	var col := grass.lerp(SAND_DARK.lerp(SAND_LIGHT, m), beach)
+	var beach := clampf((2.6 - d) / 1.8, 0.0, 1.0)
+	return grass.lerp(SAND_DARK.lerp(SAND_LIGHT, m), beach)
+
+func _corner_color(vx: int, vy: int) -> Color:
+	var key := vx * 1000 + vy
+	if _colors.has(key):
+		return _colors[key]
+	var col := _color_at(vx, vy, maxf(0.0, GameState.layout.vertex_distance(vx, vy) - 0.5))
 	_colors[key] = col
 	return col
+
+# The land part of a cell on the shore: the quad cut where the coast field crosses zero (Sutherland-Hodgman),
+# with sand colour on the cut so the beach follows the real shoreline.
+func _shore_cell(x: int, y: int, dry: bool) -> Array:
+	var lay := GameState.layout
+	var gp: Array[Vector2] = [Vector2(x, y), Vector2(x + 1, y), Vector2(x + 1, y + 1), Vector2(x, y + 1)]
+	var fv: Array[float] = [lay.vertex_field(x, y), lay.vertex_field(x + 1, y), lay.vertex_field(x + 1, y + 1), lay.vertex_field(x, y + 1)]
+	var cv: Array[Color] = [_corner_color(x, y), _corner_color(x + 1, y), _corner_color(x + 1, y + 1), _corner_color(x, y + 1)]
+	var pts := PackedVector2Array()
+	var cols := PackedColorArray()
+	for i in range(4):
+		var j := (i + 1) % 4
+		if fv[i] > 0.0:
+			pts.append(gp[i])
+			cols.append(cv[i])
+		if (fv[i] > 0.0) != (fv[j] > 0.0):
+			var t := fv[i] / (fv[i] - fv[j])
+			pts.append(gp[i].lerp(gp[j], t))
+			cols.append(_color_at(x, y, 0.0))
+	var world := PackedVector2Array()
+	for p in pts:
+		world.append(Iso.cell_to_world_f(p - Vector2(0.5, 0.5)))
+	# A sliver (two corners of the cut almost on top of each other) cannot be filled; skip it.
+	var area := 0.0
+	for i in range(world.size()):
+		var a := world[i]
+		var b := world[(i + 1) % world.size()]
+		area += a.x * b.y - b.x * a.y
+	if world.size() < 3 or absf(area) < 6.0:
+		return [PackedVector2Array(), PackedColorArray()]
+	if dry:
+		for i in range(cols.size()):
+			cols[i] = cols[i].lerp(DRY, 0.16)
+	return [world, cols]
 
 func _visible_cells(g: WorldGrid) -> Rect2i:
 	var view := get_canvas_transform().affine_inverse() * Rect2(Vector2.ZERO, get_viewport_rect().size)
@@ -60,6 +94,13 @@ func _draw() -> void:
 	for y in range(vis.position.y, vis.end.y):
 		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
+			if not GameState.layout.has_land(c):
+				continue
+			if not GameState.layout.is_solid(c):
+				var part := _shore_cell(x, y, not g.is_owned(c))
+				if part[0].size() >= 3:
+					draw_polygon(part[0], part[1])
+				continue
 			var pts := Iso.footprint_corners(c, Vector2i.ONE)
 			var mid := Iso.cell_to_world(c)
 			for i in range(4):
@@ -116,6 +157,8 @@ func _draw_wall(a: Vector2, b: Vector2, seed_v: int) -> void:
 		var jx := Noise2D.hash2(i, seed_v, 3) - 0.5
 		var jy := Noise2D.hash2(i, seed_v, 4) - 0.5
 		p += Vector2(jx, jy) * 3.0
+		if not GameState.layout.is_solid(Iso.world_to_cell(p)):
+			continue
 		var r := 4.6 + Noise2D.hash2(i, seed_v, 9) * 2.2
 		draw_circle(p + Vector2(1.2, 2.2), r, Color(0, 0, 0, 0.25))
 		draw_circle(p, r, STONE.darkened(0.12 + 0.1 * Noise2D.hash2(i, seed_v, 10)))

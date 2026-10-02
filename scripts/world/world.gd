@@ -1,12 +1,12 @@
 extends Node2D
 
 const TAP_SLOP := 12.0
-const ZOOM_MIN := 0.35
+const ZOOM_MIN := 0.22
 const ZOOM_MAX := 2.2
 const START_VIEW_WIDTH := 1000.0
 const NONE := WorldGrid.NONE
 
-var zone: String = "restaurant"
+var zone: String = Catalog.ISLAND
 var camera: Camera2D
 var hud: Hud
 var view := ViewState.new()
@@ -36,7 +36,6 @@ func _ready() -> void:
 	renderer.setup(view, camera)
 	hud = Hud.new()
 	add_child(hud)
-	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
 	hud.crop_chosen.connect(_on_crop_chosen)
 	hud.action_pressed.connect(_on_action_pressed)
@@ -49,7 +48,7 @@ func _ready() -> void:
 	GameState.leveled_up.connect(_on_leveled_up)
 	GameState.restaurant.customer_left.connect(func(_id: int) -> void: hud.show_message("MSG_CUSTOMER_LEFT"))
 	Loc.changed.connect(_on_state_changed)
-	set_zone("restaurant")
+	set_zone(Catalog.ISLAND)
 
 # ---------------------------------------------------------------- backdrop
 
@@ -83,7 +82,7 @@ func set_zone(z: String) -> void:
 	renderer.set_zone(z)
 	camera.position = Iso.cell_to_world(GameState.start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
-	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
+	hud.show_message("HINT_START")
 	_redraw_all()
 
 func _on_state_changed() -> void:
@@ -109,7 +108,7 @@ func _on_leveled_up(new_level: int) -> void:
 func _on_reset() -> void:
 	GameState.reset()
 	GameState.save_game()
-	set_zone("restaurant")
+	set_zone(Catalog.ISLAND)
 	GameState.changed.emit()
 
 func _fmt_time(seconds: int) -> String:
@@ -125,6 +124,7 @@ func _error_text(code: String, item_id: String = "") -> Array:
 		"locked": return ["MSG_LOCKED", null]
 		"occupied": return ["MSG_OCCUPIED", null]
 		"blocked": return ["MSG_BLOCKED", null]
+		"area": return ["MSG_WRONG_AREA", null]
 		"level": return ["MSG_LEVEL", Catalog.unlock_level(item_id) if item_id != "" else null]
 	return ["MSG_INVALID", null]
 
@@ -229,8 +229,15 @@ func _on_tap(world: Vector2) -> void:
 		_select_obstacle(c)
 		return
 	_deselect()
-	if not g.is_owned(c) and g.can_buy_parcel(WorldGrid.parcel_of(c)):
+	if g.is_owned(c):
+		return
+	var parcel := WorldGrid.parcel_of(c)
+	if g.can_buy_parcel(parcel):
 		_ask_buy(c)
+	else:
+		var info := GameState.layout.info_of_parcel(parcel)
+		if not info.is_empty():
+			hud.show_message("MSG_AREA_FAR" if GameState.layout.for_sale(parcel) else "MSG_AREA_INFO", Loc.t(info.name))
 
 func _ask_buy(c: Vector2i) -> void:
 	var cost := GameState.land_cost(zone)
