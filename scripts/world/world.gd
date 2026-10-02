@@ -5,7 +5,7 @@ const ZOOM_MIN := 0.35
 const ZOOM_MAX := 2.2
 const REDRAW_EVERY := 0.5
 const SEED_PREFIX := "seed:"
-const START_VIEW_WIDTH := 800.0
+const START_VIEW_WIDTH := 1000.0
 
 var zone: String = "restaurant"
 var tool: String = "buy"
@@ -142,7 +142,7 @@ func set_zone(z: String) -> void:
 		b.pressed.connect(_select_tool.bind(id))
 		tool_bar.add_child(b)
 		tool_buttons[id] = b
-	camera.position = Iso.cell_to_world(Vector2i(GameState.GRID_SIZE / 2))
+	camera.position = Iso.cell_to_world(GameState.start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
 	if z == "farm":
 		show_message("HINT_FARM")
@@ -312,12 +312,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func _zoom_by(f: float) -> void:
 	var z := clampf(camera.zoom.x * f, ZOOM_MIN, ZOOM_MAX)
 	camera.zoom = Vector2(z, z)
+	queue_redraw()
 
 func _clamp_camera() -> void:
 	var s := GameState.GRID_SIZE
 	var lo := Vector2(Iso.cell_to_world(Vector2i(0, s.y)).x, 0.0)
 	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
 	camera.position = camera.position.clamp(lo, hi)
+	queue_redraw()
 
 func _fmt_time(seconds: int) -> String:
 	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
@@ -367,87 +369,127 @@ func _report_farm(result: String, c: Vector2i) -> void:
 		"full": show_message("MSG_FULL")
 		_: show_message("MSG_INVALID")
 
+func _visible_cell_range(g: WorldGrid) -> Rect2i:
+	var view := get_canvas_transform().affine_inverse() * Rect2(Vector2.ZERO, get_viewport_rect().size)
+	view = view.grow(Iso.TILE_W * 2.0)
+	var lo := Vector2i(g.size)
+	var hi := Vector2i(-1, -1)
+	for corner in [view.position, view.end, Vector2(view.position.x, view.end.y), Vector2(view.end.x, view.position.y)]:
+		var cc := Iso.world_to_cell(corner)
+		lo = Vector2i(mini(lo.x, cc.x), mini(lo.y, cc.y))
+		hi = Vector2i(maxi(hi.x, cc.x), maxi(hi.y, cc.y))
+	lo = lo.clamp(Vector2i.ZERO, g.size - Vector2i.ONE)
+	hi = hi.clamp(Vector2i.ZERO, g.size - Vector2i.ONE)
+	return Rect2i(lo, hi - lo + Vector2i.ONE)
+
 func _draw() -> void:
 	var g := GameState.grid(zone)
-	var font := ThemeDB.fallback_font
-	for y in range(g.size.y):
-		for x in range(g.size.x):
+	var vis := _visible_cell_range(g)
+	for y in range(vis.position.y, vis.end.y):
+		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
 			var p := Iso.cell_to_world(c)
 			if g.is_owned(c):
 				_draw_floor(Catalog.FLOOR[zone], p, Catalog.FLOOR_COLOR[zone])
 			else:
-				_draw_floor(Catalog.LOCKED_TILE, p, Color("2f3a33"))
-				if g.can_buy(c):
-					_outline(p, Color("ffd66b"))
-					var label := str(GameState.land_cost(zone))
-					draw_string_outline(font, p + Vector2(-32, 8), label, HORIZONTAL_ALIGNMENT_CENTER, 64, 22, 6, Color("1b1208"))
-					draw_string(font, p + Vector2(-32, 8), label, HORIZONTAL_ALIGNMENT_CENTER, 64, 22, Color("ffd66b"))
-	var cells: Array = g.objects.keys()
-	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x + a.y < b.x + b.y)
-	for c in cells:
-		_draw_object(c, g.objects[c], Iso.cell_to_world(c))
+				_draw_floor(Catalog.LOCKED_TILE, p, Color("2f3a33"), Color(0.6, 0.65, 0.7))
+	_draw_buyable_parcels(g)
+	var origins: Array = g.objects.keys()
+	origins.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x + a.y + g.footprints[a].x + g.footprints[a].y < b.x + b.y + g.footprints[b].x + g.footprints[b].y)
+	for o in origins:
+		_draw_object(o, g.objects[o])
+
+func _draw_buyable_parcels(g: WorldGrid) -> void:
+	var font := ThemeDB.fallback_font
+	var psize := Vector2i.ONE * WorldGrid.PARCEL
+	for py in range(g.parcel_grid().y):
+		for px in range(g.parcel_grid().x):
+			var parcel := Vector2i(px, py)
+			if not g.can_buy_parcel(parcel):
+				continue
+			var origin := parcel * WorldGrid.PARCEL
+			var pts := Iso.footprint_corners(origin, psize)
+			draw_colored_polygon(pts, Color(1.0, 0.84, 0.42, 0.10))
+			pts.append(pts[0])
+			draw_polyline(pts, Color("ffd66b"), 4.0)
+			var label := str(GameState.land_cost(zone))
+			var at := Iso.footprint_center(origin, psize) + Vector2(-60, 12)
+			draw_string_outline(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, 8, Color("1b1208"))
+			draw_string(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, Color("ffd66b"))
 
 func _diamond(p: Vector2, hw: float, hh: float) -> PackedVector2Array:
 	return PackedVector2Array([p + Vector2(0, -hh), p + Vector2(hw, 0), p + Vector2(0, hh), p + Vector2(-hw, 0)])
 
-func _outline(p: Vector2, col: Color) -> void:
-	var pts := _diamond(p, Iso.TILE_W * 0.5 - 2, Iso.TILE_H * 0.5 - 1)
-	pts.append(pts[0])
-	draw_polyline(pts, col, 3.0)
-
-func _draw_floor(id: String, p: Vector2, fallback: Color) -> void:
-	var tex := Assets.get_tex(id)
-	if tex != null:
-		var s := tex.get_size() * Assets.ART_SCALE
-		draw_texture_rect(tex, Rect2(p - s * 0.5, s), false)
-		return
-	draw_colored_polygon(_diamond(p, Iso.TILE_W * 0.5, Iso.TILE_H * 0.5), fallback)
-	var pts := _diamond(p, Iso.TILE_W * 0.5, Iso.TILE_H * 0.5)
-	pts.append(pts[0])
-	draw_polyline(pts, fallback.darkened(0.25), 1.5)
-
-func _draw_sprite(id: String, p: Vector2) -> bool:
+# Floor-style art: the canvas width maps to `width`, the diamond is centred in the canvas.
+func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
 	var tex := Assets.get_tex(id)
 	if tex == null:
 		return false
-	var s := tex.get_size() * Assets.ART_SCALE
-	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
+	var s := tex.get_size() * (width / tex.get_width())
+	draw_texture_rect(tex, Rect2(center - s * 0.5, s), false, tint)
+	return true
+
+func _draw_floor(id: String, p: Vector2, fallback: Color, tint: Color = Color.WHITE) -> void:
+	if _draw_flat_art(id, p, Iso.TILE_W, tint):
+		return
+	var pts := _diamond(p, Iso.TILE_W * 0.5, Iso.TILE_H * 0.5)
+	draw_colored_polygon(pts, fallback)
+	pts.append(pts[0])
+	draw_polyline(pts, fallback.darkened(0.25), 1.0)
+
+# Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom corner.
+func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i) -> bool:
+	var tex := Assets.get_tex(id)
+	if tex == null:
+		return false
+	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
+	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
 	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false)
 	return true
 
-func _draw_object(c: Vector2i, id: String, p: Vector2) -> void:
+func _object_height(sz: Vector2i) -> float:
+	return 9.5 * (sz.x + sz.y)
+
+func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
+	var sz: Vector2i = def.size
 	if def.get("flat", false):
-		_draw_plot(c, p)
+		_draw_plot(origin, sz)
 		return
-	if not _draw_sprite(id, p):
-		_draw_box(p, def.color)
-	_draw_status(c, p, -58.0)
+	if not _draw_sprite(id, origin, sz):
+		_draw_box(origin, sz, def.color)
+	_draw_status(origin, sz, _object_height(sz))
 
-func _draw_box(p: Vector2, col: Color) -> void:
-	var hw := 44.0
-	var hh := 22.0
-	var h := Vector2(0, -38)
-	var l := p + Vector2(-hw, 0)
-	var r := p + Vector2(hw, 0)
-	var b := p + Vector2(0, hh)
-	var t := p + Vector2(0, -hh)
-	draw_colored_polygon(PackedVector2Array([l, b, b + h, l + h]), col.darkened(0.25))
-	draw_colored_polygon(PackedVector2Array([b, r, r + h, b + h]), col.darkened(0.45))
-	draw_colored_polygon(PackedVector2Array([l + h, t + h, r + h, b + h]), col)
+func _draw_box(origin: Vector2i, sz: Vector2i, col: Color) -> void:
+	var k := Iso.footprint_corners(origin, sz)
+	var up := Vector2(0, -_object_height(sz))
+	var top := k[0]
+	var right := k[1]
+	var bottom := k[2]
+	var left := k[3]
+	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + up, left + up]), col.darkened(0.25))
+	draw_colored_polygon(PackedVector2Array([bottom, right, right + up, bottom + up]), col.darkened(0.45))
+	var lid := PackedVector2Array([left + up, top + up, right + up, bottom + up])
+	draw_colored_polygon(lid, col)
+	lid.append(lid[0])
+	draw_polyline(lid, col.darkened(0.35), 1.5)
 
-func _draw_plot(c: Vector2i, p: Vector2) -> void:
+func _draw_plot(origin: Vector2i, sz: Vector2i) -> void:
 	var g := GameState.grid(zone)
-	var prog := GameState.progress(zone, c)
-	if prog >= 0.0:
-		_draw_floor("tile_soil_wet_01", p, Color("4c331e"))
-		var crop: String = g.states[c].crop
-		if not _draw_sprite("crop_%s_s%d" % [crop, Catalog.crop_stage(prog)], p):
-			_draw_crop_placeholder(crop, prog, p)
-	else:
-		_draw_floor("tile_soil_dry_01", p, Color("7a5535"))
-	_draw_status(c, p, -44.0)
+	var center := Iso.footprint_center(origin, sz)
+	var prog := GameState.progress(zone, origin)
+	var wet := prog >= 0.0
+	if not _draw_flat_art("tile_soil_wet_01" if wet else "tile_soil_dry_01", center, Iso.footprint_width(sz)):
+		var pts := Iso.footprint_corners(origin, sz)
+		draw_colored_polygon(pts, Color("4c331e") if wet else Color("7a5535"))
+		pts.append(pts[0])
+		draw_polyline(pts, Color("2b1d12"), 1.5)
+	if wet:
+		var crop: String = g.states[origin].crop
+		if not _draw_sprite("crop_%s_s%d" % [crop, Catalog.crop_stage(prog)], origin, sz):
+			_draw_crop_placeholder(crop, prog, center)
+	_draw_status(origin, sz, 0.0)
 
 func _draw_crop_placeholder(crop: String, prog: float, p: Vector2) -> void:
 	var stage := Catalog.crop_stage(prog)
@@ -462,11 +504,11 @@ func _draw_crop_placeholder(crop: String, prog: float, p: Vector2) -> void:
 	for off in [Vector2(-20, -2), Vector2(0, 8), Vector2(20, -2), Vector2(0, -10)]:
 		draw_circle(p + off + Vector2(0, -r * 0.5), r, col)
 
-func _draw_status(c: Vector2i, p: Vector2, y: float) -> void:
-	var prog := GameState.progress(zone, c)
+func _draw_status(origin: Vector2i, sz: Vector2i, height: float) -> void:
+	var prog := GameState.progress(zone, origin)
 	if prog < 0.0:
 		return
-	var top := p + Vector2(0, y)
+	var top := Iso.footprint_corners(origin, sz)[0] + Vector2(0, -height - 12.0)
 	if prog >= 1.0:
 		draw_circle(top, 11, Color("2b1d12"))
 		draw_circle(top, 8, Color("ffd66b"))

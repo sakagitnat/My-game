@@ -4,7 +4,10 @@ signal changed
 
 const SAVE_PATH := "user://salvora.json"
 const START_COINS := 500
-const GRID_SIZE := Vector2i(12, 12)
+const GRID_SIZE := Vector2i(30, 30)
+const START_PARCEL := Vector2i(2, 2)
+const LAND_BASE_COST := 150
+const LAND_STEP_COST := 100
 const TEST_GRANT := 500
 
 var coins: int = START_COINS
@@ -23,31 +26,30 @@ func reset() -> void:
 	coins = START_COINS
 	grids = {}
 	for z in Catalog.ZONES:
-		grids[z] = WorldGrid.new(GRID_SIZE, _start_cells())
+		grids[z] = WorldGrid.new(GRID_SIZE, [START_PARCEL])
 	inventory = Inventory.new(60)
 
-func _start_cells() -> Array:
-	var cells: Array = []
-	for y in range(4, 7):
-		for x in range(4, 7):
-			cells.append(Vector2i(x, y))
-	return cells
+# Cell in the middle of the starting parcel (used to centre the camera).
+func start_cell() -> Vector2i:
+	return START_PARCEL * WorldGrid.PARCEL + Vector2i.ONE * (WorldGrid.PARCEL / 2)
 
 func grid(zone: String) -> WorldGrid:
 	return grids[zone]
 
 func land_cost(zone: String) -> int:
-	return 50 + 25 * grid(zone).bought_count()
+	return LAND_BASE_COST + LAND_STEP_COST * grid(zone).bought_count()
 
+# Buys the whole land block containing cell `c`.
 func buy_land(zone: String, c: Vector2i) -> String:
 	var g := grid(zone)
-	if not g.can_buy(c):
+	var parcel := WorldGrid.parcel_of(c)
+	if not g.in_bounds(c) or not g.can_buy_parcel(parcel):
 		return "invalid"
 	var cost := land_cost(zone)
 	if coins < cost:
 		return "no_coins"
 	coins -= cost
-	g.buy(c)
+	g.buy_parcel(parcel)
 	_commit()
 	return "ok"
 
@@ -68,16 +70,22 @@ func grant_test_coins() -> void:
 	coins += TEST_GRANT
 	_commit()
 
+# Top-left cell of a footprint of `sz` centred on the tapped cell `c`.
+func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
+	return c - Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
+
 func place_object(zone: String, c: Vector2i, id: String) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or def.zone != zone:
 		return "invalid"
 	var g := grid(zone)
-	if not g.in_bounds(c):
+	var sz: Vector2i = def.size
+	var origin := footprint_origin(c, sz)
+	if not g.footprint_in_bounds(origin, sz):
 		return "invalid"
-	if not g.is_owned(c):
+	if not g.footprint_owned(origin, sz):
 		return "locked"
-	if g.objects.has(c):
+	if not g.footprint_free(origin, sz):
 		return "occupied"
 	var cost: int = def.cost
 	if id == "farm_plot_01" and is_broke() and not _farm_has("farm_plot_01"):
@@ -85,12 +93,12 @@ func place_object(zone: String, c: Vector2i, id: String) -> String:
 	if coins < cost:
 		return "no_coins"
 	coins -= cost
-	g.place(c, id)
+	g.place(origin, id, sz)
 	_commit()
 	return "ok"
 
 func remove_object(zone: String, c: Vector2i) -> String:
-	var id := grid(zone).remove(c)
+	var id := grid(zone).remove_at(c)
 	if id == "":
 		return "empty"
 	coins += int(Catalog.PLACEABLES[id].cost) / 2
@@ -98,7 +106,7 @@ func remove_object(zone: String, c: Vector2i) -> String:
 	return "ok"
 
 func refund_for(zone: String, c: Vector2i) -> int:
-	var id: String = grid(zone).objects.get(c, "")
+	var id: String = grid(zone).id_at(c)
 	return int(Catalog.PLACEABLES[id].cost) / 2 if id != "" else 0
 
 func now() -> float:
@@ -110,6 +118,7 @@ func _elapsed(state: Dictionary) -> float:
 # 0..1 while a plot is growing or a coop is producing, 1.0 when ready, -1.0 if idle or not a producer.
 func progress(zone: String, c: Vector2i) -> float:
 	var g := grid(zone)
+	c = g.origin_at(c)
 	var st: Dictionary = g.states.get(c, {})
 	if st.is_empty():
 		return -1.0
@@ -127,8 +136,9 @@ func seconds_left(zone: String, c: Vector2i) -> int:
 	var p := progress(zone, c)
 	if p < 0.0 or p >= 1.0:
 		return 0
-	var st: Dictionary = grid(zone).states[c]
-	var id: String = grid(zone).objects[c]
+	var o := grid(zone).origin_at(c)
+	var st: Dictionary = grid(zone).states[o]
+	var id: String = grid(zone).objects[o]
 	var total: float = Catalog.CROPS[st.crop].time if id == "farm_plot_01" else Catalog.COOP.time
 	return ceili(total - _elapsed(st))
 
@@ -136,11 +146,12 @@ func seconds_left(zone: String, c: Vector2i) -> int:
 # Returns "planted", "harvested", "fed", "collected", "growing", "busy", "no_coins", "no_feed", "full" or "invalid".
 func interact(zone: String, c: Vector2i, seed_id: String) -> String:
 	var g := grid(zone)
-	var id: String = g.objects.get(c, "")
+	var origin := g.origin_at(c)
+	var id: String = g.objects.get(origin, "")
 	if id == "farm_plot_01":
-		return _interact_plot(zone, c, seed_id)
+		return _interact_plot(zone, origin, seed_id)
 	if id == "farm_coop_01":
-		return _interact_coop(zone, c)
+		return _interact_coop(zone, origin)
 	return "invalid"
 
 func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
@@ -226,7 +237,7 @@ func load_game() -> bool:
 	if gd is Dictionary:
 		for z in Catalog.ZONES:
 			if gd.has(z) and gd[z] is Dictionary:
-				grids[z].load_dict(gd[z])
+				grids[z].load_dict(gd[z])  # old-format saves keep a fresh grid
 	var inv = d.get("inventory", {})
 	if inv is Dictionary:
 		inventory.load_dict(inv)

@@ -7,13 +7,14 @@ const LOCKED_TILE := "tile_locked_01"
 const FLOOR_COLOR := {"restaurant": Color("c58a50"), "farm": Color("6fae58")}
 
 # Placeable keys are also art file names under assets/ (see docs/ASSETS.md).
+# "size" is the footprint in cells; art is scaled so its canvas width equals the footprint width.
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 const PLACEABLES := {
-	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "name": "ITEM_TABLE", "color": Color("b8793f")},
-	"rest_stove_01": {"zone": "restaurant", "cost": 80, "name": "ITEM_STOVE", "color": Color("6b6f78")},
-	"farm_plot_01": {"zone": "farm", "cost": 10, "name": "ITEM_PLOT", "color": Color("6b4a2f"), "flat": true},
-	"farm_fence_01": {"zone": "farm", "cost": 20, "name": "ITEM_FENCE", "color": Color("d9c7a0")},
-	"farm_coop_01": {"zone": "farm", "cost": 120, "name": "ITEM_COOP", "color": Color("b5503c")},
+	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE", "color": Color("b8793f")},
+	"rest_stove_01": {"zone": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE", "color": Color("6b6f78")},
+	"farm_plot_01": {"zone": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "color": Color("6b4a2f"), "flat": true},
+	"farm_fence_01": {"zone": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE", "color": Color("d9c7a0")},
+	"farm_coop_01": {"zone": "farm", "cost": 120, "size": Vector2i(3, 3), "name": "ITEM_COOP", "color": Color("b5503c")},
 }
 
 # time: seconds to grow. seed: coin cost per planting. yield: items per harvest.
@@ -32,6 +33,9 @@ const ITEMS := {
 	"cabbage": {"sell": 25, "name": "CROP_CABBAGE"},
 	"egg": {"sell": 10, "name": "ITEM_EGG"},
 }
+
+static func size_of(id: String) -> Vector2i:
+	return PLACEABLES[id].size
 
 static func placeables_for(zone: String) -> Array[String]:
 	var out: Array[String] = []
