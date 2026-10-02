@@ -11,7 +11,7 @@ const DRY := Color("cdb860")
 const STONE := Color("b9bcc0")
 const WALL_STEP := 11.0
 
-var zone: String = "island"
+var zone: String = "restaurant"
 # "ground" draws the terrain; a second instance with "signs" sits above objects so prices stay readable.
 var layer: String = "ground"
 var _colors: Dictionary = {}
@@ -34,14 +34,14 @@ func _corner_color(vx: int, vy: int) -> Color:
 	var key := vx * 1000 + vy
 	if _colors.has(key):
 		return _colors[key]
-	var col := _color_at(vx, vy, maxf(0.0, GameState.layout.vertex_distance(vx, vy) - 0.5))
+	var col := _color_at(vx, vy, maxf(0.0, GameState.layout_for(zone).vertex_distance(vx, vy) - 0.5))
 	_colors[key] = col
 	return col
 
 # The land part of a cell on the shore: the quad cut where the coast field crosses zero (Sutherland-Hodgman),
 # with sand colour on the cut so the beach follows the real shoreline.
 func _shore_cell(x: int, y: int, dry: bool) -> Array:
-	var lay := GameState.layout
+	var lay := GameState.layout_for(zone)
 	var gp: Array[Vector2] = [Vector2(x, y), Vector2(x + 1, y), Vector2(x + 1, y + 1), Vector2(x, y + 1)]
 	var fv: Array[float] = [lay.vertex_field(x, y), lay.vertex_field(x + 1, y), lay.vertex_field(x + 1, y + 1), lay.vertex_field(x, y + 1)]
 	var cv: Array[Color] = [_corner_color(x, y), _corner_color(x + 1, y), _corner_color(x + 1, y + 1), _corner_color(x, y + 1)]
@@ -94,9 +94,9 @@ func _draw() -> void:
 	for y in range(vis.position.y, vis.end.y):
 		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
-			if not GameState.layout.has_land(c):
+			if not GameState.layout_for(zone).has_land(c):
 				continue
-			if not GameState.layout.is_solid(c):
+			if not GameState.layout_for(zone).is_solid(c):
 				var part := _shore_cell(x, y, not g.is_owned(c))
 				if part[0].size() >= 3:
 					draw_polygon(part[0], part[1])
@@ -117,7 +117,7 @@ func _draw_decor(g: WorldGrid, vis: Rect2i) -> void:
 	for y in range(vis.position.y, vis.end.y):
 		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
-			if GameState.edge_distance(c) < 3 or g.occupied.has(c) or g.blocked.has(c):
+			if GameState.edge_distance(zone, c) < 3 or g.occupied.has(c) or GameState.layout_for(zone).is_road(c) or g.has_floor(WorldGrid.parcel_of(c)) or g.blocked.has(c):
 				continue
 			var h := Noise2D.hash2(x, y, 5)
 			if h > 0.13:
@@ -157,7 +157,7 @@ func _draw_wall(a: Vector2, b: Vector2, seed_v: int) -> void:
 		var jx := Noise2D.hash2(i, seed_v, 3) - 0.5
 		var jy := Noise2D.hash2(i, seed_v, 4) - 0.5
 		p += Vector2(jx, jy) * 3.0
-		if not GameState.layout.is_solid(Iso.world_to_cell(p)):
+		if not GameState.layout_for(zone).is_solid(Iso.world_to_cell(p)):
 			continue
 		var r := 4.6 + Noise2D.hash2(i, seed_v, 9) * 2.2
 		draw_circle(p + Vector2(1.2, 2.2), r, Color(0, 0, 0, 0.25))

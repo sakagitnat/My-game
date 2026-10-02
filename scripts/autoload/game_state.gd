@@ -5,7 +5,6 @@ signal leveled_up(new_level: int)
 
 const SAVE_PATH := "user://salvora.json"
 const START_COINS := 500
-const GRID_SIZE := Vector2i(66, 66)
 const LAND_BASE_COST := 150
 const LAND_STEP_COST := 100
 const LAND_XP := 5
@@ -16,6 +15,7 @@ const BARN_BASE_COST := 100
 const OBSTACLE_SEED := 20261002
 const NAME_MAX := 14
 const CLEAR_MARGIN := 1  # cells kept free of trees inside each starting block, measured from the block edge
+const FLOOR_COST := 60   # turning an owned land block of the restaurant into indoor floor
 
 var coins: int = START_COINS
 var xp: int = 0
@@ -32,7 +32,7 @@ var clock_override: float = -1.0
 var spawn_obstacles: bool = true
 var restaurant_active: bool = true
 var restaurant: Restaurant = Restaurant.new(self)
-var layout: Island = Island.standard()
+var layouts: Dictionary = {"restaurant": SceneLayout.restaurant(), "farm": SceneLayout.farm()}
 
 func _ready() -> void:
 	reset()
@@ -49,36 +49,49 @@ func reset() -> void:
 	level = 1
 	grids = {}
 	for z in Catalog.ZONES:
-		grids[z] = WorldGrid.new(GRID_SIZE, layout.starts, layout.sale_parcels())
+		var l := layout_for(z)
+		grids[z] = WorldGrid.new(l.cells, l.starts, l.sale_parcels())
+		for p in l.starts:
+			if l.is_shell_parcel(p):
+				grids[z].styles[p] = "floor"
 		if spawn_obstacles:
 			scatter_obstacles(z)
 	inventory = Inventory.new(60)
 	player_name = ""
 	restaurant_name = ""
 
-# Whole cells between a cell and the water (0 on the outermost ring of land, -1 in the water).
-func edge_distance(c: Vector2i) -> int:
-	return layout.edge_distance(c)
+func layout_for(zone: String) -> SceneLayout:
+	return layouts[zone]
+
+# Tests swap in plain 30x30 plots where every block is for sale and takes every item.
+func use_sandbox_layouts() -> void:
+	layouts = {"restaurant": SceneLayout.sandbox(), "farm": SceneLayout.sandbox()}
+
+# Whole cells between a cell and the water (0 on the outermost ring of a square plot, -1 in the water).
+func edge_distance(zone: String, c: Vector2i) -> int:
+	return layout_for(zone).edge_distance(c)
 
 # True for cells inside the middle of a starting block (kept clear so the player can build at once).
-func in_start_clearing(c: Vector2i) -> bool:
-	for p in layout.starts:
+func in_start_clearing(zone: String, c: Vector2i) -> bool:
+	var l := layout_for(zone)
+	for p in l.starts:
 		var r := Rect2i(p * WorldGrid.PARCEL + Vector2i.ONE * CLEAR_MARGIN, Vector2i.ONE * (WorldGrid.PARCEL - 2 * CLEAR_MARGIN))
 		if r.has_point(c):
 			return true
 	return false
 
 # Fills free cells with trees, rocks and bushes: sparse in the open, dense in forest clumps, scaled by what the
-# land block is for (see Island.LABELS), and always leaving the starting blocks and the beach clear.
+# land block is for (see SceneLayout.LABELS), and always leaving the starting blocks and the beach clear.
 func scatter_obstacles(zone: String) -> void:
 	var g := grid(zone)
-	var seed_v := OBSTACLE_SEED
+	var l := layout_for(zone)
+	var seed_v := OBSTACLE_SEED + (7919 if zone == "farm" else 0)
 	for y in range(g.size.y):
 		for x in range(g.size.x):
 			var c := Vector2i(x, y)
-			if g.occupied.has(c) or in_start_clearing(c) or edge_distance(c) < 3 or not layout.is_solid(c):
+			if g.occupied.has(c) or in_start_clearing(zone, c) or l.edge_distance(c) < 3 or not l.is_solid(c):
 				continue
-			var info := layout.info_of_parcel(WorldGrid.parcel_of(c))
+			var info := l.info_of_parcel(WorldGrid.parcel_of(c))
 			var density := float(info.get("density", 1.0))
 			if density <= 0.0:
 				continue
@@ -90,13 +103,13 @@ func scatter_obstacles(zone: String) -> void:
 			var r := Noise2D.hash2(x, y, seed_v + 2)
 			g.blocked[c] = "tree" if r < 0.55 else ("rock" if r < 0.82 else "bush")
 
-# Cell in the middle of the starting restaurant block (used to centre the camera).
+# Cell in the middle of the starting shop (used to centre the camera).
 func start_cell() -> Vector2i:
-	return layout.restaurant_start * WorldGrid.PARCEL + Vector2i.ONE * (WorldGrid.PARCEL / 2)
+	return layout_for("restaurant").start_cell()
 
 # Same for the starting farm block.
 func farm_start_cell() -> Vector2i:
-	return layout.farm_start * WorldGrid.PARCEL + Vector2i.ONE * (WorldGrid.PARCEL / 2)
+	return layout_for("farm").start_cell()
 
 func xp_for_next() -> int:
 	return 30 + 20 * (level - 1)
@@ -113,9 +126,8 @@ func add_xp(amount: int) -> void:
 		coins += level_up_reward(level)
 		leveled_up.emit(level)
 
-# There is a single island. Old zone names ("restaurant", "farm") resolve to it so older callers keep working.
-func grid(_zone: String = Catalog.ISLAND) -> WorldGrid:
-	return grids[Catalog.ISLAND]
+func grid(zone: String) -> WorldGrid:
+	return grids[zone]
 
 func land_cost(zone: String) -> int:
 	return LAND_BASE_COST + LAND_STEP_COST * grid(zone).bought_count()
@@ -135,6 +147,30 @@ func buy_land(zone: String, c: Vector2i) -> String:
 	_commit()
 	return "ok"
 
+# Turns an owned land block of the restaurant into indoor floor or back into grass. Returns "ok", "invalid",
+# "locked" (not owned), "fixed" (the starting shop), "same" (already so) or "no_coins".
+func set_floor(zone: String, c: Vector2i, floor_on: bool) -> String:
+	if zone != "restaurant":
+		return "invalid"
+	var g := grid(zone)
+	var parcel := WorldGrid.parcel_of(c)
+	var l := layout_for(zone)
+	if not g.in_bounds(c) or l.label_of_parcel(parcel) == "=" or l.label_of_parcel(parcel) == "~":
+		return "invalid"
+	if not g.owned_parcels.has(parcel):
+		return "locked"
+	if l.is_shell_parcel(parcel):
+		return "fixed"
+	if g.has_floor(parcel) == floor_on:
+		return "same"
+	if floor_on:
+		if coins < FLOOR_COST:
+			return "no_coins"
+		coins -= FLOOR_COST
+	g.set_floor(parcel, floor_on)
+	_commit()
+	return "ok"
+
 func _min_seed_cost() -> int:
 	var lowest := 1 << 30
 	for crop in Catalog.CROPS:
@@ -142,11 +178,11 @@ func _min_seed_cost() -> int:
 	return lowest
 
 func _farm_has(id: String) -> bool:
-	return grid().objects.values().has(id)
+	return grid("farm").objects.values().has(id)
 
 # True when the player has no coins, nothing to sell and nothing growing, so no action can ever earn money.
 func is_broke() -> bool:
-	return coins < _min_seed_cost() and inventory.total() == 0 and grid().states.is_empty()
+	return coins < _min_seed_cost() and inventory.total() == 0 and grid("farm").states.is_empty()
 
 func grant_test_coins() -> void:
 	coins += TEST_GRANT
@@ -159,7 +195,7 @@ func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 # Why `id` can or cannot be placed with a footprint centred on `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
 func check_place(zone: String, c: Vector2i, id: String) -> String:
 	var def = Catalog.PLACEABLES.get(id)
-	if def == null:
+	if def == null or def.area != zone:
 		return "invalid"
 	if level < Catalog.unlock_level(id):
 		return "level"
@@ -168,9 +204,9 @@ func check_place(zone: String, c: Vector2i, id: String) -> String:
 	var origin := footprint_origin(c, sz)
 	if not g.footprint_in_bounds(origin, sz):
 		return "invalid"
-	if not _footprint_solid(origin, sz):
+	if not _footprint_solid(zone, origin, sz):
 		return "invalid"
-	if not _footprint_in_area(origin, sz, str(def.area)):
+	if not _footprint_in_area(zone, origin, sz, str(def.area)):
 		return "area"
 	if not g.footprint_owned(origin, sz):
 		return "locked"
@@ -183,16 +219,16 @@ func check_place(zone: String, c: Vector2i, id: String) -> String:
 	return "ok"
 
 # Nothing may stand in the water or on the waterline.
-func _footprint_solid(origin: Vector2i, sz: Vector2i) -> bool:
-	for c in grid().cells_of(origin, sz):
-		if not layout.is_solid(c):
+func _footprint_solid(zone: String, origin: Vector2i, sz: Vector2i) -> bool:
+	for c in grid(zone).cells_of(origin, sz):
+		if not layout_for(zone).is_solid(c):
 			return false
 	return true
 
 # Every cell of the footprint must lie on land meant for this kind of item.
-func _footprint_in_area(origin: Vector2i, sz: Vector2i, area: String) -> bool:
-	for c in grid().cells_of(origin, sz):
-		if not layout.allows(area, c):
+func _footprint_in_area(zone: String, origin: Vector2i, sz: Vector2i, area: String) -> bool:
+	for c in grid(zone).cells_of(origin, sz):
+		if not layout_for(zone).allows(area, c):
 			return false
 	return true
 
@@ -222,9 +258,9 @@ func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
 	var new_origin := footprint_origin(to_cell, sz)
 	if not g.footprint_in_bounds(new_origin, sz):
 		return "invalid"
-	if not _footprint_solid(new_origin, sz):
+	if not _footprint_solid(zone, new_origin, sz):
 		return "invalid"
-	if not _footprint_in_area(new_origin, sz, str(Catalog.PLACEABLES[g.objects[origin]].area)):
+	if not _footprint_in_area(zone, new_origin, sz, str(Catalog.PLACEABLES[g.objects[origin]].area)):
 		return "area"
 	if not g.footprint_owned(new_origin, sz):
 		return "locked"

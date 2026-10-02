@@ -20,7 +20,7 @@ func run() -> void:
 	gs.autosave = false
 	gs.restaurant_active = false
 	gs.ask_names = false
-	gs.layout = Island.sandbox()
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = true
 	gs.reset()
 	gs.level = 10
@@ -35,15 +35,17 @@ func run() -> void:
 		var in_clear := false
 		var on_beach := false
 		for c in g.blocked:
-			if gs.in_start_clearing(c):
+			if gs.in_start_clearing(z, c):
 				in_clear = true
-			if gs.edge_distance(c) < 3:
+			if gs.edge_distance(z, c) < 3:
 				on_beach = true
 		check(not in_clear, "%s: middle of the starting block is clear" % z)
 		check(not on_beach, "%s: the beach is clear" % z)
-	var layout_a: Dictionary = gs.grid().blocked.duplicate()
+	var farm_layout: Dictionary = gs.grid("farm").blocked.duplicate()
+	var rest_layout: Dictionary = gs.grid("restaurant").blocked.duplicate()
+	check(farm_layout != rest_layout, "zones get different layouts")
 	gs.reset()
-	check(gs.grid().blocked == layout_a, "layout is the same every new game")
+	check(gs.grid("farm").blocked == farm_layout and gs.grid("restaurant").blocked == rest_layout, "layout is the same every new game")
 	for kind in gs.grid("farm").blocked.values():
 		check(Catalog.OBSTACLES.has(kind), "known obstacle kind %s" % kind)
 
@@ -85,10 +87,10 @@ func run() -> void:
 	var saved_blocked: Dictionary = g.blocked.duplicate()
 	gs.reset()
 	check(gs.load_game() and gs.grid("farm").blocked == saved_blocked, "cleared and remaining obstacles persist")
-	var legacy: Dictionary = gs.grid().to_dict()
+	var legacy: Dictionary = gs.grid("farm").to_dict()
 	legacy.erase("obstacles")
 	var f := FileAccess.open(gs.save_path, FileAccess.WRITE)
-	f.store_string(JSON.stringify({"version": 1, "coins": 5, "grids": {"island": legacy}}))
+	f.store_string(JSON.stringify({"version": 1, "coins": 5, "grids": {"farm": legacy}}))
 	f.close()
 	gs.spawn_obstacles = true
 	gs.reset()

@@ -1,9 +1,8 @@
 class_name Catalog
 extends RefCounted
 
-# There is one island. Older code and saves may still say "restaurant" or "farm"; GameState.grid() maps them to it.
-const ISLAND := "island"
-const ZONES: Array[String] = ["island"]
+# Scenes the player works in; each has its own map (see SceneLayout).
+const ZONES: Array[String] = ["restaurant", "farm"]
 
 # Game rules only; how things look (colours, sprite sizing) is in scripts/visuals/art_catalog.gd.
 # Placeable keys are also art file names under assets/ (see docs/ASSETS.md).

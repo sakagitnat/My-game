@@ -16,6 +16,7 @@ var occupied: Dictionary = {}
 var states: Dictionary = {}
 var blocked: Dictionary = {}
 var sale: Dictionary = {}         # parcels the player may buy; empty means every parcel
+var styles: Dictionary = {}       # parcel -> "floor" for blocks built over as indoor floor (everything else is open ground)
 
 func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = [], sale_parcels: Dictionary = {}) -> void:
 	size = grid_size
@@ -57,6 +58,15 @@ func buy_parcel(p: Vector2i) -> bool:
 		return false
 	owned_parcels[p] = true
 	return true
+
+func has_floor(p: Vector2i) -> bool:
+	return styles.get(p, "") == "floor"
+
+func set_floor(p: Vector2i, floor_on: bool) -> void:
+	if floor_on:
+		styles[p] = "floor"
+	else:
+		styles.erase(p)
 
 func cells_of(origin: Vector2i, sz: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
@@ -153,12 +163,18 @@ func to_dict() -> Dictionary:
 	var obs: Array = []
 	for c in blocked:
 		obs.append([c.x, c.y, blocked[c]])
+	var floors: Array = []
+	for p in styles:
+		floors.append([p.x, p.y])
 	return {"size": [size.x, size.y], "parcel": PARCEL, "start": start_parcel_count,
-		"parcels": parcels, "objects": obj, "states": st, "obstacles": obs}
+		"parcels": parcels, "objects": obj, "states": st, "obstacles": obs, "floors": floors}
 
-# Returns false (leaving the grid untouched) for saves from before parcels existed.
+# Returns false (leaving the grid untouched) for saves from before parcels existed or of a different map size.
 func load_dict(d: Dictionary) -> bool:
 	if not d.has("parcels") or int(d.get("parcel", 0)) != PARCEL:
+		return false
+	var sz = d.get("size", [])
+	if sz is Array and sz.size() == 2 and (int(sz[0]) != size.x or int(sz[1]) != size.y):
 		return false
 	owned_parcels.clear()
 	objects.clear()
@@ -166,10 +182,15 @@ func load_dict(d: Dictionary) -> bool:
 	occupied.clear()
 	states.clear()
 	blocked.clear()
+	styles.clear()
 	for p in d.get("parcels", []):
 		var pc := Vector2i(int(p[0]), int(p[1]))
 		if parcel_in_bounds(pc):
 			owned_parcels[pc] = true
+	for f in d.get("floors", []):
+		var fc := Vector2i(int(f[0]), int(f[1]))
+		if owned_parcels.has(fc):
+			styles[fc] = "floor"
 	start_parcel_count = clampi(int(d.get("start", 1)), 0, owned_parcels.size())
 	for o in d.get("objects", []):
 		var origin := Vector2i(int(o[0]), int(o[1]))

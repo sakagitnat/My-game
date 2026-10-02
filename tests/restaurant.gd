@@ -21,7 +21,7 @@ func run() -> void:
 	loc.set_language("en")
 	gs.restaurant_active = false
 	gs.ask_names = false
-	gs.layout = Island.sandbox()
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora6.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
@@ -221,8 +221,8 @@ func run() -> void:
 	r.counter = ["omelet"]
 	world._sync_view()
 	check(world.view.customers.size() == 1 and world.view.customers[0].has("seat_cell") and world.view.customers[0].patience_frac > 0.9 and world.view.counter == ["omelet"], "ViewState carries customers and the counter")
-	world.set_zone(Catalog.ISLAND)
-	check(hud.rest_panel.visible, "the restaurant panel stays visible on the one island")
+	world.set_zone("farm")
+	check(not hud.rest_panel.visible, "the panel hides on the farm")
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	if failures == 0:

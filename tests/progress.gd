@@ -20,7 +20,7 @@ func run() -> void:
 	loc.set_language("en")
 	gs.restaurant_active = false
 	gs.ask_names = false
-	gs.layout = Island.sandbox()
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora3.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
@@ -118,7 +118,7 @@ func run() -> void:
 	var world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(world)
 	await process_frame
-	world.set_zone(Catalog.ISLAND)
+	world.set_zone("farm")
 	world.start_placement("farm_coop_01")
 	check(world.placement_status() == "level" and world.hud.placement_ok.disabled, "locked item shows as unplaceable in placement mode")
 	world.cancel_placement()
@@ -161,7 +161,7 @@ func run() -> void:
 	gs.level = 7
 	world._on_reset()
 	check(gs.coins == 500 and gs.level == 1 and gs.xp == 0 and gs.grid("farm").objects.is_empty(), "reset restores a fresh game")
-	check(world.zone == Catalog.ISLAND, "reset keeps the single island view")
+	check(world.zone == "restaurant", "reset returns to the restaurant")
 	await process_frame
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))

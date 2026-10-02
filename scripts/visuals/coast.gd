@@ -1,16 +1,19 @@
 extends Node2D
 
-# Shallow water and foam that gently pulse along the island's shore. The shoreline comes from the coast
-# field (Island.coast_segments), so it follows the real outline of the island.
+# Shallow water and foam that gently pulse along the scene's shore. The shoreline comes from the coast
+# field (SceneLayout.coast_segments), so it follows the real outline of the land.
 var time := 0.0
+var zone := "restaurant"
 var _segments: Array = []   # [from_world, to_world, outward_normal_world]
 
-func _ready() -> void:
+func set_zone(z: String) -> void:
+	zone = z
 	_build()
+	queue_redraw()
 
 func _build() -> void:
 	_segments.clear()
-	for seg in GameState.layout.coast_segments():
+	for seg in GameState.layout_for(zone).coast_segments():
 		var a := Iso.cell_to_world_f(seg[0])
 		var b := Iso.cell_to_world_f(seg[1])
 		var n_world := (Iso.cell_to_world_f(seg[0] + seg[2]) - a).normalized()

@@ -1,6 +1,7 @@
 class_name Hud
 extends CanvasLayer
 
+signal zone_toggled
 signal item_picked(id: String)
 signal crop_chosen(crop: String)
 signal move_requested
@@ -12,7 +13,7 @@ signal reset_confirmed
 
 const MODAL_MAX_WIDTH := 640.0
 
-var zone: String = Catalog.ISLAND
+var zone: String = "restaurant"
 var root: Control
 var level_label: Label
 var xp_bar: ProgressBar
@@ -36,6 +37,7 @@ var confirm_text := ""
 var confirm_yes := Callable()
 var context: PanelContainer
 var context_body: VBoxContainer
+var zone_button: Button
 var rest_panel: PanelContainer
 var rest_body: VBoxContainer
 var _rest_sig := ""
@@ -106,6 +108,9 @@ func _build() -> void:
 
 	menu_button = _corner_button(Control.PRESET_TOP_RIGHT, Vector2(120, 60))
 	menu_button.pressed.connect(open_modal.bind("settings"))
+
+	zone_button = _corner_button(Control.PRESET_BOTTOM_LEFT, Vector2(220, 72))
+	zone_button.pressed.connect(func() -> void: zone_toggled.emit())
 
 	var right := HBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)
@@ -233,6 +238,7 @@ func refresh() -> void:
 	menu_button.text = Loc.t("BTN_MENU")
 	shop_button.text = Loc.t("BTN_SHOP")
 	barn_button.text = Loc.t("BTN_BARN") % [GameState.inventory.total(), GameState.inventory.capacity]
+	zone_button.text = Loc.t("GO_FARM") if zone == "restaurant" else Loc.t("GO_RESTAURANT")
 	placement_ok.text = Loc.t("BTN_PLACE")
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
@@ -307,7 +313,7 @@ func _refresh_restaurant(force: bool) -> void:
 	if rest_panel == null:
 		return
 	var r := GameState.restaurant
-	rest_panel.visible = true
+	rest_panel.visible = zone == "restaurant"
 	if not rest_panel.visible:
 		return
 	var sig := "%d|%d|%d|%s" % [r.reputation, r.counter.size(), GameState.level, ",".join(r.counter)]
@@ -547,19 +553,10 @@ func _build_modal() -> void:
 		"names": _build_names()
 
 func _build_shop() -> void:
-	_modal_header(Loc.t("SHOP_TITLE"))
-	var items: Array[String] = []
-	items.append_array(Catalog.placeables_for("restaurant"))
-	items.append_array(Catalog.placeables_for("farm"))
+	_modal_header(Loc.t("SHOP_TITLE") + " - " + Loc.t("ZONE_RESTAURANT" if zone == "restaurant" else "ZONE_FARM"))
+	var items := Catalog.placeables_for(zone)
 	var list := _scroll_area(items.size())
-	var group := ""
 	for id in items:
-		if Catalog.PLACEABLES[id].area != group:
-			group = Catalog.PLACEABLES[id].area
-			var head := Label.new()
-			head.text = Loc.t("ZONE_RESTAURANT" if group == "restaurant" else "ZONE_FARM")
-			head.add_theme_color_override("font_color", UiTheme.GOLD)
-			list.add_child(head)
 		var def: Dictionary = Catalog.PLACEABLES[id]
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)

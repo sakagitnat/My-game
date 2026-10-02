@@ -21,7 +21,7 @@ func run() -> void:
 	var gs = root.get_node("/root/GameState")
 	gs.restaurant_active = false
 	gs.ask_names = false
-	gs.layout = Island.sandbox()
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = true
 	gs.save_path = "user://test_salvora5.json"
 	gs.autosave = false
@@ -43,7 +43,7 @@ func run() -> void:
 	var world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(world)
 	await process_frame
-	world.set_zone(Catalog.ISLAND)
+	world.set_zone("farm")
 	gs.place_object("farm", Vector2i(13, 13), "farm_plot_01")
 	gs.interact("farm", Vector2i(13, 13), "wheat")
 	gs.place_object("farm", Vector2i(15, 15), "farm_coop_01")
@@ -52,7 +52,7 @@ func run() -> void:
 
 	# world.gd keeps the view in step with what the player is doing
 	world._redraw_all()
-	check(world.view.zone == Catalog.ISLAND and world.view.ghost_id == "", "view follows the zone")
+	check(world.view.zone == "farm" and world.view.ghost_id == "", "view follows the zone")
 	world.start_placement("farm_fence_01")
 	world.set_ghost(Vector2i(14, 16))
 	check(world.view.ghost_id == "farm_fence_01" and world.view.ghost_cell == Vector2i(14, 16) and world.view.ghost_status == "ok", "ghost is mirrored into the view")
@@ -76,7 +76,7 @@ func run() -> void:
 	var views := []
 	for i in range(6):
 		var vs := ViewState.new()
-		vs.zone = Catalog.ISLAND
+		vs.zone = "farm" if i % 2 == 0 else "restaurant"
 		match i:
 			0:
 				vs.ghost_id = "farm_plot_01"
@@ -104,7 +104,7 @@ func run() -> void:
 		await process_frame
 	check(snapshot(gs) == before, "rendering never changes game state")
 	world.renderer.view = world.view
-	world.renderer.set_zone(Catalog.ISLAND)
+	world.renderer.set_zone("farm")
 	await process_frame
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
