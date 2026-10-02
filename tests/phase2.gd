@@ -112,6 +112,27 @@ func run() -> void:
 	gs.reset()
 	check(gs.load_game() and gs.coins == 77 and gs.progress("farm", Vector2i(4, 4)) == -1.0, "old save loads")
 
+	# Never soft-lock: with no coins, nothing to sell and nothing growing, the player can still start over
+	gs.reset()
+	gs.autosave = false
+	gs.coins = 0
+	check(gs.is_broke(), "broke when nothing can earn money")
+	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.coins == 0, "first plot is free when broke")
+	check(gs.interact("farm", plot, "tomato") == "no_coins", "only wheat is free")
+	check(gs.interact("farm", plot, "wheat") == "planted" and gs.coins == 0, "free wheat when broke")
+	check(not gs.is_broke(), "growing crop means not broke")
+	gs.coins = 0
+	check(gs.place_object("farm", plot2, "farm_plot_01") == "no_coins", "second plot is not free")
+	gs.clock_override = 99999.0
+	gs.interact("farm", plot, "wheat")
+	check(gs.inventory.count("wheat") == 1 and not gs.is_broke(), "harvest gives sellable item")
+	gs.coins = 3
+	check(not gs.is_broke(), "enough coins for a seed is not broke")
+	var before_grant: int = gs.coins
+	gs.grant_test_coins()
+	check(gs.coins == before_grant + gs.TEST_GRANT, "test grant adds coins")
+	gs.clock_override = 1000.0
+
 	# Every string the farm uses exists in both languages
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(loc.STRINGS_PATH))
 	var names: Array = []
@@ -148,6 +169,8 @@ func run() -> void:
 	check(gs.inventory.count("wheat") == 1, "tap harvests")
 	world._toggle_barn()
 	check(world.barn_panel.visible and world.barn_rows.get_child_count() >= 2, "barn panel lists items")
+	var last: Node = world.barn_rows.get_child(world.barn_rows.get_child_count() - 1)
+	check(last is Button and last.text.contains("500"), "barn has the test coins button")
 	var coins_before: int = gs.coins
 	world._sell_everything()
 	check(gs.coins == coins_before + 4 and gs.inventory.total() == 0, "barn sells everything")
