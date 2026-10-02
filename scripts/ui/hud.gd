@@ -47,6 +47,7 @@ var name_draft := ["", ""]
 var names_edits: Array[LineEdit] = []
 var names_start: Button
 var _names_sync_t := 0.0
+var _names_busy := false
 
 func _ready() -> void:
 	layer = 10
@@ -542,6 +543,7 @@ func _scroll_area(rows: int = 6) -> VBoxContainer:
 
 func _build_modal() -> void:
 	_clear_modal()
+	modal_panel.visible = true
 	modal_panel.custom_minimum_size = Vector2(clampf(_viewport_size().x - 40.0, 300.0, MODAL_MAX_WIDTH), 0)
 	match modal_kind:
 		"shop": _build_shop()
@@ -652,6 +654,10 @@ func _build_settings() -> void:
 
 # First-run screen: the player and the restaurant get names. It cannot be dismissed without them.
 func _build_names() -> void:
+	if OS.has_feature("web"):
+		modal_panel.visible = false
+		_sync_web_names()
+		return
 	var title := Label.new()
 	title.text = Loc.t("NAME_TITLE")
 	title.add_theme_font_size_override("font_size", 28)
@@ -687,43 +693,57 @@ func _build_names() -> void:
 	lang.pressed.connect(Loc.toggle)
 	modal_body.add_child(lang)
 
-# Godot cannot raise the iPad keyboard from its own text fields, so on the web real <input> elements
-# are laid transparently over the two fields: the tap lands on a native input and the keyboard opens.
-# The text is read back from them; the game fields underneath only draw the frame.
+# Godot cannot raise the iPad keyboard from its own text fields, so on the web the whole naming card is
+# an HTML form floating above the canvas (native inputs, native keyboard). The game polls it for the
+# result; Godot draws no text fields at all on this screen.
 func _sync_web_names() -> void:
-	if not OS.has_feature("web") or modal_kind != "names" or not modal.visible:
+	if not OS.has_feature("web") or modal_kind != "names" or not modal.visible or _names_busy:
 		return
-	var items := []
-	for i in names_edits.size():
-		var e := names_edits[i]
-		if not is_instance_valid(e) or not e.is_inside_tree():
-			return
-		var r := e.get_global_rect()
-		e.placeholder_text = ""
-		items.append({"x": r.position.x, "y": r.position.y, "w": r.size.x, "h": r.size.y, "fs": 22,
-			"ph": Loc.t("NAME_PLAYER_HINT" if i == 0 else "NAME_RESTAURANT_HINT"), "val": name_draft[i]})
+	_names_busy = true
+	var d := {"title": Loc.t("NAME_TITLE"), "l0": Loc.t("NAME_PLAYER"), "l1": Loc.t("NAME_RESTAURANT"),
+		"p0": Loc.t("NAME_PLAYER_HINT"), "p1": Loc.t("NAME_RESTAURANT_HINT"), "start": Loc.t("BTN_START"),
+		"lang": Loc.t("LANG_BUTTON"), "max": GameState.NAME_MAX, "gold": UiTheme.GOLD.to_html(false)}
 	var js := """(function(d){
-var c=document.querySelector('canvas'),r=c.getBoundingClientRect(),sx=r.width/d.vw,sy=r.height/d.vh,out=[];
-if(!document.getElementById('salvora_name_css')){var st=document.createElement('style');st.id='salvora_name_css';
-st.textContent='.salvora-in::placeholder{color:#7c8590}';document.head.appendChild(st);}
-d.items.forEach(function(it,i){var id='salvora_name_'+i,el=document.getElementById(id);
-if(!el){el=document.createElement('input');el.id=id;el.className='salvora-in';el.type='text';el.maxLength=%d;
-el.autocomplete='off';el.autocapitalize='off';el.spellcheck=false;el.value=it.val;
-el.style.cssText='position:fixed;box-sizing:border-box;background:transparent;border:0;outline:0;color:#f2efe6;padding:0 8px;z-index:10;font-family:sans-serif;';
-el.addEventListener('keydown',function(e){if(e.key==='Enter')el.blur();});document.body.appendChild(el);}
-el.placeholder=it.ph;el.style.left=(r.left+it.x*sx)+'px';el.style.top=(r.top+it.y*sy)+'px';
-el.style.width=(it.w*sx)+'px';el.style.height=(it.h*sy)+'px';el.style.fontSize=Math.max(16,it.fs*sy)+'px';out.push(el.value);});
-return JSON.stringify(out);})(%s)""" % [GameState.NAME_MAX, JSON.stringify({"vw": get_viewport().get_visible_rect().size.x, "vh": get_viewport().get_visible_rect().size.y, "items": items})]
+var f=document.getElementById('salvora_names');
+if(!f){f=document.createElement('div');f.id='salvora_names';f.className='salvora-in';
+f.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:10;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:5vh 12px;box-sizing:border-box;font-family:sans-serif;';
+f.innerHTML='<div style="width:min(520px,100%%);box-sizing:border-box;background:#1b2428;border:3px solid #c58a50;border-radius:14px;padding:18px;color:#f4ece0;display:flex;flex-direction:column;gap:8px;">'
++'<div id="sn_title" style="font-size:26px;"></div><div id="sn_l0" style="font-size:18px;"></div>'
++'<input id="sn_i0" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #4a5560;border-radius:8px;background:#11171b;color:#f4ece0;outline:0;">'
++'<div id="sn_l1" style="font-size:18px;"></div>'
++'<input id="sn_i1" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #4a5560;border-radius:8px;background:#11171b;color:#f4ece0;outline:0;">'
++'<button id="sn_go" style="font-size:20px;height:58px;margin-top:6px;border:1px solid #6f7d8a;border-radius:10px;background:#2c3b41;color:#f4ece0;"></button>'
++'<button id="sn_lang" style="font-size:18px;height:50px;border:1px solid #6f7d8a;border-radius:10px;background:#2c3b41;color:#f4ece0;"></button></div>';
+document.body.appendChild(f);
+var i0=document.getElementById('sn_i0'),i1=document.getElementById('sn_i1'),go=document.getElementById('sn_go');
+window.__sn={done:0,lang:0};
+function chk(){var ok=i0.value.trim()!==''&&i1.value.trim()!=='';go.disabled=!ok;go.style.opacity=ok?1:0.45;}
+i0.addEventListener('input',chk);i1.addEventListener('input',chk);
+i0.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();i1.focus();}});
+i1.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();i1.blur();}});
+go.addEventListener('click',function(){if(!go.disabled)window.__sn.done=1;});
+document.getElementById('sn_lang').addEventListener('click',function(){window.__sn.lang=1;});
+chk();}
+document.getElementById('sn_title').textContent=d.title;document.getElementById('sn_title').style.color='#'+d.gold;
+document.getElementById('sn_l0').textContent=d.l0;document.getElementById('sn_l1').textContent=d.l1;
+document.getElementById('sn_i0').placeholder=d.p0;document.getElementById('sn_i1').placeholder=d.p1;
+document.getElementById('sn_i0').maxLength=d.max;document.getElementById('sn_i1').maxLength=d.max;
+document.getElementById('sn_go').textContent=d.start;document.getElementById('sn_lang').textContent=d.lang;
+var s=window.__sn,r={a:document.getElementById('sn_i0').value,b:document.getElementById('sn_i1').value,done:s.done,lang:s.lang};
+s.lang=0;s.done=0;return JSON.stringify(r);})(%s)""" % JSON.stringify(d)
 	var res = JavaScriptBridge.eval(js, true)
-	var vals = JSON.parse_string(str(res)) if res != null else null
-	if vals is Array and vals.size() == 2:
-		name_draft = [str(vals[0]).left(GameState.NAME_MAX), str(vals[1]).left(GameState.NAME_MAX)]
-		if names_start != null and is_instance_valid(names_start):
-			names_start.disabled = not _names_ready()
+	var r = JSON.parse_string(str(res)) if res != null else null
+	if r is Dictionary:
+		name_draft = [str(r.get("a", "")).left(GameState.NAME_MAX), str(r.get("b", "")).left(GameState.NAME_MAX)]
+		if int(r.get("lang", 0)) == 1:
+			Loc.toggle()
+		elif int(r.get("done", 0)) == 1:
+			_on_names_done()
+	_names_busy = false
 
 func _remove_web_names() -> void:
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("document.querySelectorAll('.salvora-in').forEach(function(e){e.remove();})")
+		JavaScriptBridge.eval("(function(){var f=document.getElementById('salvora_names');if(f)f.remove();})()")
 
 func _names_ready() -> bool:
 	return name_draft[0].strip_edges() != "" and name_draft[1].strip_edges() != ""
