@@ -14,6 +14,8 @@ const PLACE_XP := 2
 const TEST_GRANT := 500
 const BARN_STEP := 30
 const BARN_BASE_COST := 100
+const OBSTACLE_SEED := 20261002
+const CLEAR_AREA := Rect2i(13, 13, 4, 4)
 
 var coins: int = START_COINS
 var xp: int = 0
@@ -24,6 +26,7 @@ var inventory: Inventory = Inventory.new(60)
 var save_path: String = SAVE_PATH
 var autosave: bool = true
 var clock_override: float = -1.0
+var spawn_obstacles: bool = true
 
 func _ready() -> void:
 	reset()
@@ -36,7 +39,31 @@ func reset() -> void:
 	grids = {}
 	for z in Catalog.ZONES:
 		grids[z] = WorldGrid.new(GRID_SIZE, [START_PARCEL])
+		if spawn_obstacles:
+			scatter_obstacles(z)
 	inventory = Inventory.new(60)
+
+# Distance in cells from the island edge (0 on the outermost ring).
+static func edge_distance(c: Vector2i) -> int:
+	return mini(mini(c.x, c.y), mini(GRID_SIZE.x - 1 - c.x, GRID_SIZE.y - 1 - c.y))
+
+# Fills free cells with trees, rocks and bushes: sparse in the open, dense in forest clumps,
+# and always leaving the middle of the starting block and the beach clear.
+func scatter_obstacles(zone: String) -> void:
+	var g := grid(zone)
+	var seed_v := OBSTACLE_SEED + (7919 if zone == "farm" else 0)
+	for y in range(g.size.y):
+		for x in range(g.size.x):
+			var c := Vector2i(x, y)
+			if g.occupied.has(c) or CLEAR_AREA.has_point(c) or edge_distance(c) < 3:
+				continue
+			var forest := smoothstep(0.5, 0.78, Noise2D.value(x * 0.2, y * 0.2, seed_v))
+			var wild := 0.0 if g.is_owned(c) else 0.04
+			var chance := 0.02 + wild + 0.30 * forest
+			if Noise2D.hash2(x, y, seed_v + 1) >= chance:
+				continue
+			var r := Noise2D.hash2(x, y, seed_v + 2)
+			g.blocked[c] = "tree" if r < 0.55 else ("rock" if r < 0.82 else "bush")
 
 # Cell in the middle of the starting parcel (used to centre the camera).
 func start_cell() -> Vector2i:
@@ -113,6 +140,8 @@ func check_place(zone: String, c: Vector2i, id: String) -> String:
 		return "invalid"
 	if not g.footprint_owned(origin, sz):
 		return "locked"
+	if g.footprint_blocked(origin, sz):
+		return "blocked"
 	if not g.footprint_free(origin, sz):
 		return "occupied"
 	if coins < place_cost(id):
@@ -147,6 +176,8 @@ func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
 		return "invalid"
 	if not g.footprint_owned(new_origin, sz):
 		return "locked"
+	if g.footprint_blocked(new_origin, sz):
+		return "blocked"
 	for cell in g.cells_of(new_origin, sz):
 		if g.occupied.has(cell) and g.occupied[cell] != origin:
 			return "occupied"
@@ -160,6 +191,25 @@ func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String
 	var g := grid(zone)
 	var origin := g.origin_at(from_cell)
 	g.move(origin, footprint_origin(to_cell, g.footprints[origin]))
+	_commit()
+	return "ok"
+
+# Pays to remove the tree, rock or bush on owned cell `c`. Wood and stone go to the barn when there is room.
+func clear_obstacle(zone: String, c: Vector2i) -> String:
+	var g := grid(zone)
+	var kind: String = g.blocked.get(c, "")
+	if kind == "":
+		return "empty"
+	if not g.is_owned(c):
+		return "locked"
+	var def: Dictionary = Catalog.OBSTACLES[kind]
+	if coins < int(def.cost):
+		return "no_coins"
+	coins -= int(def.cost)
+	g.blocked.erase(c)
+	if def.item != "":
+		inventory.add(def.item, 1)
+	add_xp(int(def.xp))
 	_commit()
 	return "ok"
 
@@ -321,7 +371,9 @@ func load_game() -> bool:
 	if gd is Dictionary:
 		for z in Catalog.ZONES:
 			if gd.has(z) and gd[z] is Dictionary:
-				grids[z].load_dict(gd[z])  # old-format saves keep a fresh grid
+				var loaded: bool = grids[z].load_dict(gd[z])  # old-format saves keep a fresh grid
+				if loaded and not gd[z].has("obstacles") and spawn_obstacles:
+					scatter_obstacles(z)
 	var inv = d.get("inventory", {})
 	if inv is Dictionary:
 		inventory.load_dict(inv)

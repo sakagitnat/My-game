@@ -14,6 +14,7 @@ var objects: Dictionary = {}
 var footprints: Dictionary = {}
 var occupied: Dictionary = {}
 var states: Dictionary = {}
+var blocked: Dictionary = {}
 
 func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = []) -> void:
 	size = grid_size
@@ -75,8 +76,15 @@ func footprint_free(origin: Vector2i, sz: Vector2i) -> bool:
 			return false
 	return true
 
+# True if a tree, rock or bush stands on any cell of the footprint.
+func footprint_blocked(origin: Vector2i, sz: Vector2i) -> bool:
+	for c in cells_of(origin, sz):
+		if blocked.has(c):
+			return true
+	return false
+
 func can_place(origin: Vector2i, sz: Vector2i) -> bool:
-	return footprint_in_bounds(origin, sz) and footprint_owned(origin, sz) and footprint_free(origin, sz)
+	return footprint_in_bounds(origin, sz) and footprint_owned(origin, sz) and footprint_free(origin, sz) and not footprint_blocked(origin, sz)
 
 func place(origin: Vector2i, id: String, sz: Vector2i) -> bool:
 	if not can_place(origin, sz):
@@ -93,7 +101,7 @@ func move(origin: Vector2i, new_origin: Vector2i) -> bool:
 		return false
 	var sz: Vector2i = footprints[origin]
 	for c in cells_of(new_origin, sz):
-		if not in_bounds(c) or not is_owned(c):
+		if not in_bounds(c) or not is_owned(c) or blocked.has(c):
 			return false
 		if occupied.has(c) and occupied[c] != origin:
 			return false
@@ -138,8 +146,11 @@ func to_dict() -> Dictionary:
 	var st: Array = []
 	for o in states:
 		st.append([o.x, o.y, states[o]])
+	var obs: Array = []
+	for c in blocked:
+		obs.append([c.x, c.y, blocked[c]])
 	return {"size": [size.x, size.y], "parcel": PARCEL, "start": start_parcel_count,
-		"parcels": parcels, "objects": obj, "states": st}
+		"parcels": parcels, "objects": obj, "states": st, "obstacles": obs}
 
 # Returns false (leaving the grid untouched) for saves from before parcels existed.
 func load_dict(d: Dictionary) -> bool:
@@ -150,6 +161,7 @@ func load_dict(d: Dictionary) -> bool:
 	footprints.clear()
 	occupied.clear()
 	states.clear()
+	blocked.clear()
 	for p in d.get("parcels", []):
 		var pc := Vector2i(int(p[0]), int(p[1]))
 		if parcel_in_bounds(pc):
@@ -162,4 +174,8 @@ func load_dict(d: Dictionary) -> bool:
 		var origin := Vector2i(int(s[0]), int(s[1]))
 		if objects.has(origin) and s[2] is Dictionary:
 			states[origin] = s[2]
+	for o in d.get("obstacles", []):
+		var cell := Vector2i(int(o[0]), int(o[1]))
+		if in_bounds(cell) and not occupied.has(cell) and Catalog.OBSTACLES.has(str(o[2])):
+			blocked[cell] = str(o[2])
 	return true

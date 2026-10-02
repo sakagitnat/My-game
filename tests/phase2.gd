@@ -13,6 +13,7 @@ func _initialize() -> void:
 func run() -> void:
 	var gs = root.get_node("/root/GameState")
 	var loc = root.get_node("/root/Loc")
+	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora2.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	gs.reset()
