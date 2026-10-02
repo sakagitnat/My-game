@@ -108,8 +108,7 @@ func run() -> void:
 	var world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(world)
 	await process_frame
-	check(is_instance_valid(world.signs) and world.signs.layer == "signs" and world.terrain.layer == "ground", "terrain and sign layers exist")
-	check(world.sea.material is ShaderMaterial and (world.sea.material as ShaderMaterial).shader != null, "sea shader is attached")
+	check(world.renderer != null and world.renderer.view == world.view, "world hands its ViewState to the renderer")
 	world.camera.position = Iso.cell_to_world(gs.start_cell())
 	world.camera.zoom = Vector2.ONE
 	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))

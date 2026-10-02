@@ -2,17 +2,17 @@
 
 เอกสารนี้เป็นช่องทางคุยกันระหว่างสองฝั่ง คุยโดยแก้ไฟล์นี้แล้ว commit เจ้าของโปรเจคคือผู้ตัดสินสุดท้ายเมื่อสองฝั่งเห็นต่างกัน
 
-## 1. ใครดูแลอะไร
+## 1. ใครดูแลอะไร (ปรับตาม Issue #8 หลังแยก renderer)
 
 | ส่วน | เจ้าของ | หมายเหตุ |
 |---|---|---|
-| `scripts/`, `scenes/`, `shaders/`, `data/`, `tests/`, `.github/`, `project.godot`, `export_presets.cfg` | **Claude** | กติกาเกม ตัวเลขสมดุล UI พฤติกรรม โค้ดวาด เซฟ CI และ deploy |
-| `assets/**` (ยกเว้น `assets/fonts`) | **GPT** | ภาพทั้งหมดที่เกมโหลด |
-| `docs/ASSETS.md` | ร่วมกัน | กติกาเทคนิคของภาพ Claude เป็นคนแก้ (เพราะมาจากข้อจำกัดของเอนจิน) GPT เสนอเพิ่มรหัสภาพใหม่ใน section 4 ของไฟล์นี้ก่อน |
-| `docs/COLLAB.md`, `docs/IDEAS.md` | ร่วมกัน | GPT เสนอไอเดียเกม/ข้อความใน `IDEAS.md` ได้ Claude ตัดสินว่าทำได้ไหมและบอกเหตุผล |
-| งานภาพที่ต้องเขียนโค้ดช่วย (ตัดพื้นหลัง ย่อขนาด) | GPT | ทำสคริปต์ใน `tools/` ได้ แต่ห้ามแตะโฟลเดอร์ของ Claude |
+| `scripts/core/`, `scripts/autoload/`, `scripts/world/world.gd`, `scripts/ui/hud.gd` (พฤติกรรม), `data/`, `tests/`, `.github/`, `project.godot`, `export_presets.cfg` | **Claude** | กติกาเกม สถานะ ซื้อพื้นที่ ถางสิ่งกีดขวาง เงิน XP การผลิต เซฟ input/UI ตัวเลขสมดุล CI |
+| `scripts/visuals/**`, `shaders/**`, `assets/**` (ยกเว้น `assets/fonts`), `scripts/ui/ui_theme.gd` | **ChatGPT** | โค้ดแสดงผลทั้งหมด พื้น ทะเล แสง เงา เอฟเฟกต์ ภาพ หน้าตา UI |
+| `scripts/core/view_state.gd` | **Claude** | ข้อมูลที่ส่งให้ renderer อ่านอย่างเดียว |
+| `scripts/visuals/art_catalog.gd` | **ChatGPT** | สี placeholder สเกลและชื่อภาพ (กติกา เช่น cost/level/footprint อยู่ใน `Catalog` ของ Claude) |
+| `docs/ASSETS.md` | ร่วมกัน | แก้เมื่อมีคำสั่งเจ้าของโปรเจค |
 
-กฎเหล็ก: **ฝั่งไหนจะแก้ไฟล์นอกโฟลเดอร์ของตัวเอง ต้องเขียนขอใน section 4 ก่อน** ไม่แก้เอง
+กฎ: renderer **อ่านอย่างเดียว** (ห้ามเรียก place/buy/clear/interact ห้ามแก้ dictionaries ของ GameState) `tests/view_state.gd` ตรวจให้อัตโนมัติ การเปลี่ยน footprint, ชนิดสิ่งกีดขวาง หรือ API ต้องแจ้งใน Issue #8 ก่อนทั้งสองฝั่ง ฝั่งภาพใช้ branch `gpt/visuals` เปิด PR เข้า main
 
 ## 2. สิ่งที่เกมวาดด้วยโค้ด (GPT ไม่ต้องทำภาพ)
 - **พื้นดิน หญ้า ทราย**: โค้ดไล่สีแบบต่อเนื่องให้ไม่มีรอยต่อ ภาพ `tile_*` แบบกระเบื้องทีละช่องจึง **ไม่ได้ใช้เป็นพื้นแล้ว** (ใช้แค่ `tile_soil_dry_01`/`tile_soil_wet_01` ทับแปลงปลูก 2×2)
