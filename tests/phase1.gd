@@ -15,6 +15,7 @@ func run() -> void:
 	var loc = root.get_node("/root/Loc")
 	var assets = root.get_node("/root/Assets")
 	gs.restaurant_active = false
+	gs.ask_names = false
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))

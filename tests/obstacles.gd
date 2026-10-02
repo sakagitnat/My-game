@@ -19,6 +19,7 @@ func run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	gs.autosave = false
 	gs.restaurant_active = false
+	gs.ask_names = false
 	gs.spawn_obstacles = true
 	gs.reset()
 	gs.level = 10
