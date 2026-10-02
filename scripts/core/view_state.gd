@@ -10,3 +10,8 @@ var ghost_status: String = ""                   # "ok" | "blocked" | "occupied" 
 var moving_origin: Vector2i = WorldGrid.NONE    # NONE unless an existing object is being moved
 var selected_origin: Vector2i = WorldGrid.NONE  # NONE when no object is selected
 var selected_obstacle: Vector2i = WorldGrid.NONE
+
+# Restaurant (read-only copies refreshed about twice a second; see Restaurant.snapshot_customers):
+# customers: [{id, seat_cell, table, index, dish, patience_frac, served_ready}], counter: [dish ids]
+var customers: Array = []
+var counter: Array = []

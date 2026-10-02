@@ -19,6 +19,7 @@ var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
 var context_timer: float = 0.0
+var view_timer: float = 0.0
 
 var pressing := false
 var dragged := false
@@ -46,6 +47,7 @@ func _ready() -> void:
 	hud.reset_confirmed.connect(_on_reset)
 	GameState.changed.connect(_on_state_changed)
 	GameState.leveled_up.connect(_on_leveled_up)
+	GameState.restaurant.customer_left.connect(func(_id: int) -> void: hud.show_message("MSG_CUSTOMER_LEFT"))
 	Loc.changed.connect(_on_state_changed)
 	set_zone("restaurant")
 
@@ -59,6 +61,8 @@ func _sync_view() -> void:
 	view.moving_origin = moving_origin
 	view.selected_origin = selected_origin
 	view.selected_obstacle = selected_obstacle
+	view.customers = GameState.restaurant.snapshot_customers()
+	view.counter = GameState.restaurant.counter.duplicate()
 
 # Tells the renderer something visible changed.
 func _redraw_all() -> void:
@@ -287,6 +291,12 @@ func _context_info(origin: Vector2i) -> Dictionary:
 			info.crops = crops
 		else:
 			info.status = Loc.t("STATUS_GROWING") % _fmt_time(GameState.seconds_left(zone, origin))
+	elif id == "rest_stove_01":
+		if prog < 0.0:
+			info.status = Loc.t("STATUS_STOVE_IDLE")
+		else:
+			var dish: String = g.states[origin].dish
+			info.status = Loc.t("STATUS_STOVE_BUSY") % [Loc.t(Catalog.RECIPES[dish].name), _fmt_time(GameState.seconds_left(zone, origin))]
 	elif id == "farm_coop_01":
 		if prog < 0.0:
 			info.status = Loc.t("STATUS_COOP_IDLE")
@@ -373,6 +383,10 @@ func _on_sell_requested() -> void:
 # ---------------------------------------------------------------- frame & input
 
 func _process(delta: float) -> void:
+	view_timer += delta
+	if view_timer >= 0.5:
+		view_timer = 0.0
+		_sync_view()
 	if selected_obstacle != NONE and hud.context.visible:
 		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
 	if selected_origin != NONE and hud.context.visible:

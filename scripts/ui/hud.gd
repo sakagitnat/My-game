@@ -38,6 +38,11 @@ var confirm_text := ""
 var confirm_yes := Callable()
 var context: PanelContainer
 var context_body: VBoxContainer
+var rest_panel: PanelContainer
+var rest_body: VBoxContainer
+var _rest_sig := ""
+var _rest_bars: Dictionary = {}
+var _rest_timer := 0.0
 
 func _ready() -> void:
 	layer = 10
@@ -87,6 +92,14 @@ func _build() -> void:
 	xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	xp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	xp_bar.add_child(xp_label)
+
+	rest_panel = PanelContainer.new()
+	rest_panel.position = Vector2(12, 112)
+	rest_panel.visible = false
+	root.add_child(rest_panel)
+	rest_body = VBoxContainer.new()
+	rest_body.add_theme_constant_override("separation", 8)
+	rest_panel.add_child(rest_body)
 
 	menu_button = _corner_button(Control.PRESET_TOP_RIGHT, Vector2(120, 60))
 	menu_button.pressed.connect(open_modal.bind("settings"))
@@ -222,6 +235,7 @@ func refresh() -> void:
 	placement_ok.text = Loc.t("BTN_PLACE")
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
+	_refresh_restaurant(true)
 	if modal.visible:
 		_build_modal()
 
@@ -233,6 +247,10 @@ func show_message(key: String, arg = null) -> void:
 	refresh()
 
 func _process(delta: float) -> void:
+	_rest_timer += delta
+	if _rest_timer >= 0.4:
+		_rest_timer = 0.0
+		_refresh_restaurant(false)
 	if message_time > 0.0:
 		message_time -= delta
 		message_label.modulate.a = clampf(message_time, 0.0, 1.0)
@@ -252,6 +270,119 @@ func float_text(text: String, screen_pos: Vector2, color: Color = Color.WHITE) -
 	tw.tween_property(l, "position:y", l.position.y - 70.0, 1.1)
 	tw.tween_property(l, "modulate:a", 0.0, 1.1).set_delay(0.4)
 	tw.chain().tween_callback(l.queue_free)
+
+# ---------------------------------------------------------------- restaurant panel
+
+func _missing_text(missing: Dictionary) -> String:
+	var parts: Array = []
+	for item in missing:
+		parts.append("%s x%d" % [Loc.t(Catalog.ITEMS[item].name), missing[item]])
+	return ", ".join(parts)
+
+# What a customer's button should do: {"text", "enabled", "action": "serve"|"cook"|""}.
+func _customer_action(c: Dictionary) -> Dictionary:
+	var r := GameState.restaurant
+	if r.counter.has(c.dish):
+		return {"text": Loc.t("BTN_SERVE"), "enabled": true, "action": "serve"}
+	var can := r.can_cook(c.dish)
+	if can == "ok":
+		return {"text": Loc.t("BTN_COOK"), "enabled": true, "action": "cook"}
+	if r.is_cooking(c.dish):
+		return {"text": Loc.t("COOK_COOKING"), "enabled": false, "action": ""}
+	var text := Loc.t("COOK_STOVES_BUSY")
+	match can:
+		"no_ingredients": text = Loc.t("COOK_NEED") % _missing_text(r.missing(c.dish))
+		"counter_full": text = Loc.t("COOK_COUNTER_FULL")
+		"level": text = Loc.t("COOK_LEVEL") % int(Catalog.RECIPES[c.dish].level)
+	return {"text": text, "enabled": false, "action": ""}
+
+func _refresh_restaurant(force: bool) -> void:
+	if rest_panel == null:
+		return
+	var r := GameState.restaurant
+	rest_panel.visible = zone == "restaurant"
+	if not rest_panel.visible:
+		return
+	var sig := "%d|%d|%d|%s" % [r.reputation, r.counter.size(), GameState.level, ",".join(r.counter)]
+	for c in r.customers:
+		sig += "|%d:%s:%s" % [c.id, c.dish, _customer_action(c).text]
+	if not force and sig == _rest_sig:
+		for c in r.customers:
+			if _rest_bars.has(c.id):
+				_rest_bars[c.id].value = 100.0 * clampf(c.patience / c.max_patience, 0.0, 1.0)
+		return
+	_rest_sig = sig
+	_rest_bars.clear()
+	for child in rest_body.get_children():
+		rest_body.remove_child(child)
+		child.queue_free()
+	var head := Label.new()
+	head.text = "%s   %s   %s" % [Loc.t("ZONE_RESTAURANT"), Loc.t("REST_REP") % r.reputation,
+		Loc.t("REST_COUNTER") % [r.counter.size(), int(Catalog.RESTAURANT.counter_slots)]]
+	head.add_theme_font_size_override("font_size", 18)
+	head.add_theme_color_override("font_color", UiTheme.GOLD)
+	rest_body.add_child(head)
+	if not r.has_service():
+		var setup := Label.new()
+		setup.text = Loc.t("REST_NEEDS_SETUP")
+		setup.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		setup.custom_minimum_size = Vector2(300, 0)
+		rest_body.add_child(setup)
+		return
+	if not r.counter.is_empty():
+		var names: Array = []
+		for d in r.counter:
+			names.append(Loc.t(Catalog.RECIPES[d].name))
+		var ready := Label.new()
+		ready.text = ", ".join(names)
+		ready.add_theme_font_size_override("font_size", 16)
+		ready.add_theme_color_override("font_color", UiTheme.GOOD)
+		rest_body.add_child(ready)
+	if r.customers.is_empty():
+		var wait := Label.new()
+		wait.text = Loc.t("REST_WAITING")
+		wait.add_theme_color_override("font_color", UiTheme.MUTED)
+		rest_body.add_child(wait)
+	for c in r.customers:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var info := VBoxContainer.new()
+		info.custom_minimum_size = Vector2(150, 0)
+		var dish := Label.new()
+		dish.text = Loc.t(Catalog.RECIPES[c.dish].name)
+		dish.add_theme_font_size_override("font_size", 18)
+		info.add_child(dish)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(150, 10)
+		bar.show_percentage = false
+		bar.max_value = 100.0
+		bar.value = 100.0 * clampf(c.patience / c.max_patience, 0.0, 1.0)
+		info.add_child(bar)
+		_rest_bars[c.id] = bar
+		row.add_child(info)
+		var act := _customer_action(c)
+		var b := Button.new()
+		b.text = act.text
+		b.disabled = not act.enabled
+		b.custom_minimum_size = Vector2(150, 56)
+		if act.action == "serve":
+			b.pressed.connect(_on_serve.bind(c.id))
+		elif act.action == "cook":
+			b.pressed.connect(_on_cook.bind(c.dish))
+		row.add_child(b)
+		rest_body.add_child(row)
+
+func _on_serve(id: int) -> void:
+	var res := GameState.serve_customer(id)
+	if res.result == "ok":
+		show_message("MSG_SERVED", [res.price + res.tip, res.tip])
+		float_text("+%d" % (res.price + res.tip), Vector2(220, 260), UiTheme.GOLD)
+	elif res.result == "no_dish":
+		show_message("MSG_NO_DISH")
+
+func _on_cook(dish: String) -> void:
+	if GameState.cook_dish(dish) == "ok":
+		show_message("MSG_COOKING", Loc.t(Catalog.RECIPES[dish].name))
 
 # ---------------------------------------------------------------- placement bar
 

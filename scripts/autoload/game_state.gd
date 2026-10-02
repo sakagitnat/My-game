@@ -27,12 +27,19 @@ var save_path: String = SAVE_PATH
 var autosave: bool = true
 var clock_override: float = -1.0
 var spawn_obstacles: bool = true
+var restaurant_active: bool = true
+var restaurant: Restaurant = Restaurant.new(self)
 
 func _ready() -> void:
 	reset()
 	load_game()
 
+func _process(delta: float) -> void:
+	if restaurant_active and restaurant.tick(delta):
+		_commit()
+
 func reset() -> void:
+	restaurant.reset_state()
 	coins = START_COINS
 	xp = 0
 	level = 1
@@ -231,22 +238,27 @@ func now() -> float:
 func _elapsed(state: Dictionary) -> float:
 	return maxf(0.0, now() - float(state.get("t", 0.0)))
 
-# 0..1 while a plot is growing or a coop is producing, 1.0 when ready, -1.0 if idle or not a producer.
+# 0..1 while a plot is growing, a coop is producing or a stove is cooking, 1.0 when ready, -1.0 if idle or not a producer.
 func progress(zone: String, c: Vector2i) -> float:
 	var g := grid(zone)
 	c = g.origin_at(c)
 	var st: Dictionary = g.states.get(c, {})
 	if st.is_empty():
 		return -1.0
-	var id: String = g.objects.get(c, "")
-	var total := 0.0
-	if id == "farm_plot_01" and Catalog.CROPS.has(st.get("crop", "")):
-		total = Catalog.CROPS[st.crop].time
-	elif id == "farm_coop_01":
-		total = Catalog.COOP.time
+	var total := _total_time(g.objects.get(c, ""), st)
 	if total <= 0.0:
 		return -1.0
 	return clampf(_elapsed(st) / total, 0.0, 1.0)
+
+# Seconds a producer (plot, coop or stove) needs for the job described by `st`, or 0 if it is not a producer.
+func _total_time(id: String, st: Dictionary) -> float:
+	if id == "farm_plot_01" and Catalog.CROPS.has(st.get("crop", "")):
+		return Catalog.CROPS[st.crop].time
+	if id == "farm_coop_01":
+		return Catalog.COOP.time
+	if id == "rest_stove_01" and Catalog.RECIPES.has(st.get("dish", "")):
+		return Catalog.RECIPES[st.dish].time
+	return 0.0
 
 func seconds_left(zone: String, c: Vector2i) -> int:
 	var p := progress(zone, c)
@@ -254,9 +266,7 @@ func seconds_left(zone: String, c: Vector2i) -> int:
 		return 0
 	var o := grid(zone).origin_at(c)
 	var st: Dictionary = grid(zone).states[o]
-	var id: String = grid(zone).objects[o]
-	var total: float = Catalog.CROPS[st.crop].time if id == "farm_plot_01" else Catalog.COOP.time
-	return ceili(total - _elapsed(st))
+	return ceili(_total_time(grid(zone).objects[o], st) - _elapsed(st))
 
 # One tap on a plot or coop. `seed_id` is the crop to plant if the plot is empty.
 # Returns "planted", "harvested", "fed", "collected", "growing", "busy", "no_coins", "no_feed", "full" or "invalid".
@@ -314,6 +324,20 @@ func _interact_coop(zone: String, c: Vector2i) -> String:
 	_commit()
 	return "fed"
 
+# Starts cooking `dish` on a free stove using barn ingredients. See Restaurant.can_cook for result codes.
+func cook_dish(dish: String) -> String:
+	var result := restaurant.cook(dish)
+	if result == "ok":
+		_commit()
+	return result
+
+# Serves the finished dish at the counter to customer `id`. Returns the Restaurant.serve result dictionary.
+func serve_customer(id: int) -> Dictionary:
+	var result := restaurant.serve(id)
+	if result.result == "ok":
+		_commit()
+	return result
+
 func sell(item: String, amount: int) -> int:
 	if not Catalog.ITEMS.has(item):
 		return 0
@@ -357,7 +381,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "grids": g, "inventory": inventory.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "grids": g, "inventory": inventory.to_dict(), "restaurant": restaurant.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -377,4 +401,7 @@ func load_game() -> bool:
 	var inv = d.get("inventory", {})
 	if inv is Dictionary:
 		inventory.load_dict(inv)
+	var rest = d.get("restaurant", {})
+	if rest is Dictionary:
+		restaurant.load_dict(rest)
 	return true
