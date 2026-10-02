@@ -44,6 +44,9 @@ var _rest_sig := ""
 var _rest_bars: Dictionary = {}
 var _rest_timer := 0.0
 var name_draft := ["", ""]
+var names_edits: Array[LineEdit] = []
+var names_start: Button
+var _names_sync_t := 0.0
 
 func _ready() -> void:
 	layer = 10
@@ -252,6 +255,10 @@ func show_message(key: String, arg = null) -> void:
 	refresh()
 
 func _process(delta: float) -> void:
+	_names_sync_t += delta
+	if _names_sync_t >= 0.1:
+		_names_sync_t = 0.0
+		_sync_web_names()
 	_rest_timer += delta
 	if _rest_timer >= 0.4:
 		_rest_timer = 0.0
@@ -488,6 +495,7 @@ func open_modal(kind: String) -> void:
 	_build_modal()
 
 func close_modal() -> void:
+	_remove_web_names()
 	modal.visible = false
 	modal_kind = ""
 
@@ -500,6 +508,8 @@ func ask_confirm(text: String, on_yes: Callable) -> void:
 	_build_modal()
 
 func _clear_modal() -> void:
+	if modal_kind != "names":
+		_remove_web_names()
 	for child in modal_body.get_children():
 		modal_body.remove_child(child)
 		child.queue_free()
@@ -649,6 +659,7 @@ func _build_names() -> void:
 	modal_body.add_child(title)
 	var start := Button.new()
 	var edits: Array[LineEdit] = []
+	names_start = start
 	var keys := [["NAME_PLAYER", "NAME_PLAYER_HINT"], ["NAME_RESTAURANT", "NAME_RESTAURANT_HINT"]]
 	for i in keys.size():
 		var l := Label.new()
@@ -662,18 +673,9 @@ func _build_names() -> void:
 		e.text_changed.connect(func(t: String) -> void:
 			name_draft[i] = t
 			start.disabled = not _names_ready())
-		if OS.has_feature("web"):
-			# Godot cannot raise the iPad keyboard from a text field, so a tap asks the browser instead.
-			e.focus_mode = Control.FOCUS_NONE
-			e.virtual_keyboard_enabled = false
-			e.gui_input.connect(func(ev: InputEvent) -> void:
-				if ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT and not ev.pressed:
-					var typed = JavaScriptBridge.eval("window.prompt(%s, %s)" % [JSON.stringify(Loc.t(keys[i][1])), JSON.stringify(name_draft[i])], true)
-					if typed != null:
-						e.text = str(typed).left(GameState.NAME_MAX)
-						e.text_changed.emit(e.text))
 		modal_body.add_child(e)
 		edits.append(e)
+	names_edits = edits
 	start.text = Loc.t("BTN_START")
 	start.custom_minimum_size = Vector2(0, 64)
 	start.disabled = not _names_ready()
@@ -684,6 +686,44 @@ func _build_names() -> void:
 	lang.custom_minimum_size = Vector2(0, 52)
 	lang.pressed.connect(Loc.toggle)
 	modal_body.add_child(lang)
+
+# Godot cannot raise the iPad keyboard from its own text fields, so on the web real <input> elements
+# are laid transparently over the two fields: the tap lands on a native input and the keyboard opens.
+# The text is read back from them; the game fields underneath only draw the frame.
+func _sync_web_names() -> void:
+	if not OS.has_feature("web") or modal_kind != "names" or not modal.visible:
+		return
+	var items := []
+	for i in names_edits.size():
+		var e := names_edits[i]
+		if not is_instance_valid(e) or not e.is_inside_tree():
+			return
+		var r := e.get_global_rect()
+		e.placeholder_text = ""
+		items.append({"x": r.position.x, "y": r.position.y, "w": r.size.x, "h": r.size.y, "fs": 22,
+			"ph": Loc.t("NAME_PLAYER_HINT" if i == 0 else "NAME_RESTAURANT_HINT"), "val": name_draft[i]})
+	var js := """(function(d){
+var c=document.querySelector('canvas'),r=c.getBoundingClientRect(),sx=r.width/d.vw,sy=r.height/d.vh,out=[];
+if(!document.getElementById('salvora_name_css')){var st=document.createElement('style');st.id='salvora_name_css';
+st.textContent='.salvora-in::placeholder{color:#7c8590}';document.head.appendChild(st);}
+d.items.forEach(function(it,i){var id='salvora_name_'+i,el=document.getElementById(id);
+if(!el){el=document.createElement('input');el.id=id;el.className='salvora-in';el.type='text';el.maxLength=%d;
+el.autocomplete='off';el.autocapitalize='off';el.spellcheck=false;el.value=it.val;
+el.style.cssText='position:fixed;box-sizing:border-box;background:transparent;border:0;outline:0;color:#f2efe6;padding:0 8px;z-index:10;font-family:sans-serif;';
+el.addEventListener('keydown',function(e){if(e.key==='Enter')el.blur();});document.body.appendChild(el);}
+el.placeholder=it.ph;el.style.left=(r.left+it.x*sx)+'px';el.style.top=(r.top+it.y*sy)+'px';
+el.style.width=(it.w*sx)+'px';el.style.height=(it.h*sy)+'px';el.style.fontSize=Math.max(16,it.fs*sy)+'px';out.push(el.value);});
+return JSON.stringify(out);})(%s)""" % [GameState.NAME_MAX, JSON.stringify({"vw": get_viewport().get_visible_rect().size.x, "vh": get_viewport().get_visible_rect().size.y, "items": items})]
+	var res = JavaScriptBridge.eval(js, true)
+	var vals = JSON.parse_string(str(res)) if res != null else null
+	if vals is Array and vals.size() == 2:
+		name_draft = [str(vals[0]).left(GameState.NAME_MAX), str(vals[1]).left(GameState.NAME_MAX)]
+		if names_start != null and is_instance_valid(names_start):
+			names_start.disabled = not _names_ready()
+
+func _remove_web_names() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("document.querySelectorAll('.salvora-in').forEach(function(e){e.remove();})")
 
 func _names_ready() -> bool:
 	return name_draft[0].strip_edges() != "" and name_draft[1].strip_edges() != ""
