@@ -10,6 +10,10 @@ GameState="*res://scripts/autoload/game_state.gd"
 Loc="*res://scripts/autoload/loc.gd"
 Assets="*res://scripts/autoload/assets.gd"
 
+[gui]
+
+theme/custom_font="res://assets/fonts/NotoSansThai_400Regular.ttf"
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
@@ -22,6 +26,10 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.055, 0.075, 0.09, 1)
+
+[internationalization]
+
+locale/include_text_server_data=true
 
 [input_devices]
 pointing/emulate_mouse_from_touch=true

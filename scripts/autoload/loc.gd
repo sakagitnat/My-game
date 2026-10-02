@@ -4,8 +4,7 @@ signal changed
 
 const LANGS: Array[String] = ["en", "th"]
 const STRINGS_PATH := "res://data/strings.json"
-const FONT_LATIN := "res://assets/fonts/noto-sans-thai-latin-400-normal.woff2"
-const FONT_THAI := "res://assets/fonts/noto-sans-thai-thai-400-normal.woff2"
+const FONT_PATH := "res://assets/fonts/NotoSansThai_400Regular.ttf"
 
 func _ready() -> void:
 	_load_strings()
@@ -28,17 +27,12 @@ func _load_strings() -> void:
 		TranslationServer.add_translation(t)
 
 func _apply_font() -> void:
-	var latin := load(FONT_LATIN) as FontFile
-	var thai := load(FONT_THAI) as FontFile
-	if latin == null or thai == null:
-		push_error("UI fonts failed to load")
+	var font := load(FONT_PATH) as FontFile
+	if font == null:
+		push_error("UI font failed to load")
 		return
-	latin.fallbacks = [thai]
-	ThemeDB.fallback_font = latin
-	var theme := Theme.new()
-	theme.default_font = latin
-	theme.default_font_size = 22
-	get_tree().root.theme = theme
+	ThemeDB.fallback_font = font
+	ThemeDB.fallback_font_size = 22
 
 func current() -> String:
 	return TranslationServer.get_locale()

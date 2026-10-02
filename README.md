@@ -15,6 +15,10 @@ godot --headless --path . --script tests/phase1.gd
 godot --headless --path . --script tests/smoke.gd   # ต้นแบบ Tiny Tavern เดิม
 ```
 
+### เล่นบน iPad (เวอร์ชันเว็บ)
+
+workflow `Deploy Salvora web (iPad)` export เกมเป็น HTML5 (ไม่ใช้เธรด รันบน Safari ได้โดยไม่ต้องตั้งค่าเฮดเดอร์พิเศษ) แล้วเผยแพร่ผ่าน GitHub Pages ตั้งค่าครั้งเดียว: Settings → Pages → Source เลือก **GitHub Actions** จากนั้นรัน workflow จากแท็บ Actions (หรือ merge เข้า `main`) แล้วเปิด URL ที่ได้ใน Safari ถ้าต้องการเต็มจอ กด Share → Add to Home Screen ไฟล์ wasm ราว 37 MB (ราว 9 MB เมื่อบีบอัด) เกินขีดจำกัดไฟล์ละ 25 MiB ของ Cloudflare จึงใช้ Pages แทน ไฟล์ `web/` เดิมของ Tiny Tavern ยังอยู่บน Cloudflare ตามเดิม
+
 ไฟล์สำคัญ: `scripts/core/` (ตรรกะล้วน ทดสอบได้), `scripts/autoload/` (GameState, Loc, Assets), `scripts/world/world.gd` (ฉากและ UI), `data/strings.json` (ข้อความสองภาษา เพิ่มคีย์ใหม่ต้องใส่ทั้ง en และ th)
 
 ---

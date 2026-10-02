@@ -86,9 +86,15 @@ func run() -> void:
 	check(loc.t("ZONE_FARM") == "ฟาร์ม", "Thai translation active")
 	loc.set_language("en")
 	check(loc.t("ZONE_FARM") == "Farm", "English translation active")
-	check(root.theme != null and root.theme.default_font != null, "UI font applied")
-	var fonts_ok: bool = ThemeDB.fallback_font.has_char("ก".unicode_at(0)) or ThemeDB.fallback_font.fallbacks.size() > 0
-	check(fonts_ok, "Thai glyph fallback configured")
+	# Controls under a CanvasLayer must resolve to the bundled font (web has no system fonts).
+	var probe_layer := CanvasLayer.new()
+	var probe := Label.new()
+	probe_layer.add_child(probe)
+	root.add_child(probe_layer)
+	var font: Font = probe.get_theme_default_font()
+	check(font.get_font_name() == "Noto Sans Thai", "UI font is the bundled Noto Sans Thai")
+	check(font.has_char(0x0E01) and font.has_char(0x0E48) and font.has_char(65), "UI font covers Thai and Latin")
+	probe_layer.queue_free()
 
 	# Assets: missing art falls back to null (placeholder), no crash
 	check(assets.get_tex("definitely_not_a_real_asset") == null, "missing asset returns null")

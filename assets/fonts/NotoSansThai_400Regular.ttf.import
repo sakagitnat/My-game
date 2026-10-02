@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bg2xpscu8njaa"
-path="res://.godot/imported/noto-sans-thai-thai-400-normal.woff2-8b5c39f23a721b179f974d6150c7b334.fontdata"
+uid="uid://bjs6y3bslw36o"
+path="res://.godot/imported/NotoSansThai_400Regular.ttf-ee82ce445998c0515db842074d8767a3.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/noto-sans-thai-thai-400-normal.woff2"
-dest_files=["res://.godot/imported/noto-sans-thai-thai-400-normal.woff2-8b5c39f23a721b179f974d6150c7b334.fontdata"]
+source_file="res://assets/fonts/NotoSansThai_400Regular.ttf"
+dest_files=["res://.godot/imported/NotoSansThai_400Regular.ttf-ee82ce445998c0515db842074d8767a3.fontdata"]
 
 [params]
 
