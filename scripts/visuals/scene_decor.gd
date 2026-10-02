@@ -158,14 +158,14 @@ func _draw_wall_piece(a: Vector2, b: Vector2, kind: String, side: bool) -> void:
 		draw_line(a, a + Vector2(0, -h), TRIM, 3.0)
 		draw_line(b, b + Vector2(0, -h), TRIM, 3.0)
 
-# Door mat on the cell the door opens onto (south of a north-edge door, east of a west-edge one).
+# Door mat laid across the doorway, half on each side of the wall.
 func _draw_mat(x: int, y: int, side: bool) -> void:
 	var o := Vector2(x - 0.5, y - 0.5)
 	var pts := PackedVector2Array()
 	if side:
-		pts = PackedVector2Array([_pt(o.x, o.y + 0.15), _pt(o.x + 0.9, o.y + 0.15), _pt(o.x + 0.9, o.y + 0.85), _pt(o.x, o.y + 0.85)])
+		pts = PackedVector2Array([_pt(o.x - 0.45, o.y + 0.15), _pt(o.x + 0.45, o.y + 0.15), _pt(o.x + 0.45, o.y + 0.85), _pt(o.x - 0.45, o.y + 0.85)])
 	else:
-		pts = PackedVector2Array([_pt(o.x + 0.15, o.y), _pt(o.x + 0.85, o.y), _pt(o.x + 0.85, o.y + 0.9), _pt(o.x + 0.15, o.y + 0.9)])
+		pts = PackedVector2Array([_pt(o.x + 0.15, o.y - 0.45), _pt(o.x + 0.85, o.y - 0.45), _pt(o.x + 0.85, o.y + 0.45), _pt(o.x + 0.15, o.y + 0.45)])
 	draw_colored_polygon(pts, Color("b5483c"))
 	pts.append(pts[0])
 	draw_polyline(pts, Color("7c2d26"), 2.0)

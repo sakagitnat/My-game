@@ -94,9 +94,9 @@ func run() -> void:
 	ed.begin_stroke()
 	check(ed.apply_at(_world_at(Vector2i(8, 22))), "plant a tree on grass")
 	check(not ed.apply_at(_world_at(Vector2i(8, 22))), "not twice on the same cell")
-	check(not ed.apply_at(_world_at(Vector2i(24, 2))), "not in the water")
-	check(not ed.apply_at(_world_at(Vector2i(24, 26))), "not on the road")
-	check(not ed.apply_at(_world_at(Vector2i(24, 18))), "not on the shop floor")
+	check(not ed.apply_at(_world_at(Vector2i(36, 50))), "not in the water")
+	check(not ed.apply_at(_world_at(Vector2i(36, 2))), "not on the road")
+	check(not ed.apply_at(_world_at(Vector2i(18, 12))), "not on the shop floor")
 	ed.end_stroke()
 	check(gs.grid("restaurant").blocked.get(Vector2i(8, 22), "") == "tree", "the tree appears in the scene")
 	ed.tool = "ground"
@@ -113,14 +113,14 @@ func run() -> void:
 	ed.tool = "prop"
 	ed.prop_id = "rest_table_small_01"
 	ed.begin_stroke()
-	check(ed.apply_at(_world_at(Vector2i(22, 18))), "put a table in the shop")
-	check(not ed.apply_at(_world_at(Vector2i(22, 18))), "not on top of another")
-	check(not ed.apply_at(_world_at(Vector2i(24, 26))), "not on the road")
+	check(ed.apply_at(_world_at(Vector2i(16, 12))), "put a table in the shop")
+	check(not ed.apply_at(_world_at(Vector2i(16, 12))), "not on top of another")
+	check(not ed.apply_at(_world_at(Vector2i(36, 2))), "not on the road")
 	ed.end_stroke()
 	check(gs.grid("restaurant").objects.size() == 1, "the table is an object of the scene")
 	ed.prop_id = "farm_plot_01"
 	ed.begin_stroke()
-	check(not ed.apply_at(_world_at(Vector2i(22, 14))), "a farm item does not belong in the restaurant")
+	check(not ed.apply_at(_world_at(Vector2i(14, 10))), "a farm item does not belong in the restaurant")
 	ed.end_stroke()
 
 	# Walls
@@ -139,14 +139,14 @@ func run() -> void:
 	check(lay.wall_at(Vector2i(30, 30), "n") == "", "the wall is gone")
 	ed.erase_walls = false
 	ed.begin_stroke()
-	check(ed.apply_at(_world_at(Vector2i(23, 19))), "erase items removes the table")
+	check(ed.apply_at(_world_at(Vector2i(17, 13))), "erase items removes the table")
 	ed.end_stroke()
 	check(gs.grid("restaurant").objects.is_empty(), "the table is gone from the scene")
 
 	# Land blocks
 	ed.tool = "land"
 	ed.land_label = "S"
-	var block := Vector2i(1, 4)
+	var block := Vector2i(8, 3)
 	ed.begin_stroke()
 	check(ed.apply_at(_world_at(block * 6 + Vector2i(3, 3))), "mark a block as owned from the start")
 	ed.end_stroke()
@@ -158,23 +158,23 @@ func run() -> void:
 	check(lay.starts.size() == 4 and not gs.grid("restaurant").owned_parcels.has(block), "and locked again")
 
 	# Size
-	check(lay.cells == Vector2i(48, 36), "48x36 before resizing")
-	check(ed.resize_by(Vector2i(1, 0)) and lay.cells == Vector2i(54, 36) and lay.parcels[0].length() == 9, "one block wider")
-	check(lay.tile_at(Vector2i(24, 2)) == SceneLayout.Tile.WATER and lay.tile_at(Vector2i(50, 20)) == SceneLayout.Tile.GRASS, "old ground kept, new ground is grass")
-	check(gs.grid("restaurant").size == Vector2i(54, 36), "the scene grid follows")
-	check(ed.resize_by(Vector2i(-2, 0)) and lay.cells == Vector2i(42, 36), "two blocks narrower")
-	check(lay.wall_at(Vector2i(42, 20), "w") == "" or lay.edge_in_bounds(Vector2i(42, 20), "w"), "walls beyond the new edge are dropped")
+	check(lay.cells == Vector2i(72, 54), "72x54 before resizing")
+	check(ed.resize_by(Vector2i(1, 0)) and lay.cells == Vector2i(78, 54) and lay.parcels[0].length() == 13, "one block wider")
+	check(lay.tile_at(Vector2i(36, 50)) == SceneLayout.Tile.WATER and lay.tile_at(Vector2i(75, 20)) == SceneLayout.Tile.GRASS, "old ground kept, new ground is grass")
+	check(gs.grid("restaurant").size == Vector2i(78, 54), "the scene grid follows")
+	check(ed.resize_by(Vector2i(-2, 0)) and lay.cells == Vector2i(66, 54), "two blocks narrower")
+	check(lay.wall_at(Vector2i(72, 10), "w") == "", "walls beyond the new edge are dropped")
 	var steps := 0
 	while ed.resize_by(Vector2i(0, 1)):
 		steps += 1
-	check(steps == 10 and not ed.resize_by(Vector2i(0, 1)), "the map stops growing at 16 blocks")
+	check(steps == 7 and not ed.resize_by(Vector2i(0, 1)), "the map stops growing at 16 blocks")
 	while ed.resize_by(Vector2i(-1, 0)):
 		pass
 	check(lay.cells.x == 18 and not ed.resize_by(Vector2i(-1, 0)), "and stops shrinking at 3 blocks")
 	ed.undo()
-	for i in range(30):
+	for i in range(40):
 		ed.undo()
-	check(lay.cells == Vector2i(48, 36), "undo walks all the way back")
+	check(lay.cells == Vector2i(72, 54), "undo walks all the way back")
 
 	# Text out and in
 	ed.tool = "ground"
@@ -184,7 +184,7 @@ func run() -> void:
 	ed.end_stroke()
 	var text: String = ed.export_text()
 	var parsed_size: Array = MapStore.parse(text).get("size", [])
-	check(parsed_size.size() == 2 and int(parsed_size[0]) == 48 and int(parsed_size[1]) == 36, "the map exports as JSON text")
+	check(parsed_size.size() == 2 and int(parsed_size[0]) == 72 and int(parsed_size[1]) == 54, "the map exports as JSON text")
 	ed.undo()
 	check(lay.tile_at(Vector2i(3, 30)) == SceneLayout.Tile.GRASS, "undone")
 	check(ed.import_text(text) == "ok" and lay.tile_at(Vector2i(3, 30)) == SceneLayout.Tile.DIRT, "pasting the text brings the map back")
