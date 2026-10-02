@@ -33,6 +33,7 @@ jobs:
           godot --headless --path . --editor --quit
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/phase1.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/phase2.gd
+          XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/progress.gd
       - name: Export web build
         run: |
           mkdir -p build/web

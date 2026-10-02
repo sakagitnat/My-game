@@ -1,6 +1,7 @@
 extends Node
 
 signal changed
+signal leveled_up(new_level: int)
 
 const SAVE_PATH := "user://salvora.json"
 const START_COINS := 500
@@ -8,9 +9,15 @@ const GRID_SIZE := Vector2i(30, 30)
 const START_PARCEL := Vector2i(2, 2)
 const LAND_BASE_COST := 150
 const LAND_STEP_COST := 100
+const LAND_XP := 5
+const PLACE_XP := 2
 const TEST_GRANT := 500
+const BARN_STEP := 30
+const BARN_BASE_COST := 100
 
 var coins: int = START_COINS
+var xp: int = 0
+var level: int = 1
 var language: String = ""
 var grids: Dictionary = {}
 var inventory: Inventory = Inventory.new(60)
@@ -24,6 +31,8 @@ func _ready() -> void:
 
 func reset() -> void:
 	coins = START_COINS
+	xp = 0
+	level = 1
 	grids = {}
 	for z in Catalog.ZONES:
 		grids[z] = WorldGrid.new(GRID_SIZE, [START_PARCEL])
@@ -32,6 +41,21 @@ func reset() -> void:
 # Cell in the middle of the starting parcel (used to centre the camera).
 func start_cell() -> Vector2i:
 	return START_PARCEL * WorldGrid.PARCEL + Vector2i.ONE * (WorldGrid.PARCEL / 2)
+
+func xp_for_next() -> int:
+	return 30 + 20 * (level - 1)
+
+func level_up_reward(lv: int) -> int:
+	return 20 * lv
+
+# Callers must _commit() afterwards.
+func add_xp(amount: int) -> void:
+	xp += maxi(0, amount)
+	while xp >= xp_for_next():
+		xp -= xp_for_next()
+		level += 1
+		coins += level_up_reward(level)
+		leveled_up.emit(level)
 
 func grid(zone: String) -> WorldGrid:
 	return grids[zone]
@@ -50,6 +74,7 @@ func buy_land(zone: String, c: Vector2i) -> String:
 		return "no_coins"
 	coins -= cost
 	g.buy_parcel(parcel)
+	add_xp(LAND_XP)
 	_commit()
 	return "ok"
 
@@ -74,10 +99,13 @@ func grant_test_coins() -> void:
 func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 	return c - Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 
-func place_object(zone: String, c: Vector2i, id: String) -> String:
+# Why `id` can or cannot be placed with a footprint centred on `c`: "ok", "invalid", "level", "locked", "occupied" or "no_coins".
+func check_place(zone: String, c: Vector2i, id: String) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or def.zone != zone:
 		return "invalid"
+	if level < Catalog.unlock_level(id):
+		return "level"
 	var g := grid(zone)
 	var sz: Vector2i = def.size
 	var origin := footprint_origin(c, sz)
@@ -87,13 +115,51 @@ func place_object(zone: String, c: Vector2i, id: String) -> String:
 		return "locked"
 	if not g.footprint_free(origin, sz):
 		return "occupied"
-	var cost: int = def.cost
-	if id == "farm_plot_01" and is_broke() and not _farm_has("farm_plot_01"):
-		cost = 0
-	if coins < cost:
+	if coins < place_cost(id):
 		return "no_coins"
-	coins -= cost
-	g.place(origin, id, sz)
+	return "ok"
+
+func place_cost(id: String) -> int:
+	if id == "farm_plot_01" and is_broke() and not _farm_has("farm_plot_01"):
+		return 0
+	return int(Catalog.PLACEABLES[id].cost)
+
+func place_object(zone: String, c: Vector2i, id: String) -> String:
+	var result := check_place(zone, c, id)
+	if result != "ok":
+		return result
+	var sz: Vector2i = Catalog.size_of(id)
+	coins -= place_cost(id)
+	grid(zone).place(footprint_origin(c, sz), id, sz)
+	add_xp(PLACE_XP)
+	_commit()
+	return "ok"
+
+# Whether the object covering `from_cell` fits with a footprint centred on `to_cell`: "ok", "empty", "invalid", "locked" or "occupied".
+func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
+	var g := grid(zone)
+	var origin := g.origin_at(from_cell)
+	if origin == WorldGrid.NONE:
+		return "empty"
+	var sz: Vector2i = g.footprints[origin]
+	var new_origin := footprint_origin(to_cell, sz)
+	if not g.footprint_in_bounds(new_origin, sz):
+		return "invalid"
+	if not g.footprint_owned(new_origin, sz):
+		return "locked"
+	for cell in g.cells_of(new_origin, sz):
+		if g.occupied.has(cell) and g.occupied[cell] != origin:
+			return "occupied"
+	return "ok"
+
+# Moves the object covering `from_cell` so a footprint centred on `to_cell` holds it. Free of charge.
+func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
+	var result := check_move(zone, from_cell, to_cell)
+	if result != "ok":
+		return result
+	var g := grid(zone)
+	var origin := g.origin_at(from_cell)
+	g.move(origin, footprint_origin(to_cell, g.footprints[origin]))
 	_commit()
 	return "ok"
 
@@ -164,10 +230,13 @@ func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
 		if inventory.add(st.crop, int(crop.yield)) == 0:
 			return "full"
 		g.states.erase(c)
+		add_xp(int(crop.xp))
 		_commit()
 		return "harvested"
 	if not Catalog.CROPS.has(seed_id):
 		return "invalid"
+	if level < int(Catalog.CROPS[seed_id].level):
+		return "level"
 	var cost: int = Catalog.CROPS[seed_id].seed
 	if seed_id == "wheat" and is_broke():
 		cost = 0
@@ -186,6 +255,7 @@ func _interact_coop(zone: String, c: Vector2i) -> String:
 		if inventory.add(Catalog.COOP.product, 1) == 0:
 			return "full"
 		g.states.erase(c)
+		add_xp(int(Catalog.COOP.xp))
 		_commit()
 		return "collected"
 	if not inventory.remove(Catalog.COOP.feed, 1):
@@ -211,6 +281,18 @@ func sell_all() -> int:
 		total += sell(item, inventory.count(item))
 	return total
 
+func barn_upgrade_cost() -> int:
+	return BARN_BASE_COST * (1 + (inventory.capacity - 60) / BARN_STEP)
+
+func upgrade_barn() -> String:
+	var cost := barn_upgrade_cost()
+	if coins < cost:
+		return "no_coins"
+	coins -= cost
+	inventory.capacity += BARN_STEP
+	_commit()
+	return "ok"
+
 func set_language(code: String) -> void:
 	language = code
 	_commit()
@@ -225,13 +307,15 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "language": language, "grids": g, "inventory": inventory.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "grids": g, "inventory": inventory.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
 	if d.is_empty():
 		return false
 	coins = maxi(0, int(d.get("coins", START_COINS)))
+	level = maxi(1, int(d.get("level", 1)))
+	xp = clampi(int(d.get("xp", 0)), 0, xp_for_next() - 1)
 	language = str(d.get("language", ""))
 	var gd = d.get("grids", {})
 	if gd is Dictionary:
