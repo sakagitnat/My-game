@@ -6,11 +6,12 @@ const ZOOM_MAX := 2.2
 const START_VIEW_WIDTH := 1000.0
 const NONE := WorldGrid.NONE
 
-var zone: String = Catalog.ISLAND
+var zone: String = "restaurant"
 var camera: Camera2D
 var hud: Hud
 var view := ViewState.new()
 var renderer: WorldRenderer
+var decor: SceneDecor
 
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
@@ -18,6 +19,7 @@ var moving_origin: Vector2i = NONE
 var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
+var selected_land: Vector2i = NONE   # a cell on an owned, empty block of the restaurant (opens the floor/grass bubble)
 var context_timer: float = 0.0
 var view_timer: float = 0.0
 
@@ -34,8 +36,12 @@ func _ready() -> void:
 	renderer = WorldRenderer.new()
 	add_child(renderer)
 	renderer.setup(view, camera)
+	decor = SceneDecor.new()
+	decor.setup(view)
+	add_child(decor)
 	hud = Hud.new()
 	add_child(hud)
+	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
 	hud.crop_chosen.connect(_on_crop_chosen)
 	hud.action_pressed.connect(_on_action_pressed)
@@ -48,7 +54,7 @@ func _ready() -> void:
 	GameState.leveled_up.connect(_on_leveled_up)
 	GameState.restaurant.customer_left.connect(func(_id: int) -> void: hud.show_message("MSG_CUSTOMER_LEFT"))
 	Loc.changed.connect(_on_state_changed)
-	set_zone(Catalog.ISLAND)
+	set_zone("restaurant")
 
 # ---------------------------------------------------------------- backdrop
 
@@ -60,6 +66,7 @@ func _sync_view() -> void:
 	view.moving_origin = moving_origin
 	view.selected_origin = selected_origin
 	view.selected_obstacle = selected_obstacle
+	view.selected_land = selected_land
 	view.customers = GameState.restaurant.snapshot_customers()
 	view.counter = GameState.restaurant.counter.duplicate()
 
@@ -69,6 +76,7 @@ func _redraw_all() -> void:
 		return
 	_sync_view()
 	renderer.refresh()
+	decor.queue_redraw()
 
 # ---------------------------------------------------------------- zones & state
 
@@ -80,9 +88,10 @@ func set_zone(z: String) -> void:
 	hud.set_zone(z)
 	_sync_view()
 	renderer.set_zone(z)
-	camera.position = Iso.cell_to_world(GameState.start_cell())
+	decor.set_zone(z)
+	camera.position = Iso.cell_to_world(GameState.layout_for(z).start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
-	hud.show_message("HINT_START")
+	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
 	_redraw_all()
 
 func _on_state_changed() -> void:
@@ -92,6 +101,8 @@ func _on_state_changed() -> void:
 			hud.show_context(_context_info(selected_origin))
 		else:
 			_deselect()
+	if selected_land != NONE:
+		hud.show_context(_land_info(selected_land))
 	if selected_obstacle != NONE:
 		if GameState.grid(zone).blocked.has(selected_obstacle):
 			hud.show_context(_obstacle_info(selected_obstacle))
@@ -108,7 +119,7 @@ func _on_leveled_up(new_level: int) -> void:
 func _on_reset() -> void:
 	GameState.reset()
 	GameState.save_game()
-	set_zone(Catalog.ISLAND)
+	set_zone("restaurant")
 	GameState.changed.emit()
 
 func _fmt_time(seconds: int) -> String:
@@ -207,6 +218,7 @@ func cancel_placement() -> void:
 func _deselect() -> void:
 	selected_origin = NONE
 	selected_obstacle = NONE
+	selected_land = NONE
 	if hud != null:
 		hud.hide_context()
 	_redraw_all()
@@ -229,15 +241,17 @@ func _on_tap(world: Vector2) -> void:
 		_select_obstacle(c)
 		return
 	_deselect()
-	if g.is_owned(c):
-		return
 	var parcel := WorldGrid.parcel_of(c)
+	if g.is_owned(c):
+		if zone == "restaurant" and GameState.layout_for(zone).label_of_parcel(parcel) in ["B", "r", "R"]:
+			_select_land(c)
+		return
 	if g.can_buy_parcel(parcel):
 		_ask_buy(c)
 	else:
-		var info := GameState.layout.info_of_parcel(parcel)
+		var info := GameState.layout_for(zone).info_of_parcel(parcel)
 		if not info.is_empty():
-			hud.show_message("MSG_AREA_FAR" if GameState.layout.for_sale(parcel) else "MSG_AREA_INFO", Loc.t(info.name))
+			hud.show_message("MSG_AREA_FAR" if GameState.layout_for(zone).for_sale(parcel) else "MSG_AREA_INFO", Loc.t(info.name))
 
 func _ask_buy(c: Vector2i) -> void:
 	var cost := GameState.land_cost(zone)
@@ -261,6 +275,34 @@ func _select(origin: Vector2i) -> void:
 		return
 	hud.show_context(_context_info(origin))
 	_redraw_all()
+
+func _select_land(c: Vector2i) -> void:
+	selected_land = c
+	hud.show_context(_land_info(c))
+	_redraw_all()
+
+func _land_info(c: Vector2i) -> Dictionary:
+	var g := GameState.grid(zone)
+	var parcel := WorldGrid.parcel_of(c)
+	var info := {"title": Loc.t(GameState.layout_for(zone).info_of_parcel(parcel).name), "plain": true}
+	if GameState.layout_for(zone).is_shell_parcel(parcel):
+		info.status = Loc.t("STATUS_FLOOR_FIXED")
+	elif g.has_floor(parcel):
+		info.status = Loc.t("STATUS_FLOOR")
+		info.action = {"text": Loc.t("BTN_GRASS"), "enabled": true}
+	else:
+		info.status = Loc.t("STATUS_GRASS")
+		info.action = {"text": Loc.t("BTN_FLOOR") % GameState.FLOOR_COST, "enabled": GameState.coins >= GameState.FLOOR_COST}
+	return info
+
+func _toggle_land_floor() -> void:
+	var c := selected_land
+	var want := not GameState.grid(zone).has_floor(WorldGrid.parcel_of(c))
+	match GameState.set_floor(zone, c, want):
+		"ok": hud.show_message("MSG_FLOOR_BUILT" if want else "MSG_FLOOR_REMOVED")
+		"no_coins": hud.show_message("MSG_NO_COINS")
+		_: hud.show_message("MSG_INVALID")
+	_deselect()
 
 func _select_obstacle(c: Vector2i) -> void:
 	_deselect()
@@ -320,6 +362,9 @@ func _on_crop_chosen(crop: String) -> void:
 	_deselect()
 
 func _on_action_pressed() -> void:
+	if selected_land != NONE:
+		_toggle_land_floor()
+		return
 	if selected_obstacle != NONE:
 		_clear_selected_obstacle()
 		return
@@ -394,6 +439,8 @@ func _process(delta: float) -> void:
 	if view_timer >= 0.5:
 		view_timer = 0.0
 		_sync_view()
+	if selected_land != NONE and hud.context.visible:
+		hud.place_context(_screen_of(Iso.cell_to_world(selected_land) + Vector2(0, -30)))
 	if selected_obstacle != NONE and hud.context.visible:
 		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
 	if selected_origin != NONE and hud.context.visible:
@@ -453,7 +500,7 @@ func _zoom_by(f: float) -> void:
 	_redraw_all()
 
 func _clamp_camera() -> void:
-	var s := GameState.GRID_SIZE
+	var s := GameState.grid(zone).size
 	var lo := Vector2(Iso.cell_to_world(Vector2i(0, s.y)).x, 0.0)
 	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
 	camera.position = camera.position.clamp(lo, hi)

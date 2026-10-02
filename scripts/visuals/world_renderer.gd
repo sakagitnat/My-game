@@ -23,6 +23,7 @@ func setup(view_state: ViewState, cam: Camera2D) -> void:
 func set_zone(z: String) -> void:
 	terrain.set_zone(z)
 	signs.set_zone(z)
+	coast.set_zone(z)
 	refresh()
 
 # Called when game state, selection, camera or zoom changed.

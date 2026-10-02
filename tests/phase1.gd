@@ -16,7 +16,7 @@ func run() -> void:
 	var assets = root.get_node("/root/Assets")
 	gs.restaurant_active = false
 	gs.ask_names = false
-	gs.layout = Island.sandbox()
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
@@ -67,12 +67,12 @@ func run() -> void:
 	check(gs.buy_land("restaurant", Vector2i(0, 0)) == "invalid", "buy far block rejected")
 	check(gs.buy_land("restaurant", Vector2i(20, 14)) == "ok" and gs.coins == 350, "buy block costs 150")
 	check(gs.grid("restaurant").is_owned(Vector2i(18, 12)) and gs.grid("restaurant").is_owned(Vector2i(23, 17)), "tapping any cell buys the whole block")
-	check(gs.land_cost("restaurant") == 250, "land cost grows with every block bought")
+	check(gs.land_cost("restaurant") == 250 and gs.land_cost("farm") == 150, "land cost scales per zone")
 	check(gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01") == "ok" and gs.coins == 320, "place table")
 	check(gs.place_object("restaurant", Vector2i(14, 14), "rest_stove_01") == "occupied", "overlap rejected")
 	check(gs.place_object("restaurant", Vector2i(0, 0), "rest_stove_01") == "locked", "locked")
 	check(gs.place_object("restaurant", Vector2i(17, 13), "rest_stove_01") == "ok" and gs.coins == 240, "footprint may span two owned blocks")
-	check(gs.place_object("restaurant", Vector2i(5, 5), "not_an_item") == "invalid", "unknown item")
+	check(gs.place_object("restaurant", Vector2i(5, 5), "farm_fence_01") == "invalid", "wrong zone item")
 	check(gs.remove_object("restaurant", Vector2i(14, 14)) == "ok" and gs.coins == 240 + 15, "remove from any covered cell refunds half")
 	gs.remove_object("restaurant", Vector2i(18, 14))
 	gs.coins = 5
@@ -128,7 +128,7 @@ func run() -> void:
 	# Assets: missing art falls back to null (placeholder), no crash
 	check(assets.get_tex("definitely_not_a_real_asset") == null, "missing asset returns null")
 	for id in Catalog.PLACEABLES:
-		check(Catalog.PLACEABLES[id].area in ["restaurant", "farm"], "placeable area valid %s" % id)
+		check(Catalog.PLACEABLES[id].area in Catalog.ZONES, "placeable zone valid %s" % id)
 
 	# World scene: HUD, confirmation before buying, placement mode, selecting and selling
 	gs.reset()
@@ -174,7 +174,8 @@ func run() -> void:
 	world.hud.open_modal("shop")
 	check(world.hud.modal_kind == "shop" and world.hud.modal_body.get_child_count() >= 2, "shop lists items")
 	world.hud.close_modal()
-	check(world.zone == Catalog.ISLAND, "one island, no zone switch")
+	world.hud.zone_toggled.emit()
+	check(world.zone == "farm", "zone button switches zone")
 	world.hud.open_modal("settings")
 	check(world.hud.modal_kind == "settings", "menu opens")
 	world.hud.close_modal()
