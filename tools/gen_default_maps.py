@@ -49,37 +49,43 @@ def near_water(tiles, W, H, r):
     return near
 
 def restaurant():
-    W, H = 48, 36
+    W, H = 72, 54
     tiles = [['g'] * W for _ in range(H)]
-    coast = [6.5 + 2.2 * (value(x * 0.13, 3.0, 51) - 0.5) + 0.8 * (value(x * 0.5, 7.0, 53) - 0.5) for x in range(W)]
+    # sea along the bottom-left edge only (the front of the diamond)
+    coast = [44.0 + 2.4 * (value(x * 0.11, 3.0, 51) - 0.5) + 0.9 * (value(x * 0.45, 7.0, 53) - 0.5) for x in range(W)]
     for y in range(H):
         for x in range(W):
-            if y < coast[x]:
+            if y > coast[x]:
                 tiles[y][x] = 'w'
     near = near_water(tiles, W, H, 2)
     for y in range(H):
         for x in range(W):
             if tiles[y][x] == 'g' and (x, y) in near:
                 tiles[y][x] = 's'
-    for y in range(25, 29):
+    # the country road runs across the top (back) edge of the map, flush to the border
+    for y in range(0, 4):
         for x in range(W):
             tiles[y][x] = 'r'
-    for x in range(17, 31):
-        tiles[24][x] = 'p'
-    for y in range(12, 24):
-        for x in range(18, 30):
+    # a paved path from the road to the door
+    for y in range(4, 6):
+        for x in range(16, 20):
+            tiles[y][x] = 'p'
+    # the shop: 12 x 12 cells of tiled floor near the back-left corner, door in the north wall facing the road
+    X0, Y0, X1, Y1 = 12, 6, 24, 18   # [X0, X1) x [Y0, Y1)
+    for y in range(Y0, Y1):
+        for x in range(X0, X1):
             tiles[y][x] = 'f'
     walls = []
-    wins_n = {19, 20, 23, 24, 27, 28}
-    for x in range(18, 30):
-        walls.append([x, 12, "n", "window" if x in wins_n else "wall"])
-    for y in range(12, 24):
-        walls.append([18, y, "w", "window" if y in (15, 16, 19, 20) else "wall"])
-    for x in range(18, 30):
-        walls.append([x, 24, "n", "door" if x in (23, 24) else "low"])
-    for y in range(12, 24):
-        walls.append([30, y, "w", "low"])
-    parcels = ["........", "..BBBB..", ".BBSSBB.", ".BBSSBB.", "........", "........"]
+    for x in range(X0, X1):
+        kind = "door" if x in (17, 18) else ("window" if x in (13, 14, 21, 22) else "wall")
+        walls.append([x, Y0, "n", kind])
+    for y in range(Y0, Y1):
+        walls.append([X0, y, "w", "window" if y in (8, 9, 14, 15) else "wall"])
+    for y in range(Y0, Y1):
+        walls.append([X1, y, "w", "low"])
+    for x in range(X0, X1):
+        walls.append([x, Y1, "n", "low"])
+    parcels = ["............", ".BSSBB......", ".BSSBB......", ".BBBBB......", "..BBB.......", "............", "............", "............", "............"]
     protected = set()
     for py, row in enumerate(parcels):
         for px, ch in enumerate(row):
@@ -87,21 +93,17 @@ def restaurant():
                 for y in range(py * 6 + 1, py * 6 + 5):
                     for x in range(px * 6 + 1, px * 6 + 5):
                         protected.add((x, y))
-    for y in range(H):
-        for x in range(W):
-            if (x, y) in near_water(tiles, W, H, 0) if False else False:
-                pass
     shore = near_water(tiles, W, H, 3)
     def dens(x, y):
-        if (x, y) in shore:
+        if (x, y) in shore or y < 6:
             return (0, 0)
         px, py = x // 6, y // 6
         ch = parcels[py][px]
-        if py == 5 or px < 1 or px > 6:           # woods around the edge
+        if px < 1 or px > 10:                      # woods down the left and right edges
             return (3.0, 0.85)
         if ch == 'B':
             return (1.6, 0.2)
-        return (0, 0)
+        return (0.5, 0.15)                         # the rest of the land is lightly wooded
     obstacles = scatter(W, H, tiles, parcels, 20261002, dens, protected)
     return {"version": 1, "id": "restaurant", "area": "restaurant", "size": [W, H],
             "tiles": ["".join(r) for r in tiles], "walls": walls, "obstacles": obstacles, "objects": [],

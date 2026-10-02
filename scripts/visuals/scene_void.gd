@@ -26,7 +26,7 @@ func _draw() -> void:
 	for side in sides:
 		var run_start := -1
 		for i in range(side.count + 1):
-			var solid: bool = i < side.count and lay.tile_at(side.cells.call(i)) != SceneLayout.Tile.WATER
+			var solid: bool = i < side.count and _is_ground(lay, side.cells.call(i))
 			if solid and run_start < 0:
 				run_start = i
 			elif not solid and run_start >= 0:
@@ -40,11 +40,15 @@ func _draw() -> void:
 		[Vector2i(0, h - 1), Vector2(-0.5, h - 0.5), Vector2(0, 1), Vector2(-1, 0)],
 	]
 	for c in corners:
-		if lay.tile_at(c[0]) != SceneLayout.Tile.WATER:
+		if _is_ground(lay, c[0]):
 			var p := Iso.cell_to_world_f(c[1])
 			var d1 := (Iso.cell_to_world_f(c[1] + c[2]) - p).normalized() * REACH
 			var d2 := (Iso.cell_to_world_f(c[1] + c[3]) - p).normalized() * REACH
 			draw_colored_polygon(PackedVector2Array([p, p + d1, p + d1 + d2, p + d2]), COLOR)
+
+# Ground, not shore: a border cell next to the water lets the sea carry on, so a ragged coast does not leave stripes.
+func _is_ground(lay: SceneLayout, c: Vector2i) -> bool:
+	return lay.tile_at(c) != SceneLayout.Tile.WATER and lay.edge_distance(c) >= 3
 
 # A strip along the border from cell-space point a to b, pushed outward along grid direction n.
 func _strip(a: Vector2, b: Vector2, n: Vector2) -> void:
