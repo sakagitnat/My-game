@@ -10,12 +10,17 @@ const NONE := WorldGrid.NONE
 var zone: String = "restaurant"
 var camera: Camera2D
 var hud: Hud
+var terrain: Terrain
+var signs: Terrain
+var coast: Node2D
+var sea: ColorRect
 
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
 var moving_origin: Vector2i = NONE
 var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
+var selected_obstacle: Vector2i = NONE
 var redraw_timer: float = 0.0
 var context_timer: float = 0.0
 
@@ -29,6 +34,7 @@ var pinched := false
 func _ready() -> void:
 	camera = Camera2D.new()
 	add_child(camera)
+	_build_backdrop()
 	hud = Hud.new()
 	add_child(hud)
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
@@ -45,6 +51,53 @@ func _ready() -> void:
 	Loc.changed.connect(_on_state_changed)
 	set_zone("restaurant")
 
+# ---------------------------------------------------------------- backdrop
+
+func _build_backdrop() -> void:
+	var sea_layer := CanvasLayer.new()
+	sea_layer.layer = -10
+	add_child(sea_layer)
+	sea = ColorRect.new()
+	sea.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sea.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/sea.gdshader")
+	sea.material = mat
+	sea_layer.add_child(sea)
+	terrain = Terrain.new()
+	terrain.z_index = -2
+	add_child(terrain)
+	coast = load("res://scripts/world/coast.gd").new()
+	coast.z_index = -1
+	add_child(coast)
+	signs = Terrain.new()
+	signs.layer = "signs"
+	signs.z_index = 1
+	add_child(signs)
+	var light_layer := CanvasLayer.new()
+	light_layer.layer = 5
+	add_child(light_layer)
+	for shader_path in ["res://shaders/sunlight.gdshader", "res://shaders/vignette.gdshader"]:
+		var r := ColorRect.new()
+		r.set_anchors_preset(Control.PRESET_FULL_RECT)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var m := ShaderMaterial.new()
+		m.shader = load(shader_path)
+		r.material = m
+		light_layer.add_child(r)
+
+func _update_sea() -> void:
+	var m := sea.material as ShaderMaterial
+	m.set_shader_parameter("cam_pos", camera.position)
+	m.set_shader_parameter("zoom", camera.zoom.x)
+	m.set_shader_parameter("view_size", get_viewport_rect().size)
+
+func _redraw_all() -> void:
+	queue_redraw()
+	if terrain != null:
+		terrain.queue_redraw()
+		signs.queue_redraw()
+
 # ---------------------------------------------------------------- zones & state
 
 func set_zone(z: String) -> void:
@@ -53,10 +106,12 @@ func set_zone(z: String) -> void:
 	_deselect()
 	hud.close_modal()
 	hud.set_zone(z)
+	terrain.set_zone(z)
+	signs.set_zone(z)
 	camera.position = Iso.cell_to_world(GameState.start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
 	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
-	queue_redraw()
+	_redraw_all()
 
 func _on_state_changed() -> void:
 	hud.refresh()
@@ -65,9 +120,14 @@ func _on_state_changed() -> void:
 			hud.show_context(_context_info(selected_origin))
 		else:
 			_deselect()
+	if selected_obstacle != NONE:
+		if GameState.grid(zone).blocked.has(selected_obstacle):
+			hud.show_context(_obstacle_info(selected_obstacle))
+		else:
+			_deselect()
 	if placing_id != "":
 		_update_placement_ui()
-	queue_redraw()
+	_redraw_all()
 
 func _on_leveled_up(new_level: int) -> void:
 	hud.show_message("MSG_LEVEL_UP", [new_level, GameState.level_up_reward(new_level)])
@@ -91,6 +151,7 @@ func _error_text(code: String, item_id: String = "") -> Array:
 		"no_coins": return ["MSG_NO_COINS", null]
 		"locked": return ["MSG_LOCKED", null]
 		"occupied": return ["MSG_OCCUPIED", null]
+		"blocked": return ["MSG_BLOCKED", null]
 		"level": return ["MSG_LEVEL", Catalog.unlock_level(item_id) if item_id != "" else null]
 	return ["MSG_INVALID", null]
 
@@ -102,7 +163,7 @@ func start_placement(id: String) -> void:
 	moving_origin = NONE
 	ghost_cell = Iso.world_to_cell(camera.position)
 	_update_placement_ui()
-	queue_redraw()
+	_redraw_all()
 
 func start_move(origin: Vector2i) -> void:
 	var g := GameState.grid(zone)
@@ -114,12 +175,12 @@ func start_move(origin: Vector2i) -> void:
 	var sz: Vector2i = g.footprints[origin]
 	ghost_cell = origin + Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 	_update_placement_ui()
-	queue_redraw()
+	_redraw_all()
 
 func set_ghost(c: Vector2i) -> void:
 	ghost_cell = c
 	_update_placement_ui()
-	queue_redraw()
+	_redraw_all()
 
 func placement_status() -> String:
 	if placing_id == "":
@@ -166,15 +227,16 @@ func cancel_placement() -> void:
 	moving_origin = NONE
 	if hud != null:
 		hud.hide_placement()
-	queue_redraw()
+	_redraw_all()
 
 # ---------------------------------------------------------------- selecting & interacting
 
 func _deselect() -> void:
 	selected_origin = NONE
+	selected_obstacle = NONE
 	if hud != null:
 		hud.hide_context()
-	queue_redraw()
+	_redraw_all()
 
 func _on_tap(world: Vector2) -> void:
 	var c := Iso.world_to_cell(world)
@@ -189,6 +251,9 @@ func _on_tap(world: Vector2) -> void:
 	var origin := g.origin_at(c)
 	if origin != NONE:
 		_select(origin)
+		return
+	if g.blocked.has(c) and g.is_owned(c):
+		_select_obstacle(c)
 		return
 	_deselect()
 	if not g.is_owned(c) and g.can_buy_parcel(WorldGrid.parcel_of(c)):
@@ -215,7 +280,22 @@ func _select(origin: Vector2i) -> void:
 		_deselect()
 		return
 	hud.show_context(_context_info(origin))
-	queue_redraw()
+	_redraw_all()
+
+func _select_obstacle(c: Vector2i) -> void:
+	_deselect()
+	selected_obstacle = c
+	hud.show_context(_obstacle_info(c))
+	_redraw_all()
+
+func _obstacle_info(c: Vector2i) -> Dictionary:
+	var def: Dictionary = Catalog.OBSTACLES[GameState.grid(zone).blocked[c]]
+	return {
+		"title": Loc.t(def.name),
+		"status": Loc.t("STATUS_OBSTACLE"),
+		"plain": true,
+		"action": {"text": Loc.t("BTN_CLEAR") % int(def.cost), "enabled": GameState.coins >= int(def.cost)},
+	}
 
 func _context_info(origin: Vector2i) -> Dictionary:
 	var g := GameState.grid(zone)
@@ -254,10 +334,31 @@ func _on_crop_chosen(crop: String) -> void:
 	_deselect()
 
 func _on_action_pressed() -> void:
+	if selected_obstacle != NONE:
+		_clear_selected_obstacle()
+		return
 	if selected_origin == NONE:
 		return
 	var origin := selected_origin
 	_do_interact(origin, "")
+	_deselect()
+
+func _clear_selected_obstacle() -> void:
+	var c := selected_obstacle
+	var kind: String = GameState.grid(zone).blocked.get(c, "")
+	if kind == "":
+		_deselect()
+		return
+	var def: Dictionary = Catalog.OBSTACLES[kind]
+	var at := _screen_of(Iso.cell_to_world(c))
+	match GameState.clear_obstacle(zone, c):
+		"ok":
+			hud.show_message("MSG_CLEARED")
+			hud.float_text(Loc.t("FLOAT_XP") % int(def.xp), at, UiTheme.GOLD)
+			if def.item != "":
+				hud.float_text(Loc.t("FLOAT_GAIN") % [1, Loc.t(Catalog.ITEMS[def.item].name)], at + Vector2(0, 32), UiTheme.GOOD)
+		"no_coins": hud.show_message("MSG_NO_COINS")
+		_: hud.show_message("MSG_INVALID")
 	_deselect()
 
 func _do_interact(origin: Vector2i, seed_id: String) -> void:
@@ -303,6 +404,9 @@ func _on_sell_requested() -> void:
 # ---------------------------------------------------------------- frame & input
 
 func _process(delta: float) -> void:
+	_update_sea()
+	if selected_obstacle != NONE and hud.context.visible:
+		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
 	if zone == "farm":
 		redraw_timer += delta
 		if redraw_timer >= REDRAW_EVERY:
@@ -362,71 +466,76 @@ func _unhandled_input(event: InputEvent) -> void:
 func _zoom_by(f: float) -> void:
 	var z := clampf(camera.zoom.x * f, ZOOM_MIN, ZOOM_MAX)
 	camera.zoom = Vector2(z, z)
-	queue_redraw()
+	_redraw_all()
 
 func _clamp_camera() -> void:
 	var s := GameState.GRID_SIZE
 	var lo := Vector2(Iso.cell_to_world(Vector2i(0, s.y)).x, 0.0)
 	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
 	camera.position = camera.position.clamp(lo, hi)
-	queue_redraw()
+	_redraw_all()
 
 # ---------------------------------------------------------------- drawing
 
-func _visible_cell_range(g: WorldGrid) -> Rect2i:
-	var view := get_canvas_transform().affine_inverse() * Rect2(Vector2.ZERO, get_viewport_rect().size)
-	view = view.grow(Iso.TILE_W * 2.0)
-	var lo := Vector2i(g.size)
-	var hi := Vector2i(-1, -1)
-	for corner in [view.position, view.end, Vector2(view.position.x, view.end.y), Vector2(view.end.x, view.position.y)]:
-		var cc := Iso.world_to_cell(corner)
-		lo = Vector2i(mini(lo.x, cc.x), mini(lo.y, cc.y))
-		hi = Vector2i(maxi(hi.x, cc.x), maxi(hi.y, cc.y))
-	lo = lo.clamp(Vector2i.ZERO, g.size - Vector2i.ONE)
-	hi = hi.clamp(Vector2i.ZERO, g.size - Vector2i.ONE)
-	return Rect2i(lo, hi - lo + Vector2i.ONE)
-
 func _draw() -> void:
 	var g := GameState.grid(zone)
-	var vis := _visible_cell_range(g)
-	for y in range(vis.position.y, vis.end.y):
-		for x in range(vis.position.x, vis.end.x):
-			var c := Vector2i(x, y)
-			var p := Iso.cell_to_world(c)
-			if g.is_owned(c):
-				_draw_floor(Catalog.FLOOR[zone], p, Catalog.FLOOR_COLOR[zone])
-			else:
-				_draw_floor(Catalog.LOCKED_TILE, p, Color("2f3a33"), Color(0.6, 0.65, 0.7))
-	_draw_buyable_parcels(g)
-	var origins: Array = g.objects.keys()
-	origins.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.x + a.y + g.footprints[a].x + g.footprints[a].y < b.x + b.y + g.footprints[b].x + g.footprints[b].y)
-	for o in origins:
-		_draw_object(o, g.objects[o])
+	var items: Array = []
+	for o in g.objects:
+		var fp: Vector2i = g.footprints[o]
+		items.append([o.x + o.y + fp.x + fp.y, 0, o])
+	for c in g.blocked:
+		items.append([c.x + c.y + 1, 1, c])
+	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for it in items:
+		if it[1] == 0:
+			_draw_object(it[2], g.objects[it[2]])
+		else:
+			_draw_obstacle(it[2], g.blocked[it[2]])
 	if selected_origin != NONE and g.objects.has(selected_origin):
 		var pts := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])
+		pts.append(pts[0])
+		draw_polyline(pts, Color.WHITE, 3.0)
+	if selected_obstacle != NONE:
+		var pts := Iso.footprint_corners(selected_obstacle, Vector2i.ONE)
 		pts.append(pts[0])
 		draw_polyline(pts, Color.WHITE, 3.0)
 	if placing_id != "":
 		_draw_ghost()
 
-func _draw_buyable_parcels(g: WorldGrid) -> void:
-	var font := ThemeDB.fallback_font
-	var psize := Vector2i.ONE * WorldGrid.PARCEL
-	for py in range(g.parcel_grid().y):
-		for px in range(g.parcel_grid().x):
-			var parcel := Vector2i(px, py)
-			if not g.can_buy_parcel(parcel):
-				continue
-			var origin := parcel * WorldGrid.PARCEL
-			var pts := Iso.footprint_corners(origin, psize)
-			draw_colored_polygon(pts, Color(1.0, 0.84, 0.42, 0.10))
-			pts.append(pts[0])
-			draw_polyline(pts, Color("ffd66b"), 4.0)
-			var label := str(GameState.land_cost(zone))
-			var at := Iso.footprint_center(origin, psize) + Vector2(-60, 12)
-			draw_string_outline(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, 8, Color("1b1208"))
-			draw_string(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, Color("ffd66b"))
+func _draw_shadow(center: Vector2, rx: float) -> void:
+	var pts := PackedVector2Array()
+	for i in range(16):
+		var a := TAU * i / 16.0
+		pts.append(center + Vector2(cos(a) * rx, sin(a) * rx * 0.5))
+	draw_colored_polygon(pts, Color(0.05, 0.14, 0.05, 0.28))
+
+func _draw_obstacle(c: Vector2i, kind: String) -> void:
+	var def: Dictionary = Catalog.OBSTACLES[kind]
+	var p := Iso.cell_to_world(c)
+	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
+	_draw_shadow(p + Vector2(0, 6), Iso.TILE_W * 0.34 * float(def.scale))
+	var tex := Assets.get_tex(def.art)
+	if tex != null:
+		var s := tex.get_size() * (Iso.TILE_W * float(def.scale) / tex.get_width())
+		draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false)
+		return
+	var wob := 0.5 + Noise2D.hash2(c.x, c.y, 31) * 0.5
+	match kind:
+		"tree":
+			draw_rect(Rect2(foot + Vector2(-3.5, -30), Vector2(7, 30)), Color("6b4a2c"))
+			draw_circle(foot + Vector2(0, -56), 21 * wob + 6, Color("2f7a2a"))
+			draw_circle(foot + Vector2(-13, -42), 15, Color("2f7a2a"))
+			draw_circle(foot + Vector2(13, -42), 15, Color("2f7a2a"))
+			draw_circle(foot + Vector2(-5, -60), 13, Color("49a83c"))
+			draw_circle(foot + Vector2(8, -50), 9, Color("5cbd4a"))
+		"rock":
+			var r := PackedVector2Array([foot + Vector2(-16, -2), foot + Vector2(-12, -14), foot + Vector2(-2, -20), foot + Vector2(11, -15), foot + Vector2(17, -3), foot + Vector2(0, 3)])
+			draw_colored_polygon(r, Color("8a8f96"))
+			draw_colored_polygon(PackedVector2Array([r[1], r[2], r[3], foot + Vector2(0, -8)]), Color("b4b9c0"))
+		_:
+			draw_circle(foot + Vector2(-8, -9), 10, Color("3b8c34"))
+			draw_circle(foot + Vector2(8, -8), 9, Color("3b8c34"))
+			draw_circle(foot + Vector2(0, -15), 10, Color("55a846"))
 
 func _draw_ghost() -> void:
 	var ok := placement_status() == "ok"
@@ -444,9 +553,6 @@ func _draw_ghost() -> void:
 	if not _draw_sprite(placing_id, origin, sz, Color(1, 1, 1, 0.75)):
 		_draw_box(origin, sz, Color(def.color, 0.75))
 
-func _diamond(p: Vector2, hw: float, hh: float) -> PackedVector2Array:
-	return PackedVector2Array([p + Vector2(0, -hh), p + Vector2(hw, 0), p + Vector2(0, hh), p + Vector2(-hw, 0)])
-
 # Floor-style art: the canvas width maps to `width`, the diamond is centred in the canvas.
 func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
 	var tex := Assets.get_tex(id)
@@ -455,14 +561,6 @@ func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Col
 	var s := tex.get_size() * (width / tex.get_width())
 	draw_texture_rect(tex, Rect2(center - s * 0.5, s), false, tint)
 	return true
-
-func _draw_floor(id: String, p: Vector2, fallback: Color, tint: Color = Color.WHITE) -> void:
-	if _draw_flat_art(id, p, Iso.TILE_W, tint):
-		return
-	var pts := _diamond(p, Iso.TILE_W * 0.5, Iso.TILE_H * 0.5)
-	draw_colored_polygon(pts, fallback)
-	pts.append(pts[0])
-	draw_polyline(pts, fallback.darkened(0.25), 1.0)
 
 # Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom corner.
 func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE) -> bool:
@@ -483,6 +581,7 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 	if def.get("flat", false):
 		_draw_plot(origin, sz)
 		return
+	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.18), Iso.footprint_width(sz) * 0.42)
 	if not _draw_sprite(id, origin, sz):
 		_draw_box(origin, sz, def.color)
 	_draw_status(origin, sz, _object_height(sz))

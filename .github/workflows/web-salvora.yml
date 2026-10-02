@@ -34,6 +34,7 @@ jobs:
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/phase1.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/phase2.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/progress.gd
+          XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/assets_check.gd
       - name: Export web build
         run: |
           mkdir -p build/web

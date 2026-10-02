@@ -2,9 +2,6 @@ class_name Catalog
 extends RefCounted
 
 const ZONES: Array[String] = ["restaurant", "farm"]
-const FLOOR := {"restaurant": "tile_wood_floor_01", "farm": "tile_grass_01"}
-const LOCKED_TILE := "tile_locked_01"
-const FLOOR_COLOR := {"restaurant": Color("c58a50"), "farm": Color("6fae58")}
 
 # Placeable keys are also art file names under assets/ (see docs/ASSETS.md).
 # "size" is the footprint in cells; art is scaled so its canvas width equals the footprint width.
@@ -27,7 +24,16 @@ const CROPS := {
 # A coop turns 1 wheat into 1 egg after `time` seconds.
 const COOP := {"feed": "wheat", "product": "egg", "time": 120.0, "xp": 3}
 
+# Things that block building until cleared. `scale` is the sprite width in cells (art id `art`).
+const OBSTACLES := {
+	"tree": {"cost": 30, "xp": 2, "item": "wood", "name": "OBS_TREE", "art": "obs_tree_01", "scale": 2.6},
+	"rock": {"cost": 20, "xp": 2, "item": "stone", "name": "OBS_ROCK", "art": "obs_rock_01", "scale": 1.3},
+	"bush": {"cost": 10, "xp": 1, "item": "", "name": "OBS_BUSH", "art": "obs_bush_01", "scale": 1.6},
+}
+
 const ITEMS := {
+	"wood": {"sell": 3, "name": "ITEM_WOOD"},
+	"stone": {"sell": 3, "name": "ITEM_STONE"},
 	"wheat": {"sell": 4, "name": "CROP_WHEAT"},
 	"tomato": {"sell": 14, "name": "CROP_TOMATO"},
 	"cabbage": {"sell": 25, "name": "CROP_CABBAGE"},
