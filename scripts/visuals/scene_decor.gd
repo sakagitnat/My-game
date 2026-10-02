@@ -43,7 +43,9 @@ func _draw() -> void:
 	var vis := _visible_cells(g)
 	_draw_ground(g, lay, vis)
 	_draw_walls(lay)
-	if view != null and view.ghost_id != "":
+	if view != null and view.edit_mode:
+		_draw_edit_overlay(g, lay, vis)
+	elif view != null and view.ghost_id != "":
 		_draw_grid(g, lay, vis)
 
 func _visible_cells(g: WorldGrid) -> Rect2i:
@@ -183,3 +185,31 @@ func _draw_grid(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
 			draw_line(p[1], p[2], tint, 1.4)
 			draw_line(p[2], p[3], tint, 1.4)
 			draw_line(p[3], p[0], tint, 1.4)
+
+const LAND_TINT := {".": Color(0.5, 0.5, 0.55, 0.28), "B": Color(1.0, 0.85, 0.2, 0.30), "S": Color(0.3, 0.9, 0.4, 0.34)}
+
+# The map editor shows every cell, the land blocks, and with the land tool what each block is.
+func _draw_edit_overlay(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
+	for y in range(vis.position.y, vis.end.y):
+		for x in range(vis.position.x, vis.end.x):
+			var c := Vector2i(x, y)
+			var p := Iso.footprint_corners(c, Vector2i.ONE)
+			var tint := Color(1, 1, 1, 0.30) if lay.is_solid(c) else Color(1, 1, 1, 0.12)
+			draw_line(p[0], p[1], tint, 1.2)
+			draw_line(p[3], p[0], tint, 1.2)
+			draw_line(p[1], p[2], tint, 1.2)
+			draw_line(p[2], p[3], tint, 1.2)
+	var psz := Vector2i.ONE * WorldGrid.PARCEL
+	var font := ThemeDB.fallback_font
+	for py in range(lay.parcels.size()):
+		for px in range(lay.parcels[py].length()):
+			var corners := Iso.footprint_corners(Vector2i(px, py) * WorldGrid.PARCEL, psz)
+			var closed := corners.duplicate()
+			closed.append(corners[0])
+			draw_polyline(closed, Color(1, 1, 1, 0.55), 2.4)
+			if view.edit_tool == "land":
+				var label := lay.label_of_parcel(Vector2i(px, py))
+				draw_colored_polygon(corners, LAND_TINT.get(label, LAND_TINT["."]))
+				var mid := Iso.footprint_center(Vector2i(px, py) * WorldGrid.PARCEL, psz)
+				var text: String = {".": "-", "B": "$", "S": "S"}.get(label, "?")
+				draw_string(font, mid + Vector2(-9, 10), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color.WHITE)

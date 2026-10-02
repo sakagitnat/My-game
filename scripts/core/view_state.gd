@@ -16,3 +16,7 @@ var selected_land: Vector2i = WorldGrid.NONE    # a cell of an owned block that 
 # customers: [{id, seat_cell, table, index, dish, patience_frac, served_ready}], counter: [dish ids]
 var customers: Array = []
 var counter: Array = []
+
+# Map editor (world.gd writes these): the editor draws its cell grid, block outlines and block labels.
+var edit_mode: bool = false
+var edit_tool: String = ""

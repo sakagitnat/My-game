@@ -50,17 +50,24 @@ func reset() -> void:
 	level = 1
 	grids = {}
 	for z in Catalog.ZONES:
-		var l := layout_for(z)
-		grids[z] = WorldGrid.new(l.cells, l.starts, l.sale_parcels())
-		_place_map_objects(z)
-		if spawn_obstacles:
-			if l.scatter:
-				scatter_obstacles(z)
-			else:
-				_place_map_obstacles(z)
+		build_zone(z)
 	inventory = Inventory.new(60)
 	player_name = ""
 	restaurant_name = ""
+
+# A fresh grid for one scene from its map: starting blocks, blocks for sale, the map's trees, rocks and objects.
+# The map editor calls this after every edit; whatever the player had placed there is gone.
+func build_zone(zone: String) -> void:
+	var l := layout_for(zone)
+	grids[zone] = WorldGrid.new(l.cells, l.starts, l.sale_parcels())
+	_place_map_objects(zone)
+	if spawn_obstacles:
+		if l.scatter:
+			scatter_obstacles(zone)
+		else:
+			_place_map_obstacles(zone)
+	if zone == "restaurant":
+		restaurant.customers.clear()
 
 func layout_for(zone: String) -> SceneLayout:
 	return layouts[zone]
