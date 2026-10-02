@@ -3,17 +3,14 @@ extends Node2D
 const TAP_SLOP := 12.0
 const ZOOM_MIN := 0.35
 const ZOOM_MAX := 2.2
-const REDRAW_EVERY := 0.5
 const START_VIEW_WIDTH := 1000.0
 const NONE := WorldGrid.NONE
 
 var zone: String = "restaurant"
 var camera: Camera2D
 var hud: Hud
-var terrain: Terrain
-var signs: Terrain
-var coast: Node2D
-var sea: ColorRect
+var view := ViewState.new()
+var renderer: WorldRenderer
 
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
@@ -21,7 +18,6 @@ var moving_origin: Vector2i = NONE
 var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
-var redraw_timer: float = 0.0
 var context_timer: float = 0.0
 
 var pressing := false
@@ -34,7 +30,9 @@ var pinched := false
 func _ready() -> void:
 	camera = Camera2D.new()
 	add_child(camera)
-	_build_backdrop()
+	renderer = WorldRenderer.new()
+	add_child(renderer)
+	renderer.setup(view, camera)
 	hud = Hud.new()
 	add_child(hud)
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
@@ -53,50 +51,21 @@ func _ready() -> void:
 
 # ---------------------------------------------------------------- backdrop
 
-func _build_backdrop() -> void:
-	var sea_layer := CanvasLayer.new()
-	sea_layer.layer = -10
-	add_child(sea_layer)
-	sea = ColorRect.new()
-	sea.set_anchors_preset(Control.PRESET_FULL_RECT)
-	sea.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var mat := ShaderMaterial.new()
-	mat.shader = load("res://shaders/sea.gdshader")
-	sea.material = mat
-	sea_layer.add_child(sea)
-	terrain = Terrain.new()
-	terrain.z_index = -2
-	add_child(terrain)
-	coast = load("res://scripts/world/coast.gd").new()
-	coast.z_index = -1
-	add_child(coast)
-	signs = Terrain.new()
-	signs.layer = "signs"
-	signs.z_index = 1
-	add_child(signs)
-	var light_layer := CanvasLayer.new()
-	light_layer.layer = 5
-	add_child(light_layer)
-	for shader_path in ["res://shaders/sunlight.gdshader", "res://shaders/vignette.gdshader"]:
-		var r := ColorRect.new()
-		r.set_anchors_preset(Control.PRESET_FULL_RECT)
-		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var m := ShaderMaterial.new()
-		m.shader = load(shader_path)
-		r.material = m
-		light_layer.add_child(r)
+func _sync_view() -> void:
+	view.zone = zone
+	view.ghost_id = placing_id
+	view.ghost_cell = ghost_cell
+	view.ghost_status = placement_status()
+	view.moving_origin = moving_origin
+	view.selected_origin = selected_origin
+	view.selected_obstacle = selected_obstacle
 
-func _update_sea() -> void:
-	var m := sea.material as ShaderMaterial
-	m.set_shader_parameter("cam_pos", camera.position)
-	m.set_shader_parameter("zoom", camera.zoom.x)
-	m.set_shader_parameter("view_size", get_viewport_rect().size)
-
+# Tells the renderer something visible changed.
 func _redraw_all() -> void:
-	queue_redraw()
-	if terrain != null:
-		terrain.queue_redraw()
-		signs.queue_redraw()
+	if renderer == null:
+		return
+	_sync_view()
+	renderer.refresh()
 
 # ---------------------------------------------------------------- zones & state
 
@@ -106,8 +75,8 @@ func set_zone(z: String) -> void:
 	_deselect()
 	hud.close_modal()
 	hud.set_zone(z)
-	terrain.set_zone(z)
-	signs.set_zone(z)
+	_sync_view()
+	renderer.set_zone(z)
 	camera.position = Iso.cell_to_world(GameState.start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
 	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
@@ -404,14 +373,8 @@ func _on_sell_requested() -> void:
 # ---------------------------------------------------------------- frame & input
 
 func _process(delta: float) -> void:
-	_update_sea()
 	if selected_obstacle != NONE and hud.context.visible:
 		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
-	if zone == "farm":
-		redraw_timer += delta
-		if redraw_timer >= REDRAW_EVERY:
-			redraw_timer = 0.0
-			queue_redraw()
 	if selected_origin != NONE and hud.context.visible:
 		var g := GameState.grid(zone)
 		if g.objects.has(selected_origin):
@@ -474,169 +437,3 @@ func _clamp_camera() -> void:
 	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
 	camera.position = camera.position.clamp(lo, hi)
 	_redraw_all()
-
-# ---------------------------------------------------------------- drawing
-
-func _draw() -> void:
-	var g := GameState.grid(zone)
-	var items: Array = []
-	for o in g.objects:
-		var fp: Vector2i = g.footprints[o]
-		items.append([o.x + o.y + fp.x + fp.y, 0, o])
-	for c in g.blocked:
-		items.append([c.x + c.y + 1, 1, c])
-	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-	for it in items:
-		if it[1] == 0:
-			_draw_object(it[2], g.objects[it[2]])
-		else:
-			_draw_obstacle(it[2], g.blocked[it[2]])
-	if selected_origin != NONE and g.objects.has(selected_origin):
-		var pts := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])
-		pts.append(pts[0])
-		draw_polyline(pts, Color.WHITE, 3.0)
-	if selected_obstacle != NONE:
-		var pts := Iso.footprint_corners(selected_obstacle, Vector2i.ONE)
-		pts.append(pts[0])
-		draw_polyline(pts, Color.WHITE, 3.0)
-	if placing_id != "":
-		_draw_ghost()
-
-func _draw_shadow(center: Vector2, rx: float) -> void:
-	var pts := PackedVector2Array()
-	for i in range(16):
-		var a := TAU * i / 16.0
-		pts.append(center + Vector2(cos(a) * rx, sin(a) * rx * 0.5))
-	draw_colored_polygon(pts, Color(0.05, 0.14, 0.05, 0.28))
-
-func _draw_obstacle(c: Vector2i, kind: String) -> void:
-	var def: Dictionary = Catalog.OBSTACLES[kind]
-	var p := Iso.cell_to_world(c)
-	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
-	_draw_shadow(p + Vector2(0, 6), Iso.TILE_W * 0.34 * float(def.scale))
-	var tex := Assets.get_tex(def.art)
-	if tex != null:
-		var s := tex.get_size() * (Iso.TILE_W * float(def.scale) / tex.get_width())
-		draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false)
-		return
-	var wob := 0.5 + Noise2D.hash2(c.x, c.y, 31) * 0.5
-	match kind:
-		"tree":
-			draw_rect(Rect2(foot + Vector2(-3.5, -30), Vector2(7, 30)), Color("6b4a2c"))
-			draw_circle(foot + Vector2(0, -56), 21 * wob + 6, Color("2f7a2a"))
-			draw_circle(foot + Vector2(-13, -42), 15, Color("2f7a2a"))
-			draw_circle(foot + Vector2(13, -42), 15, Color("2f7a2a"))
-			draw_circle(foot + Vector2(-5, -60), 13, Color("49a83c"))
-			draw_circle(foot + Vector2(8, -50), 9, Color("5cbd4a"))
-		"rock":
-			var r := PackedVector2Array([foot + Vector2(-16, -2), foot + Vector2(-12, -14), foot + Vector2(-2, -20), foot + Vector2(11, -15), foot + Vector2(17, -3), foot + Vector2(0, 3)])
-			draw_colored_polygon(r, Color("8a8f96"))
-			draw_colored_polygon(PackedVector2Array([r[1], r[2], r[3], foot + Vector2(0, -8)]), Color("b4b9c0"))
-		_:
-			draw_circle(foot + Vector2(-8, -9), 10, Color("3b8c34"))
-			draw_circle(foot + Vector2(8, -8), 9, Color("3b8c34"))
-			draw_circle(foot + Vector2(0, -15), 10, Color("55a846"))
-
-func _draw_ghost() -> void:
-	var ok := placement_status() == "ok"
-	var sz: Vector2i = Catalog.size_of(placing_id)
-	var origin := GameState.footprint_origin(ghost_cell, sz)
-	var pts := Iso.footprint_corners(origin, sz)
-	var tint := Color(0.4, 0.9, 0.4, 0.45) if ok else Color(0.95, 0.3, 0.25, 0.45)
-	draw_colored_polygon(pts, tint)
-	var edge := pts.duplicate()
-	edge.append(pts[0])
-	draw_polyline(edge, Color(tint, 1.0), 3.0)
-	var def: Dictionary = Catalog.PLACEABLES[placing_id]
-	if def.get("flat", false):
-		return
-	if not _draw_sprite(placing_id, origin, sz, Color(1, 1, 1, 0.75)):
-		_draw_box(origin, sz, Color(def.color, 0.75))
-
-# Floor-style art: the canvas width maps to `width`, the diamond is centred in the canvas.
-func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
-	var tex := Assets.get_tex(id)
-	if tex == null:
-		return false
-	var s := tex.get_size() * (width / tex.get_width())
-	draw_texture_rect(tex, Rect2(center - s * 0.5, s), false, tint)
-	return true
-
-# Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom corner.
-func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE) -> bool:
-	var tex := Assets.get_tex(id)
-	if tex == null:
-		return false
-	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
-	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
-	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false, tint)
-	return true
-
-func _object_height(sz: Vector2i) -> float:
-	return 9.5 * (sz.x + sz.y)
-
-func _draw_object(origin: Vector2i, id: String) -> void:
-	var def: Dictionary = Catalog.PLACEABLES[id]
-	var sz: Vector2i = def.size
-	if def.get("flat", false):
-		_draw_plot(origin, sz)
-		return
-	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.18), Iso.footprint_width(sz) * 0.42)
-	if not _draw_sprite(id, origin, sz):
-		_draw_box(origin, sz, def.color)
-	_draw_status(origin, sz, _object_height(sz))
-
-func _draw_box(origin: Vector2i, sz: Vector2i, col: Color) -> void:
-	var k := Iso.footprint_corners(origin, sz)
-	var up := Vector2(0, -_object_height(sz))
-	var top := k[0]
-	var right := k[1]
-	var bottom := k[2]
-	var left := k[3]
-	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + up, left + up]), col.darkened(0.25))
-	draw_colored_polygon(PackedVector2Array([bottom, right, right + up, bottom + up]), col.darkened(0.45))
-	var lid := PackedVector2Array([left + up, top + up, right + up, bottom + up])
-	draw_colored_polygon(lid, col)
-	lid.append(lid[0])
-	draw_polyline(lid, col.darkened(0.35), 1.5)
-
-func _draw_plot(origin: Vector2i, sz: Vector2i) -> void:
-	var g := GameState.grid(zone)
-	var center := Iso.footprint_center(origin, sz)
-	var prog := GameState.progress(zone, origin)
-	var wet := prog >= 0.0
-	if not _draw_flat_art("tile_soil_wet_01" if wet else "tile_soil_dry_01", center, Iso.footprint_width(sz)):
-		var pts := Iso.footprint_corners(origin, sz)
-		draw_colored_polygon(pts, Color("4c331e") if wet else Color("7a5535"))
-		pts.append(pts[0])
-		draw_polyline(pts, Color("2b1d12"), 1.5)
-	if wet:
-		var crop: String = g.states[origin].crop
-		if not _draw_sprite("crop_%s_s%d" % [crop, Catalog.crop_stage(prog)], origin, sz):
-			_draw_crop_placeholder(crop, prog, center)
-	_draw_status(origin, sz, 0.0)
-
-func _draw_crop_placeholder(crop: String, prog: float, p: Vector2) -> void:
-	var stage := Catalog.crop_stage(prog)
-	var ripe: Color = Catalog.CROPS[crop].color
-	var green := Color("5aa845")
-	var col := green
-	if stage == 3:
-		col = green.lerp(ripe, 0.5)
-	elif stage == 4:
-		col = ripe
-	var r: float = [4.0, 7.0, 10.0, 13.0][stage - 1]
-	for off in [Vector2(-20, -2), Vector2(0, 8), Vector2(20, -2), Vector2(0, -10)]:
-		draw_circle(p + off + Vector2(0, -r * 0.5), r, col)
-
-func _draw_status(origin: Vector2i, sz: Vector2i, height: float) -> void:
-	var prog := GameState.progress(zone, origin)
-	if prog < 0.0:
-		return
-	var top := Iso.footprint_corners(origin, sz)[0] + Vector2(0, -height - 12.0)
-	if prog >= 1.0:
-		draw_circle(top, 11, Color("2b1d12"))
-		draw_circle(top, 8, Color("ffd66b"))
-		return
-	draw_rect(Rect2(top + Vector2(-22, -3), Vector2(44, 7)), Color("2b1d12"))
-	draw_rect(Rect2(top + Vector2(-21, -2), Vector2(42.0 * prog, 5)), Color("8fe06a"))
