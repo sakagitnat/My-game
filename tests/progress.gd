@@ -18,6 +18,7 @@ func run() -> void:
 	var gs = root.get_node("/root/GameState")
 	var loc = root.get_node("/root/Loc")
 	loc.set_language("en")
+	gs.restaurant_active = false
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora3.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
@@ -43,8 +44,9 @@ func run() -> void:
 	gs.reset()
 	gs.autosave = false
 	gs.clock_override = 1000.0
-	check(gs.check_place("restaurant", Vector2i(13, 13), "rest_stove_01") == "level", "stove locked at level 1")
-	check(gs.place_object("restaurant", Vector2i(13, 13), "rest_stove_01") == "level" and gs.coins == 500, "locked item is not placed or charged")
+	check(gs.check_place("farm", Vector2i(16, 16), "farm_coop_01") == "level", "coop locked at level 1")
+	check(gs.place_object("farm", Vector2i(16, 16), "farm_coop_01") == "level" and gs.coins == 500, "locked item is not placed or charged")
+	check(gs.check_place("restaurant", Vector2i(13, 13), "rest_stove_01") == "ok", "the stove is available from the start so the restaurant can open")
 	check(gs.check_place("restaurant", Vector2i(13, 13), "rest_table_small_01") == "ok", "table available at level 1")
 	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.xp == GameState.PLACE_XP, "placing gives XP")
 	check(gs.interact("farm", plot, "tomato") == "level" and gs.coins == 490, "tomato locked at level 1")

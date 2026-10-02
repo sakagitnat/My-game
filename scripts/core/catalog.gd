@@ -9,7 +9,7 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 const PLACEABLES := {
 	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE"},
-	"rest_stove_01": {"zone": "restaurant", "cost": 80, "level": 2, "size": Vector2i(2, 2), "name": "ITEM_STOVE"},
+	"rest_stove_01": {"zone": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE"},
 	"farm_plot_01": {"zone": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "flat": true},
 	"farm_fence_01": {"zone": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE"},
 	"farm_coop_01": {"zone": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP"},
@@ -24,6 +24,20 @@ const CROPS := {
 
 # A coop turns 1 wheat into 1 egg after `time` seconds.
 const COOP := {"feed": "wheat", "product": "egg", "time": 120.0, "xp": 3}
+
+# Dishes the restaurant can cook. ingredients: items taken from the barn. time: seconds on a stove.
+# price: coins paid by the customer. xp: given when served.
+const RECIPES := {
+	"wheat_porridge": {"name": "DISH_PORRIDGE", "ingredients": {"wheat": 2}, "time": 15.0, "price": 14, "xp": 2, "level": 1},
+	"omelet": {"name": "DISH_OMELET", "ingredients": {"egg": 2}, "time": 20.0, "price": 40, "xp": 4, "level": 2},
+	"tomato_soup": {"name": "DISH_TOMATO_SOUP", "ingredients": {"tomato": 2, "wheat": 1}, "time": 25.0, "price": 60, "xp": 6, "level": 2},
+	"cabbage_salad": {"name": "DISH_SALAD", "ingredients": {"cabbage": 2}, "time": 30.0, "price": 100, "xp": 8, "level": 3},
+}
+
+# arrival_base: seconds between customers (shorter with reputation). patience: seconds a customer waits.
+# tip_rate: share of the price given as a tip by a customer served instantly (less as patience runs out).
+# counter_slots: finished dishes that can wait to be served.
+const RESTAURANT := {"arrival_base": 20.0, "patience": 75.0, "tip_rate": 0.25, "counter_slots": 6}
 
 # Things that block building until cleared.
 const OBSTACLES := {
