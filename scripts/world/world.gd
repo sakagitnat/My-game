@@ -243,15 +243,13 @@ func _on_tap(world: Vector2) -> void:
 	_deselect()
 	var parcel := WorldGrid.parcel_of(c)
 	if g.is_owned(c):
-		if zone == "restaurant" and GameState.layout_for(zone).label_of_parcel(parcel) in ["B", "r", "R"]:
+		if zone == "restaurant":
 			_select_land(c)
 		return
 	if g.can_buy_parcel(parcel):
 		_ask_buy(c)
-	else:
-		var info := GameState.layout_for(zone).info_of_parcel(parcel)
-		if not info.is_empty():
-			hud.show_message("MSG_AREA_FAR" if GameState.layout_for(zone).for_sale(parcel) else "MSG_AREA_INFO", Loc.t(info.name))
+	elif GameState.layout_for(zone).in_bounds(c) and GameState.layout_for(zone).tile_at(c) != SceneLayout.Tile.WATER:
+		hud.show_message("MSG_AREA_FAR" if GameState.layout_for(zone).for_sale(parcel) else "MSG_AREA_INFO")
 
 func _ask_buy(c: Vector2i) -> void:
 	var cost := GameState.land_cost(zone)
@@ -284,8 +282,8 @@ func _select_land(c: Vector2i) -> void:
 func _land_info(c: Vector2i) -> Dictionary:
 	var g := GameState.grid(zone)
 	var parcel := WorldGrid.parcel_of(c)
-	var info := {"title": Loc.t(GameState.layout_for(zone).info_of_parcel(parcel).name), "plain": true}
-	if GameState.layout_for(zone).is_shell_parcel(parcel):
+	var info := {"title": Loc.t("AREA_SHOP" if GameState.layout_for(zone).is_start_parcel(parcel) else "AREA_PLOT"), "plain": true}
+	if GameState.layout_for(zone).is_start_parcel(parcel):
 		info.status = Loc.t("STATUS_FLOOR_FIXED")
 	elif g.has_floor(parcel):
 		info.status = Loc.t("STATUS_FLOOR")

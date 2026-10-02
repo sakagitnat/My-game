@@ -24,44 +24,49 @@ func run() -> void:
 	gs.level = 10
 	gs.coins = 5000
 
-	# Labels are known and named in both languages
-	for key in SceneLayout.LABELS:
-		check(loc.t(SceneLayout.LABELS[key].name) != SceneLayout.LABELS[key].name, "area name translated: %s" % key)
-	loc.set_language("th")
-	for key in SceneLayout.LABELS:
-		check(loc.t(SceneLayout.LABELS[key].name) != SceneLayout.LABELS[key].name, "Thai area name: %s" % key)
-	loc.set_language("en")
-
-	# The restaurant scene: a seaside plot with the shop in the middle and a country road in front
+	# The restaurant map: sea along the back only, a country road in front, the shop in the middle
 	var lay: SceneLayout = gs.layout_for("restaurant")
 	var g: WorldGrid = gs.grid("restaurant")
-	check(lay.cells == Vector2i(48, 36) and g.size == lay.cells, "restaurant map is 48x36 cells")
-	check(lay.parcel_count() * WorldGrid.PARCEL == lay.cells, "blocks fill the map")
-	for key in lay.rows:
-		for ch in key:
-			check(SceneLayout.LABELS.has(ch), "known label %s" % ch)
-	check(lay.shell == Rect2i(18, 12, 12, 12), "the shop is 12x12 cells in the middle")
-	check(g.owned_parcels.size() == 4 and g.bought_count() == 0, "the shop blocks are free at the start")
+	check(lay.cells == Vector2i(48, 36) and g.size == lay.cells and lay.area == "restaurant", "restaurant map is 48x36 cells")
+	check(lay.parcels.size() == 6 and lay.parcels[0].length() == 8, "8x6 land blocks")
+	var water_sides := {"top": 0, "bottom": 0, "left": 0, "right": 0}
+	for i in range(48):
+		if lay.tile_at(Vector2i(i, 0)) == SceneLayout.Tile.WATER:
+			water_sides.top += 1
+		if lay.tile_at(Vector2i(i, 35)) == SceneLayout.Tile.WATER:
+			water_sides.bottom += 1
+	for i in range(8, 36):
+		if lay.tile_at(Vector2i(0, i)) == SceneLayout.Tile.WATER:
+			water_sides.left += 1
+		if lay.tile_at(Vector2i(47, i)) == SceneLayout.Tile.WATER:
+			water_sides.right += 1
+	check(water_sides.top == 48 and water_sides.bottom == 0 and water_sides.left == 0 and water_sides.right == 0, "the sea is on one side only")
+	check(lay.tile_at(Vector2i(24, 2)) == SceneLayout.Tile.WATER and lay.tile_at(Vector2i(24, 12)) == SceneLayout.Tile.FLOOR, "water behind, floor in the shop")
+	check(not lay.is_solid(Vector2i(24, 2)) and lay.is_solid(Vector2i(24, 18)) and lay.is_solid(Vector2i(24, 33)), "water is not solid, land is")
+	check(lay.coast_segments().size() > 20, "there is a shoreline at the back")
+	var road_ok := true
+	for x in range(48):
+		for y in range(25, 29):
+			road_ok = road_ok and lay.is_road(Vector2i(x, y))
+	check(road_ok and lay.is_solid(Vector2i(0, 26)) and lay.is_solid(Vector2i(47, 26)), "the country road runs across the front and off both sides")
 	for y in range(12, 24):
 		for x in range(18, 30):
-			check(lay.is_solid(Vector2i(x, y)), "shop cell %d,%d is solid" % [x, y])
-			break
+			if lay.tile_at(Vector2i(x, y)) != SceneLayout.Tile.FLOOR:
+				check(false, "shop floor at %d,%d" % [x, y])
+				break
+	check(lay.wall_at(Vector2i(23, 24), "n") == "door" and lay.wall_at(Vector2i(24, 24), "n") == "door" and lay.wall_at(Vector2i(20, 24), "n") == "low", "the door is in the front wall")
+	check(lay.wall_at(Vector2i(19, 12), "n") == "window" and lay.wall_at(Vector2i(18, 15), "w") == "window" and lay.wall_at(Vector2i(21, 12), "n") == "wall", "walls and windows at the back")
+	check(lay.walls.size() == 48, "the shop has 48 wall pieces")
+	check(lay.starts.size() == 4 and g.owned_parcels.size() == 4 and g.bought_count() == 0, "the four shop blocks are owned at the start")
 	check(gs.start_cell() == Vector2i(24, 18), "the camera starts in the middle of the shop")
-	check(g.has_floor(Vector2i(3, 2)) and g.has_floor(Vector2i(4, 3)), "the shop blocks start as indoor floor")
-	check(lay.door_cells.size() == 2 and lay.door_cells[0].y == lay.shell.end.y - 1, "the door is in the front wall")
-	check(not lay.is_solid(Vector2i(24, 1)) and not lay.has_land(Vector2i(24, 1)), "open sea behind the shop")
-	check(lay.is_solid(Vector2i(24, 12)) and lay.is_solid(Vector2i(24, 27)), "land from the shop to the road")
-	check(not lay.is_solid(Vector2i(0, 8)) and lay.is_solid(Vector2i(0, 20)), "the sea curves round both ends")
-	check(lay.coast_segments().size() > 20, "there is a shoreline")
-	check(lay.road == Rect2i(0, 25, 48, 4) and lay.is_road(Vector2i(0, 26)) and lay.is_road(Vector2i(47, 28)), "the country road runs across the front")
-	check(lay.is_solid(Vector2i(0, 26)) and lay.is_solid(Vector2i(47, 26)), "the road reaches both sides of the scene")
-	check(not lay.is_road(Vector2i(24, 18)), "the shop is not on the road")
+	check(g.has_floor(Vector2i(3, 2)) == false, "the shop floor is painted tiles, not a bought style")
 
 	# Land for sale: terrace by the sea and gardens at the sides; never the road or the sea
-	check(g.can_buy_parcel(Vector2i(3, 1)) and g.can_buy_parcel(Vector2i(2, 2)) and g.can_buy_parcel(Vector2i(5, 3)), "terrace and garden blocks next to the shop can be bought")
-	check(not g.can_buy_parcel(Vector2i(3, 4)) and not g.can_buy_parcel(Vector2i(3, 0)) and not g.can_buy_parcel(Vector2i(2, 1)), "the road and the sea are not for sale")
+	check(g.can_buy_parcel(Vector2i(3, 1)) and g.can_buy_parcel(Vector2i(2, 2)) and g.can_buy_parcel(Vector2i(5, 3)), "land next to the shop can be bought")
+	check(not g.can_buy_parcel(Vector2i(3, 4)) and not g.can_buy_parcel(Vector2i(3, 0)) and not g.can_buy_parcel(Vector2i(2, 1)), "the road, the sea and locked land are not for sale")
 	for p in lay.sale_parcels():
-		check(lay.label_of_parcel(p) in ["B", "r"], "only terrace and garden are for sale")
+		check(lay.label_of_parcel(p) == "B", "only blocks marked B are for sale")
+	check(lay.sale_parcels().size() == 12, "twelve blocks around the shop are for sale")
 	check(gs.buy_land("restaurant", Vector2i(3, 1) * 6) == "ok" and gs.coins == 4850, "buy the terrace block")
 
 	# Floors: the shop is fixed, bought land can be built over and put back
@@ -70,7 +75,7 @@ func run() -> void:
 	check(gs.set_floor("restaurant", Vector2i(3, 1) * 6, false) == "ok" and not g.has_floor(Vector2i(3, 1)) and gs.coins == 4790, "back to open ground is free")
 	check(gs.set_floor("restaurant", Vector2i(24, 18), false) == "fixed", "the shop floor stays")
 	check(gs.set_floor("restaurant", Vector2i(2, 2) * 6, true) == "locked", "cannot build over land you do not own")
-	check(gs.set_floor("restaurant", Vector2i(3, 4) * 6, true) == "invalid" and gs.set_floor("farm", Vector2i(12, 12), true) == "invalid", "no floors on the road or in the farm")
+	check(gs.set_floor("farm", Vector2i(12, 12), true) == "invalid", "no floors in the farm")
 	gs.coins = 10
 	check(gs.set_floor("restaurant", Vector2i(3, 1) * 6, true) == "no_coins", "a floor costs coins")
 	gs.coins = 5000
@@ -84,23 +89,46 @@ func run() -> void:
 	check(gs.check_place("restaurant", Vector2i(2, 3) * 6 + Vector2i(3, 3), "rest_table_small_01") == "locked", "unbought land is locked")
 	check(gs.check_place("restaurant", Vector2i(3, 1) * 6 + Vector2i(3, 3), "rest_table_small_01") == "ok", "tables go on a bought terrace")
 
-	# Obstacles: the shop and the road are clear
-	var in_shop := 0
-	var on_road := 0
+	# Obstacles are part of the map: none in the shop, on the road or in the water
+	var bad := 0
 	for c in g.blocked:
-		if lay.shell.has_point(c):
-			in_shop += 1
-		if lay.is_road(c):
-			on_road += 1
-	check(in_shop == 0 and on_road == 0, "the shop and the road are clear")
-	check(g.blocked.size() > 15, "trees and rocks lie around the unbought land")
+		if lay.tile_at(c) in [SceneLayout.Tile.FLOOR, SceneLayout.Tile.ROAD, SceneLayout.Tile.WATER] or not lay.is_solid(c):
+			bad += 1
+	check(bad == 0, "trees and rocks stand only on open ground")
+	check(g.blocked.size() > 100, "trees and rocks lie around: %d" % g.blocked.size())
 
-	# The farm: a plot with a beach all round, one starting block
+	# The farm: all grass, one starting block, every block for sale
 	var farm: SceneLayout = gs.layout_for("farm")
 	check(farm.cells == Vector2i(30, 30) and gs.grid("farm").owned_parcels.size() == 1, "the farm is 30x30 with one starting block")
 	check(gs.farm_start_cell() == Vector2i(15, 15), "the farm camera starts in the middle")
-	check(farm.sale_parcels().size() == 25 or farm.sale_parcels().size() > 15, "farm blocks are for sale")
+	check(farm.sale_parcels().size() == 24 and gs.grid("farm").blocked.size() > 30, "farm blocks are for sale and trees stand about")
 	check(gs.check_place("farm", Vector2i(15, 15), "farm_plot_01") == "ok" and gs.check_place("farm", Vector2i(15, 15), "rest_table_small_01") == "invalid", "farm items in the farm only")
+
+	# Maps are data: round trip through text, painting, the smooth shoreline, and the owner's copy in user storage
+	var copy := SceneLayout.from_dict(MapStore.parse(MapStore.to_text(lay)))
+	check(copy.tiles == lay.tiles and copy.walls == lay.walls and copy.parcels == lay.parcels and copy.obstacles.size() == lay.obstacles.size(), "a map survives to_dict / from_dict")
+	var pond := SceneLayout.blank("pond", "any", Vector2i(24, 24))
+	check(pond.coast_segments().is_empty() and pond.edge_distance(Vector2i(12, 12)) == 99, "a map without water has no coast")
+	pond.set_tile(Vector2i(12, 12), SceneLayout.Tile.WATER)
+	pond.rebuild()
+	check(pond.is_solid(Vector2i(12, 12)) == false and pond.tile_at(Vector2i(12, 12)) == SceneLayout.Tile.WATER, "a water cell is never solid")
+	for y in range(10, 14):
+		for x in range(10, 14):
+			pond.set_tile(Vector2i(x, y), SceneLayout.Tile.WATER)
+	pond.rebuild()
+	check(not pond.has_land(Vector2i(11, 11)) and pond.has_land(Vector2i(6, 6)) and pond.coast_segments().size() > 6, "a pond has a smooth shore")
+	check(pond.edge_distance(Vector2i(6, 6)) >= 3 and pond.edge_distance(Vector2i(11, 11)) == -1, "distance to the water")
+	pond.set_wall(Vector2i(3, 3), "n", "window")
+	check(pond.wall_at(Vector2i(3, 3), "n") == "window" and pond.wall_at(Vector2i(3, 3), "w") == "", "walls sit on cell edges")
+	pond.set_wall(Vector2i(3, 3), "n", "")
+	check(pond.walls.is_empty(), "a wall can be removed")
+	pond.set_parcel_label(Vector2i(1, 1), "S")
+	check(pond.starts == [Vector2i(1, 1)] and pond.start_cell() == Vector2i(9, 9), "start blocks and the start cell")
+	pond.id = "restaurant"
+	check(MapStore.save_user(pond) and MapStore.has_user_map("restaurant"), "an edited map is saved to user storage")
+	check(MapStore.load_layout("restaurant").cells == Vector2i(24, 24) and MapStore.load_layout("restaurant", false).cells == Vector2i(48, 36), "the user copy wins; the shipped map is still there")
+	MapStore.reset_user("restaurant")
+	check(not MapStore.has_user_map("restaurant") and MapStore.load_layout("restaurant").cells == Vector2i(48, 36), "going back to the shipped map")
 
 	# Floors survive saving; a saved map of another size is ignored
 	gs.autosave = true
@@ -108,7 +136,7 @@ func run() -> void:
 	var saved_floor: bool = g.has_floor(Vector2i(3, 1))
 	gs.reset()
 	check(not gs.grid("restaurant").has_floor(Vector2i(3, 1)), "reset clears floors")
-	check(gs.load_game() and gs.grid("restaurant").has_floor(Vector2i(3, 1)) == saved_floor and gs.grid("restaurant").has_floor(Vector2i(3, 2)), "floors persist")
+	check(gs.load_game() and gs.grid("restaurant").has_floor(Vector2i(3, 1)) == saved_floor, "floors persist")
 	var f := FileAccess.open(gs.save_path, FileAccess.WRITE)
 	f.store_string(JSON.stringify({"version": 1, "coins": 777, "grids": {"restaurant": {"size": [30, 30], "parcel": 6, "parcels": [[2, 2]], "start": 1, "objects": [[13, 13, "rest_table_small_01", 2, 2]]}}}))
 	f.close()
@@ -135,7 +163,7 @@ func run() -> void:
 	check(world.selected_land != world.NONE, "the shop floor has a bubble too")
 	world._deselect()
 	world._on_tap(Iso.cell_to_world(Vector2i(1, 4) * 6 + Vector2i(2, 2)))
-	check(world.hud.message_key == "MSG_AREA_INFO", "tapping the road says what it is")
+	check(world.hud.message_key == "MSG_AREA_INFO", "tapping land that is not for sale says so")
 	world.start_placement("rest_table_small_01")
 	world.set_ghost(Vector2i(24, 18))
 	await process_frame
@@ -150,21 +178,9 @@ func run() -> void:
 	world.queue_free()
 	await process_frame
 
-	# The overview map (art only): the whole island with an organic coast
-	var ov := SceneLayout.overview()
-	check(ov.parcel_count() == Vector2i(11, 11) and ov.cells == Vector2i(66, 66), "the overview is the 11x11 block island")
-	var land := 0
-	for y in range(66):
-		for x in range(66):
-			if ov.is_solid(Vector2i(x, y)):
-				land += 1
-	var frac: float = float(land) / (66 * 66)
-	check(frac > 0.35 and frac < 0.7, "land covers about half of the overview")
-	check(not ov.has_land(Vector2i(0, 0)) and not ov.has_land(Vector2i(65, 65)), "its corners are sea")
-
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	if failures == 0:
-		print("PASS: scenes (restaurant shop, sea and road, land for sale, floors, areas, farm, saves, overview)")
+		print("PASS: scenes (maps as data, one-sided sea, shop walls, land for sale, floors, farm, saves)")
 		quit(0)
 	else:
 		printerr("%d check(s) failed" % failures)
