@@ -370,8 +370,9 @@ func _draw() -> void:
 				_draw_floor(Catalog.LOCKED_TILE, p, Color("2f3a33"))
 				if g.can_buy(c):
 					_outline(p, Color("ffd66b"))
-					draw_string(font, p + Vector2(-32, 8), str(GameState.land_cost(zone)),
-						HORIZONTAL_ALIGNMENT_CENTER, 64, 22, Color("ffd66b"))
+					var label := str(GameState.land_cost(zone))
+					draw_string_outline(font, p + Vector2(-32, 8), label, HORIZONTAL_ALIGNMENT_CENTER, 64, 22, 6, Color("1b1208"))
+					draw_string(font, p + Vector2(-32, 8), label, HORIZONTAL_ALIGNMENT_CENTER, 64, 22, Color("ffd66b"))
 	var cells: Array = g.objects.keys()
 	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x + a.y < b.x + b.y)
 	for c in cells:
