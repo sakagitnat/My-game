@@ -212,6 +212,7 @@ func _refresh_barn() -> void:
 		var empty := Label.new()
 		empty.text = Loc.t("BARN_EMPTY")
 		barn_rows.add_child(empty)
+		barn_rows.add_child(_test_coins_button())
 		return
 	var worth := 0
 	for item in inv.items:
@@ -232,6 +233,15 @@ func _refresh_barn() -> void:
 	all.custom_minimum_size = Vector2(0, 64)
 	all.pressed.connect(_sell_everything)
 	barn_rows.add_child(all)
+	barn_rows.add_child(_test_coins_button())
+
+func _test_coins_button() -> Button:
+	var b := Button.new()
+	b.text = Loc.t("BTN_TEST_COINS") % GameState.TEST_GRANT
+	b.custom_minimum_size = Vector2(0, 56)
+	b.modulate = Color(1, 1, 1, 0.75)
+	b.pressed.connect(GameState.grant_test_coins)
+	return b
 
 func _sell_item(item: String) -> void:
 	var earned := GameState.sell(item, GameState.inventory.count(item))

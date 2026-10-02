@@ -5,6 +5,7 @@ signal changed
 const SAVE_PATH := "user://salvora.json"
 const START_COINS := 500
 const GRID_SIZE := Vector2i(12, 12)
+const TEST_GRANT := 500
 
 var coins: int = START_COINS
 var language: String = ""
@@ -50,6 +51,23 @@ func buy_land(zone: String, c: Vector2i) -> String:
 	_commit()
 	return "ok"
 
+func _min_seed_cost() -> int:
+	var lowest := 1 << 30
+	for crop in Catalog.CROPS:
+		lowest = mini(lowest, int(Catalog.CROPS[crop].seed))
+	return lowest
+
+func _farm_has(id: String) -> bool:
+	return grid("farm").objects.values().has(id)
+
+# True when the player has no coins, nothing to sell and nothing growing, so no action can ever earn money.
+func is_broke() -> bool:
+	return coins < _min_seed_cost() and inventory.total() == 0 and grid("farm").states.is_empty()
+
+func grant_test_coins() -> void:
+	coins += TEST_GRANT
+	_commit()
+
 func place_object(zone: String, c: Vector2i, id: String) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or def.zone != zone:
@@ -61,9 +79,12 @@ func place_object(zone: String, c: Vector2i, id: String) -> String:
 		return "locked"
 	if g.objects.has(c):
 		return "occupied"
-	if coins < def.cost:
+	var cost: int = def.cost
+	if id == "farm_plot_01" and is_broke() and not _farm_has("farm_plot_01"):
+		cost = 0
+	if coins < cost:
 		return "no_coins"
-	coins -= def.cost
+	coins -= cost
 	g.place(c, id)
 	_commit()
 	return "ok"
@@ -137,6 +158,8 @@ func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
 	if not Catalog.CROPS.has(seed_id):
 		return "invalid"
 	var cost: int = Catalog.CROPS[seed_id].seed
+	if seed_id == "wheat" and is_broke():
+		cost = 0
 	if coins < cost:
 		return "no_coins"
 	coins -= cost
