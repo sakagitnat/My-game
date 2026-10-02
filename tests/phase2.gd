@@ -18,9 +18,10 @@ func run() -> void:
 	gs.reset()
 	gs.autosave = false
 	gs.clock_override = 1000.0
-	var plot := Vector2i(4, 4)
-	var plot2 := Vector2i(5, 4)
-	var coop := Vector2i(6, 4)
+	var plot := Vector2i(12, 12)
+	var plot2 := Vector2i(14, 12)
+	var coop := Vector2i(16, 16)
+	var coop_origin := Vector2i(15, 15)
 
 	check(Catalog.crop_stage(0.0) == 1 and Catalog.crop_stage(0.4) == 2 and Catalog.crop_stage(0.7) == 3 and Catalog.crop_stage(1.0) == 4, "crop stages")
 
@@ -62,9 +63,10 @@ func run() -> void:
 	check(gs.interact("farm", plot, "wheat") == "harvested" and gs.inventory.count("wheat") == 2, "harvest after freeing space")
 
 	# Coop: needs wheat, produces egg
-	check(gs.place_object("farm", coop, "farm_coop_01") == "ok", "place coop")
+	check(gs.place_object("farm", coop, "farm_coop_01") == "ok" and gs.grid("farm").origin_at(Vector2i(17, 17)) == coop_origin, "place 3x3 coop centred on the tapped cell")
+	check(gs.place_object("farm", Vector2i(16, 14), "farm_plot_01") == "occupied", "plot cannot overlap the coop")
 	gs.inventory.remove("wheat", 2)
-	check(gs.interact("farm", coop, "wheat") == "no_feed", "coop needs feed")
+	check(gs.interact("farm", Vector2i(17, 17), "wheat") == "no_feed", "coop needs feed (tapping any of its cells)")
 	gs.inventory.add("wheat", 1)
 	check(gs.interact("farm", coop, "wheat") == "fed" and gs.inventory.count("wheat") == 0, "feed coop")
 	check(gs.interact("farm", coop, "wheat") == "busy", "coop busy")
@@ -102,7 +104,7 @@ func run() -> void:
 	check(is_equal_approx(gs.progress("farm", plot), 0.5), "progress continues after reload")
 	gs.clock_override = 5100.0
 	check(gs.progress("farm", plot) >= 1.0, "grows while the game is closed")
-	check(gs.grid("farm").objects.get(coop) == "farm_coop_01", "coop persisted")
+	check(gs.grid("farm").objects.get(coop_origin) == "farm_coop_01", "coop persisted")
 
 	# Old phase-1 saves without "states" still load
 	var old := {"version": 1, "coins": 77, "language": "en", "grids": {"farm": {"size": [12, 12], "start": 9, "owned": [[4, 4]], "objects": [[4, 4, "farm_plot_01"]]}}}
@@ -110,7 +112,7 @@ func run() -> void:
 	f.store_string(JSON.stringify(old))
 	f.close()
 	gs.reset()
-	check(gs.load_game() and gs.coins == 77 and gs.progress("farm", Vector2i(4, 4)) == -1.0, "old save loads")
+	check(gs.load_game() and gs.coins == 77 and gs.progress("farm", Vector2i(4, 4)) == -1.0 and gs.grid("farm").objects.is_empty(), "old save loads (coins kept)")
 
 	# Never soft-lock: with no coins, nothing to sell and nothing growing, the player can still start over
 	gs.reset()

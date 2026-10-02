@@ -1,7 +1,6 @@
 extends Node
 
 const DIRS: Array[String] = ["tiles", "restaurant", "buildings", "farm", "deco", "chars", "icons", "ui", "app"]
-const ART_SCALE := 0.125
 
 var _cache: Dictionary = {}
 

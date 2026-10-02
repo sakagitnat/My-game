@@ -19,22 +19,34 @@ func run() -> void:
 	gs.reset()
 
 	# Iso grid maths
-	for c in [Vector2i(0, 0), Vector2i(3, 5), Vector2i(11, 0), Vector2i(0, 11)]:
+	for c in [Vector2i(0, 0), Vector2i(3, 5), Vector2i(29, 0), Vector2i(0, 29)]:
 		check(Iso.world_to_cell(Iso.cell_to_world(c)) == c, "iso round trip %s" % c)
-		check(Iso.world_to_cell(Iso.cell_to_world(c) + Vector2(20, 10)) == c, "iso inside cell %s" % c)
+		check(Iso.world_to_cell(Iso.cell_to_world(c) + Vector2(10, 5)) == c, "iso inside cell %s" % c)
+	var corners := Iso.footprint_corners(Vector2i(3, 4), Vector2i(2, 2))
+	check(is_equal_approx(corners[1].x - corners[3].x, Iso.footprint_width(Vector2i(2, 2))), "footprint width matches corners")
+	check(Iso.footprint_center(Vector2i(3, 4), Vector2i(1, 1)) == Iso.cell_to_world(Vector2i(3, 4)), "1x1 footprint centre is the cell")
 
-	# WorldGrid rules
-	var g := WorldGrid.new(Vector2i(5, 5), [Vector2i(2, 2)])
-	check(g.can_place(Vector2i(2, 2)) and not g.can_place(Vector2i(1, 2)), "place only on owned")
-	check(g.can_buy(Vector2i(2, 3)) and not g.can_buy(Vector2i(0, 0)), "buy only adjacent")
-	check(not g.can_buy(Vector2i(5, 2)), "no buying out of bounds")
-	check(g.buy(Vector2i(2, 3)) and g.bought_count() == 1, "buy cell")
-	check(g.place(Vector2i(2, 2), "x") and not g.place(Vector2i(2, 2), "y"), "no double place")
-	check(g.remove(Vector2i(2, 2)) == "x" and g.remove(Vector2i(2, 2)) == "", "remove")
-	g.place(Vector2i(2, 3), "t")
-	var g2 := WorldGrid.new(Vector2i(5, 5))
-	g2.load_dict(JSON.parse_string(JSON.stringify(g.to_dict())))
-	check(g2.is_owned(Vector2i(2, 3)) and g2.objects.get(Vector2i(2, 3)) == "t" and g2.bought_count() == 1, "grid json round trip")
+	# WorldGrid: land blocks and multi-cell footprints
+	var g := WorldGrid.new(Vector2i(12, 12), [Vector2i(0, 0)])
+	var two := Vector2i(2, 2)
+	check(g.can_place(Vector2i(0, 0), two) and not g.can_place(Vector2i(5, 5), two), "place only on owned land")
+	check(g.is_owned(Vector2i(5, 5)) and not g.is_owned(Vector2i(6, 0)), "block edge is 6 cells")
+	check(g.can_buy_parcel(Vector2i(1, 0)) and not g.can_buy_parcel(Vector2i(1, 1)), "buy only edge-adjacent blocks")
+	check(not g.can_buy_parcel(Vector2i(2, 0)) and not g.can_buy_parcel(Vector2i(0, 0)), "no out-of-bounds or owned blocks")
+	check(g.buy_parcel(Vector2i(1, 0)) and g.bought_count() == 1, "buy block")
+	check(g.is_owned(Vector2i(11, 5)) and g.is_owned(Vector2i(6, 0)), "whole block owned after one buy")
+	check(g.place(Vector2i(5, 0), "x", two) and not g.can_place(Vector2i(6, 0), two), "footprint blocks overlap")
+	check(g.origin_at(Vector2i(6, 1)) == Vector2i(5, 0) and g.id_at(Vector2i(6, 1)) == "x", "any covered cell finds the object")
+	check(not g.place(Vector2i(11, 0), "y", two), "footprint cannot leave the map")
+	check(g.remove_at(Vector2i(6, 1)) == "x" and g.remove_at(Vector2i(5, 0)) == "", "remove frees every cell")
+	check(g.place(Vector2i(6, 0), "t", two) and g.place(Vector2i(0, 0), "f", Vector2i.ONE), "cells free again after remove")
+	g.states[Vector2i(6, 0)] = {"k": 1}
+	var g2 := WorldGrid.new(Vector2i(12, 12))
+	check(g2.load_dict(JSON.parse_string(JSON.stringify(g.to_dict()))), "grid loads its own format")
+	check(g2.is_owned(Vector2i(8, 3)) and g2.objects.get(Vector2i(6, 0)) == "t" and g2.bought_count() == 1, "grid json round trip")
+	check(int(g2.states.get(Vector2i(6, 0), {}).get("k", 0)) == 1 and g2.origin_at(Vector2i(7, 1)) == Vector2i(6, 0), "footprints and state restored")
+	var g3 := WorldGrid.new(Vector2i(12, 12), [Vector2i(0, 0)])
+	check(not g3.load_dict({"size": [12, 12], "owned": [[1, 1]], "objects": []}) and g3.owned_parcels.size() == 1, "old-format grid rejected, untouched")
 
 	# Inventory
 	var inv := Inventory.new(5)
@@ -44,27 +56,39 @@ func run() -> void:
 	inv2.load_dict(JSON.parse_string(JSON.stringify(inv.to_dict())))
 	check(inv2.count("milk") == 2 and inv2.capacity == 5, "inventory round trip")
 
-	# GameState economy
+	# GameState economy (start block is cells 12..17)
 	check(gs.coins == 500, "start coins")
-	check(gs.buy_land("restaurant", Vector2i(0, 0)) == "invalid", "buy far cell rejected")
-	check(gs.buy_land("restaurant", Vector2i(3, 4)) == "ok" and gs.coins == 450, "buy land costs 50")
-	check(gs.land_cost("restaurant") == 75 and gs.land_cost("farm") == 50, "land cost scales per zone")
-	check(gs.place_object("restaurant", Vector2i(4, 4), "rest_table_small_01") == "ok" and gs.coins == 420, "place table")
-	check(gs.place_object("restaurant", Vector2i(4, 4), "rest_stove_01") == "occupied", "occupied")
+	check(gs.grid("restaurant").is_owned(Vector2i(12, 12)) and gs.grid("restaurant").is_owned(Vector2i(17, 17)) and not gs.grid("restaurant").is_owned(Vector2i(18, 12)), "start block")
+	check(gs.buy_land("restaurant", Vector2i(0, 0)) == "invalid", "buy far block rejected")
+	check(gs.buy_land("restaurant", Vector2i(20, 14)) == "ok" and gs.coins == 350, "buy block costs 150")
+	check(gs.grid("restaurant").is_owned(Vector2i(18, 12)) and gs.grid("restaurant").is_owned(Vector2i(23, 17)), "tapping any cell buys the whole block")
+	check(gs.land_cost("restaurant") == 250 and gs.land_cost("farm") == 150, "land cost scales per zone")
+	check(gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01") == "ok" and gs.coins == 320, "place table")
+	check(gs.place_object("restaurant", Vector2i(14, 14), "rest_stove_01") == "occupied", "overlap rejected")
 	check(gs.place_object("restaurant", Vector2i(0, 0), "rest_stove_01") == "locked", "locked")
+	check(gs.place_object("restaurant", Vector2i(17, 13), "rest_stove_01") == "ok" and gs.coins == 240, "footprint may span two owned blocks")
 	check(gs.place_object("restaurant", Vector2i(5, 5), "farm_fence_01") == "invalid", "wrong zone item")
-	check(gs.remove_object("restaurant", Vector2i(4, 4)) == "ok" and gs.coins == 435, "remove refunds half")
+	check(gs.remove_object("restaurant", Vector2i(14, 14)) == "ok" and gs.coins == 240 + 15, "remove from any covered cell refunds half")
+	gs.remove_object("restaurant", Vector2i(18, 14))
 	gs.coins = 5
-	check(gs.place_object("restaurant", Vector2i(4, 4), "rest_stove_01") == "no_coins" and gs.coins == 5, "no coins")
+	check(gs.place_object("restaurant", Vector2i(13, 13), "rest_stove_01") == "no_coins" and gs.coins == 5, "no coins")
 	gs.coins = 321
 	gs.set_language("th")
-	gs.place_object("restaurant", Vector2i(5, 5), "rest_table_small_01")
+	gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01")
 	var saved_coins: int = gs.coins
 	gs.reset()
 	check(gs.load_game(), "load succeeds")
 	check(gs.coins == saved_coins and gs.language == "th", "coins and language persisted")
-	check(gs.grid("restaurant").objects.get(Vector2i(5, 5)) == "rest_table_small_01", "objects persisted")
-	check(gs.grid("restaurant").is_owned(Vector2i(3, 4)), "bought land persisted")
+	check(gs.grid("restaurant").objects.get(Vector2i(13, 13)) == "rest_table_small_01", "objects persisted")
+	check(gs.grid("restaurant").is_owned(Vector2i(18, 12)), "bought block persisted")
+
+	# A save from before land blocks keeps coins but starts a fresh map
+	var legacy := {"version": 1, "coins": 99, "language": "en", "grids": {"restaurant": {"size": [12, 12], "start": 9, "owned": [[4, 4]], "objects": [[4, 4, "rest_table_small_01"]]}}}
+	var lf := FileAccess.open(gs.save_path, FileAccess.WRITE)
+	lf.store_string(JSON.stringify(legacy))
+	lf.close()
+	gs.reset()
+	check(gs.load_game() and gs.coins == 99 and gs.grid("restaurant").objects.is_empty(), "legacy save: coins kept, map reset")
 
 	# Corrupt / foreign save files fall back safely
 	var f := FileAccess.open(gs.save_path, FileAccess.WRITE)
@@ -108,17 +132,17 @@ func run() -> void:
 	root.add_child(world)
 	await process_frame
 	await process_frame
-	world.camera.position = Iso.cell_to_world(Vector2i(3, 4))
+	world.camera.position = Iso.cell_to_world(gs.start_cell())
 	world.camera.zoom = Vector2.ONE
 	world.tool = "buy"
-	world._on_tap(Iso.cell_to_world(Vector2i(3, 4)))
-	check(gs.grid("restaurant").is_owned(Vector2i(3, 4)) and gs.coins == 450, "tap buys land")
+	world._on_tap(Iso.cell_to_world(Vector2i(20, 14)))
+	check(gs.grid("restaurant").is_owned(Vector2i(20, 14)) and gs.coins == 350, "tap buys a whole block")
 	world.tool = "rest_table_small_01"
-	world._on_tap(Iso.cell_to_world(Vector2i(4, 4)))
-	check(gs.grid("restaurant").objects.has(Vector2i(4, 4)), "tap places table")
+	world._on_tap(Iso.cell_to_world(Vector2i(14, 14)))
+	check(gs.grid("restaurant").objects.has(Vector2i(14, 14)), "tap places table")
 	world.tool = "remove"
-	world._on_tap(Iso.cell_to_world(Vector2i(4, 4)))
-	check(not gs.grid("restaurant").objects.has(Vector2i(4, 4)), "tap removes table")
+	world._on_tap(Iso.cell_to_world(Vector2i(15, 15)))
+	check(gs.grid("restaurant").objects.is_empty(), "tap on any covered cell removes table")
 	world.set_zone("farm")
 	check(world.tool_buttons.has("farm_fence_01") and not world.tool_buttons.has("rest_table_small_01"), "farm palette")
 	world.queue_redraw()

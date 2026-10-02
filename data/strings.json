@@ -23,7 +23,7 @@
 	"BTN_SELL_ALL": {"en": "Sell all (+%d)", "th": "ขายทั้งหมด (+%d)"},
 	"BTN_TEST_COINS": {"en": "Test: +%d coins", "th": "ทดสอบ: เติม %d เหรียญ"},
 	"BTN_CLOSE": {"en": "Close", "th": "ปิด"},
-	"HINT_START": {"en": "Drag to move, pinch to zoom. Tap a glowing plot to buy it.", "th": "ลากเพื่อเลื่อน บีบนิ้วเพื่อซูม แตะที่ดินที่มีราคาเพื่อซื้อ"},
+	"HINT_START": {"en": "Drag to move, pinch to zoom. Tap a glowing land block to buy it.", "th": "ลากเพื่อเลื่อน บีบนิ้วเพื่อซูม แตะบล็อกที่ดินที่มีราคาเพื่อซื้อทั้งบล็อก"},
 	"HINT_FARM": {"en": "Buy plots, then tap an empty plot to plant and a ripe one to harvest.", "th": "ซื้อแปลงปลูก แตะแปลงว่างเพื่อปลูก แตะแปลงที่สุกเพื่อเก็บเกี่ยว"},
 	"MSG_BOUGHT": {"en": "Land bought for %d coins.", "th": "ซื้อที่ดินแล้ว %d เหรียญ"},
 	"MSG_PLACED": {"en": "Placed.", "th": "วางแล้ว"},
