@@ -1,0 +1,22 @@
+{
+	"APP_NAME": {"en": "Salvora", "th": "ซัลโวรา"},
+	"HUD_COINS": {"en": "Coins %d", "th": "เหรียญ %d"},
+	"ZONE_RESTAURANT": {"en": "Restaurant", "th": "ร้านอาหาร"},
+	"ZONE_FARM": {"en": "Farm", "th": "ฟาร์ม"},
+	"TOOL_BUY": {"en": "Buy land", "th": "ซื้อที่ดิน"},
+	"TOOL_REMOVE": {"en": "Remove", "th": "เก็บของ"},
+	"ITEM_TABLE": {"en": "Table", "th": "โต๊ะ"},
+	"ITEM_STOVE": {"en": "Stove", "th": "เตา"},
+	"ITEM_FENCE": {"en": "Fence", "th": "รั้ว"},
+	"ITEM_COOP": {"en": "Chicken coop", "th": "เล้าไก่"},
+	"LANG_BUTTON": {"en": "ไทย", "th": "English"},
+	"HINT_START": {"en": "Drag to move, pinch to zoom. Tap a glowing plot to buy it.", "th": "ลากเพื่อเลื่อน บีบนิ้วเพื่อซูม แตะที่ดินที่มีราคาเพื่อซื้อ"},
+	"MSG_BOUGHT": {"en": "Land bought for %d coins.", "th": "ซื้อที่ดินแล้ว %d เหรียญ"},
+	"MSG_PLACED": {"en": "Placed.", "th": "วางแล้ว"},
+	"MSG_REMOVED": {"en": "Removed. Refunded %d coins.", "th": "เก็บแล้ว คืนเงิน %d เหรียญ"},
+	"MSG_NO_COINS": {"en": "Not enough coins.", "th": "เหรียญไม่พอ"},
+	"MSG_LOCKED": {"en": "Buy this land first.", "th": "ต้องซื้อที่ดินก่อน"},
+	"MSG_OCCUPIED": {"en": "Something is already here.", "th": "ช่องนี้มีของอยู่แล้ว"},
+	"MSG_INVALID": {"en": "Can't do that here.", "th": "ทำตรงนี้ไม่ได้"},
+	"MSG_EMPTY": {"en": "Nothing to remove.", "th": "ไม่มีของให้เก็บ"}
+}

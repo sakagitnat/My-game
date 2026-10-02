@@ -1,4 +1,4 @@
-name: Build Android demo
+name: Build Android
 on:
   push:
     branches: [main]
@@ -55,13 +55,14 @@ jobs:
         run: |
           godot --headless --path . --editor --quit
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/smoke.gd
+          XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/phase1.gd
       - name: Export test APK
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug Android build/tiny-tavern.apk
+          godot --headless --path . --export-debug Android build/salvora.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: tiny-tavern-android
-          path: build/tiny-tavern.apk
+          name: salvora-android
+          path: build/salvora.apk
           if-no-files-found: error
           retention-days: 7
