@@ -661,12 +661,22 @@ func _build_names() -> void:
 		e.custom_minimum_size = Vector2(0, 60)
 		e.text_changed.connect(func(t: String) -> void:
 			name_draft[i] = t
-			start.disabled = name_draft[0].strip_edges() == "" or name_draft[1].strip_edges() == "")
+			start.disabled = not _names_ready())
+		if OS.has_feature("web"):
+			# Godot cannot raise the iPad keyboard from a text field, so a tap asks the browser instead.
+			e.focus_mode = Control.FOCUS_NONE
+			e.virtual_keyboard_enabled = false
+			e.gui_input.connect(func(ev: InputEvent) -> void:
+				if ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT and not ev.pressed:
+					var typed = JavaScriptBridge.eval("window.prompt(%s, %s)" % [JSON.stringify(Loc.t(keys[i][1])), JSON.stringify(name_draft[i])], true)
+					if typed != null:
+						e.text = str(typed).left(GameState.NAME_MAX)
+						e.text_changed.emit(e.text))
 		modal_body.add_child(e)
 		edits.append(e)
 	start.text = Loc.t("BTN_START")
 	start.custom_minimum_size = Vector2(0, 64)
-	start.disabled = name_draft[0].strip_edges() == "" or name_draft[1].strip_edges() == ""
+	start.disabled = not _names_ready()
 	start.pressed.connect(_on_names_done)
 	modal_body.add_child(start)
 	var lang := Button.new()
@@ -674,6 +684,9 @@ func _build_names() -> void:
 	lang.custom_minimum_size = Vector2(0, 52)
 	lang.pressed.connect(Loc.toggle)
 	modal_body.add_child(lang)
+
+func _names_ready() -> bool:
+	return name_draft[0].strip_edges() != "" and name_draft[1].strip_edges() != ""
 
 func _on_names_done() -> void:
 	if GameState.set_names(name_draft[0], name_draft[1]) != "ok":
