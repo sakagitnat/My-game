@@ -21,6 +21,16 @@ const GLASS := Color("bfe3f2")
 const WHITE_FRAME := Color("fffaf0")
 const GRID := Color(1, 1, 1, 0.34)
 
+# Art ids tried first; when no such file is in assets/, the code-drawn colours below are used instead.
+# Ground tiles are 1024x1024 canvases with the diamond centred (like every tile_*); each ground kind can have
+# several variants (_01, _02 ...) that are picked per cell. Wall modules are flat front views, see wall_art().
+const TILE_ART := {
+	SceneLayout.Tile.ROAD: ["tile_road_dirt_01", "tile_road_dirt_02", "tile_road_dirt_03"],
+	SceneLayout.Tile.PAVEMENT: ["tile_pavement_01", "tile_pavement_02"],
+	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02", "tile_floor_03"],
+}
+const WALL_ART := {"wall": "wall_plain_01", "window": "wall_window_01", "door": "wall_door_01", "low": "wall_low_01"}
+
 var zone := "restaurant"
 var view: ViewState
 var edge_void: SceneVoid
@@ -68,6 +78,20 @@ func _cell_poly(c: Vector2i) -> PackedVector2Array:
 		pts[i] += (pts[i] - mid).normalized() * 0.7
 	return pts
 
+# One tile of ground art on cell c, if the art for this ground kind exists. Slightly oversized so cells overlap.
+func _draw_tile_art(c: Vector2i, t: int) -> bool:
+	if not TILE_ART.has(t):
+		return false
+	var ids: Array = TILE_ART[t]
+	var variants: Array = ids.filter(func(id: String) -> bool: return Assets.get_tex(id) != null)
+	if variants.is_empty():
+		return false
+	var tex := Assets.get_tex(variants[int(Noise2D.hash2(c.x, c.y, 71) * variants.size()) % variants.size()])
+	var mid := Iso.cell_to_world(c)
+	var size := Vector2.ONE * Iso.TILE_W * 1.04
+	draw_texture_rect(tex, Rect2(mid - size * 0.5, size), false)
+	return true
+
 func ground_color(lay: SceneLayout, g: WorldGrid, c: Vector2i) -> Color:
 	var x := c.x
 	var y := c.y
@@ -91,6 +115,11 @@ func _draw_ground(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
 		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
 			if not lay.is_solid(c):
+				continue
+			var t := lay.tile_at(c)
+			if g.has_floor(WorldGrid.parcel_of(c)) and (t == SceneLayout.Tile.GRASS or t == SceneLayout.Tile.SAND or t == SceneLayout.Tile.DIRT):
+				t = SceneLayout.Tile.FLOOR
+			if _draw_tile_art(c, t):
 				continue
 			var col := ground_color(lay, g, c)
 			if col.a > 0.0:
@@ -129,9 +158,34 @@ func _draw_walls(lay: SceneLayout) -> void:
 		else:
 			a = _pt(x - 0.5, y - 0.5)
 			b = _pt(x + 0.5, y - 0.5)
-		_draw_wall_piece(a, b, str(lay.walls[key]), side)
-		if lay.walls[key] == "door":
+		var kind := str(lay.walls[key])
+		if not _draw_wall_art(lay, x, y, side, kind, a, b):
+			_draw_wall_piece(a, b, kind, side)
+		if kind == "door":
 			_draw_mat(x, y, side)
+
+# Wall art is a flat front view, two cells wide (so a window or a door can be wider than one cell), sheared onto
+# the wall. Consecutive pieces of the same kind use the left and right half in turn, counted in reading order on
+# screen (left to right), so the picture runs on unbroken. Canvas: 512x840 (wall_low: 512x112).
+func _draw_wall_art(lay: SceneLayout, x: int, y: int, side: bool, kind: String, a: Vector2, b: Vector2) -> bool:
+	var tex := Assets.get_tex(WALL_ART.get(kind, ""))
+	if tex == null:
+		return false
+	var edge := "w" if side else "n"
+	var prev := Vector2i(x, y + 1) if side else Vector2i(x - 1, y)   # the piece before this one in reading order
+	var pos := 0
+	while lay.wall_at(prev, edge) == kind and pos < 64:
+		pos += 1
+		prev = Vector2i(prev.x, prev.y + 1) if side else Vector2i(prev.x - 1, prev.y)
+	var u0 := 0.5 * float(pos % 2)
+	var h := LOW_H if kind == "low" else WALL_H
+	var left := b if side else a
+	var right := a if side else b
+	var shade := Color(0.86, 0.86, 0.9) if side else Color.WHITE
+	draw_polygon(PackedVector2Array([left, right, right + Vector2(0, -h), left + Vector2(0, -h)]),
+		PackedColorArray([shade, shade, shade, shade]),
+		PackedVector2Array([Vector2(u0, 1), Vector2(u0 + 0.5, 1), Vector2(u0 + 0.5, 0), Vector2(u0, 0)]), tex)
+	return true
 
 func _draw_wall_piece(a: Vector2, b: Vector2, kind: String, side: bool) -> void:
 	var body := WALL_SIDE if side else WALL
