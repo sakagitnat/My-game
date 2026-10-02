@@ -12,6 +12,9 @@ var hud: Hud
 var view := ViewState.new()
 var renderer: WorldRenderer
 var decor: SceneDecor
+var editor: MapEditor
+var editor_ui: EditorUI
+var painting := false
 
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
@@ -41,6 +44,9 @@ func _ready() -> void:
 	add_child(decor)
 	hud = Hud.new()
 	add_child(hud)
+	hud.edit_map_requested.connect(func() -> void:
+		hud.close_modal()
+		hud.ask_confirm(Loc.t("CONFIRM_EDIT_MAP"), open_editor))
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
 	hud.crop_chosen.connect(_on_crop_chosen)
@@ -67,6 +73,8 @@ func _sync_view() -> void:
 	view.selected_origin = selected_origin
 	view.selected_obstacle = selected_obstacle
 	view.selected_land = selected_land
+	view.edit_mode = editor != null
+	view.edit_tool = editor.tool if editor != null else ""
 	view.customers = GameState.restaurant.snapshot_customers()
 	view.counter = GameState.restaurant.counter.duplicate()
 
@@ -77,6 +85,42 @@ func _redraw_all() -> void:
 	_sync_view()
 	renderer.refresh()
 	decor.queue_redraw()
+
+# ---------------------------------------------------------------- map editor
+
+func open_editor() -> void:
+	if editor != null:
+		return
+	cancel_placement()
+	_deselect()
+	editor = MapEditor.new()
+	editor.begin(zone)
+	editor.changed.connect(_on_editor_changed)
+	editor_ui = EditorUI.new()
+	editor_ui.setup(editor)
+	editor_ui.leave_requested.connect(close_editor)
+	editor_ui.scene_changed.connect(func(z: String) -> void: set_zone(z))
+	add_child(editor_ui)
+	hud.visible = false
+	_on_editor_changed()
+
+func close_editor(keep: bool) -> void:
+	if editor == null:
+		return
+	painting = false
+	editor.finish(keep)
+	editor_ui.queue_free()
+	editor_ui = null
+	editor = null
+	hud.visible = true
+	set_zone(zone)
+	hud.refresh()
+
+# The map changed: terrain colours, shoreline, decor and objects are all drawn from it.
+func _on_editor_changed() -> void:
+	renderer.set_zone(zone)
+	decor.set_zone(zone)
+	_redraw_all()
 
 # ---------------------------------------------------------------- zones & state
 
@@ -461,6 +505,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			pinch_dist = 0.0
 		if touches.size() >= 2:
 			pinched = true
+			if painting:
+				painting = false
+				editor.end_stroke()
 	elif event is InputEventScreenDrag:
 		touches[event.index] = event.position
 		if touches.size() == 2:
@@ -477,8 +524,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				press_pos = event.position
 				if touches.is_empty():
 					pinched = false
+				if editor != null and editor.tool != "hand" and not pinched and touches.size() < 2:
+					painting = true
+					editor.begin_stroke()
+					editor.apply_at(get_global_mouse_position())
 			else:
-				if pressing and not dragged and not pinched:
+				if painting:
+					painting = false
+					editor.end_stroke()
+				elif pressing and not dragged and not pinched and editor == null:
 					_on_tap(get_global_mouse_position())
 				pressing = false
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -486,11 +540,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_by(1.0 / 1.1)
 	elif event is InputEventMouseMotion and pressing and not pinched:
-		if not dragged and event.position.distance_to(press_pos) > TAP_SLOP:
-			dragged = true
-		if dragged:
-			camera.position -= event.relative / camera.zoom.x
-			_clamp_camera()
+		if painting:
+			editor.apply_at(get_global_mouse_position())
+		else:
+			if not dragged and event.position.distance_to(press_pos) > TAP_SLOP:
+				dragged = true
+			if dragged:
+				camera.position -= event.relative / camera.zoom.x
+				_clamp_camera()
 
 func _zoom_by(f: float) -> void:
 	var z := clampf(camera.zoom.x * f, ZOOM_MIN, ZOOM_MAX)

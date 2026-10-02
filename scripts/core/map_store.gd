@@ -14,8 +14,10 @@ static func user_path(scene_id: String) -> String:
 	return USER_DIR + scene_id + ".json"
 
 static func parse(text: String) -> Dictionary:
-	var parsed = JSON.parse_string(text)
-	return parsed if parsed is Dictionary else {}
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		return {}
+	return json.data if json.data is Dictionary else {}
 
 static func read_file(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):

@@ -2,6 +2,7 @@ class_name Hud
 extends CanvasLayer
 
 signal zone_toggled
+signal edit_map_requested
 signal item_picked(id: String)
 signal crop_chosen(crop: String)
 signal move_requested
@@ -641,6 +642,11 @@ func _build_settings() -> void:
 	lang.custom_minimum_size = Vector2(0, 60)
 	lang.pressed.connect(Loc.toggle)
 	modal_body.add_child(lang)
+	var edit := Button.new()
+	edit.text = Loc.t("BTN_EDIT_MAP")
+	edit.custom_minimum_size = Vector2(0, 60)
+	edit.pressed.connect(func() -> void: edit_map_requested.emit())
+	modal_body.add_child(edit)
 	var test := Button.new()
 	test.text = Loc.t("BTN_TEST_COINS") % GameState.TEST_GRANT
 	test.custom_minimum_size = Vector2(0, 60)

@@ -100,6 +100,60 @@ func to_dict() -> Dictionary:
 	return {"version": SAVE_VERSION, "id": id, "area": area, "size": [cells.x, cells.y], "tiles": rows, "walls": wl,
 		"obstacles": obstacles.duplicate(true), "objects": objects.duplicate(true), "parcels": prows, "exits": exits.duplicate(true)}
 
+# Takes over everything from another layout (undo / redo restore a saved copy into the same object).
+func copy_from(other: SceneLayout) -> void:
+	id = other.id
+	area = other.area
+	cells = other.cells
+	tiles = other.tiles.duplicate()
+	walls = other.walls.duplicate()
+	obstacles = other.obstacles.duplicate(true)
+	objects = other.objects.duplicate(true)
+	parcels = other.parcels.duplicate()
+	exits = other.exits.duplicate(true)
+	scatter = other.scatter
+	rebuild()
+
+# New size in land blocks; the top-left part is kept, new ground is grass, what falls outside is dropped.
+func resize(block_count: Vector2i) -> void:
+	var new_cells := block_count * WorldGrid.PARCEL
+	var new_tiles := PackedByteArray()
+	new_tiles.resize(new_cells.x * new_cells.y)
+	new_tiles.fill(Tile.GRASS)
+	for y in range(mini(cells.y, new_cells.y)):
+		for x in range(mini(cells.x, new_cells.x)):
+			new_tiles[y * new_cells.x + x] = tiles[y * cells.x + x]
+	var old_cells := cells
+	cells = new_cells
+	tiles = new_tiles
+	for key in walls.keys():
+		var p: PackedStringArray = str(key).split(",")
+		if not edge_in_bounds(Vector2i(int(p[0]), int(p[1])), p[2]):
+			walls.erase(key)
+	obstacles = obstacles.filter(func(o: Array) -> bool: return in_bounds(Vector2i(o[0], o[1])))
+	objects = objects.filter(func(o: Array) -> bool: return in_bounds(Vector2i(o[0], o[1])))
+	var new_rows: Array[String] = []
+	for y in range(block_count.y):
+		var row := parcels[y] if y < parcels.size() else ""
+		new_rows.append((row + ".".repeat(block_count.x)).left(block_count.x))
+	parcels = new_rows
+	if old_cells != new_cells:
+		rebuild()
+
+# Drops trees, rocks and objects that no longer stand on ground they may stand on (after painting over them).
+func prune_props() -> void:
+	obstacles = obstacles.filter(func(o: Array) -> bool:
+		var t := tile_at(Vector2i(o[0], o[1]))
+		return t == Tile.GRASS or t == Tile.SAND or t == Tile.DIRT)
+	objects = objects.filter(func(o: Array) -> bool:
+		var sz: Vector2i = Catalog.size_of(str(o[2]))
+		for y in range(sz.y):
+			for x in range(sz.x):
+				var t := tile_at(Vector2i(o[0] + x, o[1] + y))
+				if t == Tile.WATER or t == Tile.ROAD:
+					return false
+		return true)
+
 # Recomputes everything derived from the tiles and the parcel rows. Call after any edit.
 func rebuild() -> void:
 	_build_field()
@@ -132,8 +186,36 @@ static func wall_key(c: Vector2i, edge: String) -> String:
 func wall_at(c: Vector2i, edge: String) -> String:
 	return str(walls.get(wall_key(c, edge), ""))
 
+# The wall edge nearest to a float cell position: {cell, edge} where edge "n" is the north face of the cell and
+# "w" its west face (the south and east faces of a cell are the north / west faces of its neighbours).
+static func nearest_edge(pos: Vector2) -> Dictionary:
+	var i := floori(pos.x + 0.5)
+	var j := floori(pos.y + 0.5)
+	var ux := pos.x - i
+	var uy := pos.y - j
+	var d_w := ux + 0.5
+	var d_e := 0.5 - ux
+	var d_n := uy + 0.5
+	var d_s := 0.5 - uy
+	var m := minf(minf(d_w, d_e), minf(d_n, d_s))
+	if m == d_w:
+		return {"cell": Vector2i(i, j), "edge": "w"}
+	if m == d_e:
+		return {"cell": Vector2i(i + 1, j), "edge": "w"}
+	if m == d_n:
+		return {"cell": Vector2i(i, j), "edge": "n"}
+	return {"cell": Vector2i(i, j + 1), "edge": "n"}
+
+# Edges run along the outer border too: a "w" edge may sit at x == cells.x and an "n" edge at y == cells.y.
+func edge_in_bounds(c: Vector2i, edge: String) -> bool:
+	if edge == "w":
+		return c.x >= 0 and c.y >= 0 and c.x <= cells.x and c.y < cells.y
+	if edge == "n":
+		return c.x >= 0 and c.y >= 0 and c.x < cells.x and c.y <= cells.y
+	return false
+
 func set_wall(c: Vector2i, edge: String, kind: String) -> void:
-	if not in_bounds(c) or not (edge == "n" or edge == "w"):
+	if not edge_in_bounds(c, edge):
 		return
 	if kind == "" or not WALL_KINDS.has(kind):
 		walls.erase(wall_key(c, edge))
