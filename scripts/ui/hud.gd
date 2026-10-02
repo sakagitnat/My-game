@@ -43,6 +43,7 @@ var rest_body: VBoxContainer
 var _rest_sig := ""
 var _rest_bars: Dictionary = {}
 var _rest_timer := 0.0
+var name_draft := ["", ""]
 
 func _ready() -> void:
 	layer = 10
@@ -211,6 +212,8 @@ func _corner_button(preset: int, size: Vector2) -> Button:
 	return b
 
 func _on_dim_input(event: InputEvent) -> void:
+	if modal_kind == "names":
+		return
 	if event is InputEventMouseButton and event.pressed:
 		close_modal()
 
@@ -236,6 +239,8 @@ func refresh() -> void:
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
 	_refresh_restaurant(true)
+	if GameState.ask_names and not GameState.has_names() and modal_kind != "names":
+		open_modal("names")
 	if modal.visible:
 		_build_modal()
 
@@ -317,7 +322,7 @@ func _refresh_restaurant(force: bool) -> void:
 		rest_body.remove_child(child)
 		child.queue_free()
 	var head := Label.new()
-	head.text = "%s   %s   %s" % [Loc.t("ZONE_RESTAURANT"), Loc.t("REST_REP") % r.reputation,
+	head.text = "%s   %s   %s" % [GameState.restaurant_name if GameState.restaurant_name != "" else Loc.t("ZONE_RESTAURANT"), Loc.t("REST_REP") % r.reputation,
 		Loc.t("REST_COUNTER") % [r.counter.size(), int(Catalog.RESTAURANT.counter_slots)]]
 	head.add_theme_font_size_override("font_size", 18)
 	head.add_theme_color_override("font_color", UiTheme.GOLD)
@@ -533,6 +538,7 @@ func _build_modal() -> void:
 		"barn": _build_barn()
 		"settings": _build_settings()
 		"confirm": _build_confirm()
+		"names": _build_names()
 
 func _build_shop() -> void:
 	_modal_header(Loc.t("SHOP_TITLE") + " - " + Loc.t("ZONE_RESTAURANT" if zone == "restaurant" else "ZONE_FARM"))
@@ -633,6 +639,48 @@ func _build_settings() -> void:
 	reset.custom_minimum_size = Vector2(0, 60)
 	reset.pressed.connect(func() -> void: ask_confirm(Loc.t("CONFIRM_RESET"), func() -> void: reset_confirmed.emit()))
 	modal_body.add_child(reset)
+
+# First-run screen: the player and the restaurant get names. It cannot be dismissed without them.
+func _build_names() -> void:
+	var title := Label.new()
+	title.text = Loc.t("NAME_TITLE")
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", UiTheme.GOLD)
+	modal_body.add_child(title)
+	var start := Button.new()
+	var edits: Array[LineEdit] = []
+	var keys := [["NAME_PLAYER", "NAME_PLAYER_HINT"], ["NAME_RESTAURANT", "NAME_RESTAURANT_HINT"]]
+	for i in keys.size():
+		var l := Label.new()
+		l.text = Loc.t(keys[i][0])
+		modal_body.add_child(l)
+		var e := LineEdit.new()
+		e.placeholder_text = Loc.t(keys[i][1])
+		e.max_length = GameState.NAME_MAX
+		e.text = name_draft[i]
+		e.custom_minimum_size = Vector2(0, 60)
+		e.text_changed.connect(func(t: String) -> void:
+			name_draft[i] = t
+			start.disabled = name_draft[0].strip_edges() == "" or name_draft[1].strip_edges() == "")
+		modal_body.add_child(e)
+		edits.append(e)
+	start.text = Loc.t("BTN_START")
+	start.custom_minimum_size = Vector2(0, 64)
+	start.disabled = name_draft[0].strip_edges() == "" or name_draft[1].strip_edges() == ""
+	start.pressed.connect(_on_names_done)
+	modal_body.add_child(start)
+	var lang := Button.new()
+	lang.text = Loc.t("LANG_BUTTON")
+	lang.custom_minimum_size = Vector2(0, 52)
+	lang.pressed.connect(Loc.toggle)
+	modal_body.add_child(lang)
+
+func _on_names_done() -> void:
+	if GameState.set_names(name_draft[0], name_draft[1]) != "ok":
+		return
+	name_draft = ["", ""]
+	close_modal()
+	show_message("MSG_WELCOME", [GameState.player_name, GameState.restaurant_name])
 
 func _build_confirm() -> void:
 	var l := Label.new()

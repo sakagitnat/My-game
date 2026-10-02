@@ -37,6 +37,7 @@ jobs:
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/obstacles.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/view_state.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/restaurant.gd
+          XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/names.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/assets_check.gd
       - name: Export web build
         run: |

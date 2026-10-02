@@ -15,12 +15,16 @@ const TEST_GRANT := 500
 const BARN_STEP := 30
 const BARN_BASE_COST := 100
 const OBSTACLE_SEED := 20261002
+const NAME_MAX := 14
 const CLEAR_AREA := Rect2i(13, 13, 4, 4)
 
 var coins: int = START_COINS
 var xp: int = 0
 var level: int = 1
 var language: String = ""
+var player_name: String = ""
+var restaurant_name: String = ""
+var ask_names: bool = true  # tests turn this off so the naming screen stays out of the way
 var grids: Dictionary = {}
 var inventory: Inventory = Inventory.new(60)
 var save_path: String = SAVE_PATH
@@ -49,6 +53,8 @@ func reset() -> void:
 		if spawn_obstacles:
 			scatter_obstacles(z)
 	inventory = Inventory.new(60)
+	player_name = ""
+	restaurant_name = ""
 
 # Distance in cells from the island edge (0 on the outermost ring).
 static func edge_distance(c: Vector2i) -> int:
@@ -367,6 +373,20 @@ func upgrade_barn() -> String:
 	_commit()
 	return "ok"
 
+func has_names() -> bool:
+	return player_name != "" and restaurant_name != ""
+
+# Names are trimmed and limited to NAME_MAX characters. Returns "ok" or "empty".
+func set_names(player: String, shop: String) -> String:
+	var p := player.strip_edges().left(NAME_MAX)
+	var r := shop.strip_edges().left(NAME_MAX)
+	if p == "" or r == "":
+		return "empty"
+	player_name = p
+	restaurant_name = r
+	_commit()
+	return "ok"
+
 func set_language(code: String) -> void:
 	language = code
 	_commit()
@@ -381,7 +401,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "grids": g, "inventory": inventory.to_dict(), "restaurant": restaurant.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "restaurant": restaurant.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -391,6 +411,8 @@ func load_game() -> bool:
 	level = maxi(1, int(d.get("level", 1)))
 	xp = clampi(int(d.get("xp", 0)), 0, xp_for_next() - 1)
 	language = str(d.get("language", ""))
+	player_name = str(d.get("player_name", "")).left(NAME_MAX)
+	restaurant_name = str(d.get("restaurant_name", "")).left(NAME_MAX)
 	var gd = d.get("grids", {})
 	if gd is Dictionary:
 		for z in Catalog.ZONES:
