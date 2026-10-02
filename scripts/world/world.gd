@@ -4,25 +4,20 @@ const TAP_SLOP := 12.0
 const ZOOM_MIN := 0.35
 const ZOOM_MAX := 2.2
 const REDRAW_EVERY := 0.5
-const SEED_PREFIX := "seed:"
 const START_VIEW_WIDTH := 1000.0
+const NONE := WorldGrid.NONE
 
 var zone: String = "restaurant"
-var tool: String = "buy"
 var camera: Camera2D
-var coins_label: Label
-var barn_button: Button
-var zone_buttons: Dictionary = {}
-var lang_button: Button
-var tool_bar: HBoxContainer
-var tool_buttons: Dictionary = {}
-var message_label: Label
-var message_key: String = "HINT_START"
-var message_arg = null
-var message_time: float = 0.0
+var hud: Hud
+
+# Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
+var placing_id: String = ""
+var moving_origin: Vector2i = NONE
+var ghost_cell: Vector2i = Vector2i.ZERO
+var selected_origin: Vector2i = NONE
 var redraw_timer: float = 0.0
-var barn_panel: PanelContainer
-var barn_rows: VBoxContainer
+var context_timer: float = 0.0
 
 var pressing := false
 var dragged := false
@@ -34,240 +29,295 @@ var pinched := false
 func _ready() -> void:
 	camera = Camera2D.new()
 	add_child(camera)
-	_build_ui()
+	hud = Hud.new()
+	add_child(hud)
+	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
+	hud.item_picked.connect(start_placement)
+	hud.crop_chosen.connect(_on_crop_chosen)
+	hud.action_pressed.connect(_on_action_pressed)
+	hud.move_requested.connect(_on_move_requested)
+	hud.sell_requested.connect(_on_sell_requested)
+	hud.placement_confirmed.connect(confirm_placement)
+	hud.placement_cancelled.connect(cancel_placement)
+	hud.reset_confirmed.connect(_on_reset)
 	GameState.changed.connect(_on_state_changed)
-	Loc.changed.connect(_on_language_changed)
+	GameState.leveled_up.connect(_on_leveled_up)
+	Loc.changed.connect(_on_state_changed)
 	set_zone("restaurant")
 
-func _build_ui() -> void:
-	var ui := CanvasLayer.new()
-	add_child(ui)
-	var top := HBoxContainer.new()
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE, Control.PRESET_MODE_MINSIZE, 16)
-	top.add_theme_constant_override("separation", 12)
-	ui.add_child(top)
-	coins_label = Label.new()
-	coins_label.add_theme_font_size_override("font_size", 26)
-	coins_label.custom_minimum_size = Vector2(150, 64)
-	coins_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	top.add_child(coins_label)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(spacer)
-	barn_button = Button.new()
-	barn_button.custom_minimum_size = Vector2(140, 64)
-	barn_button.pressed.connect(_toggle_barn)
-	top.add_child(barn_button)
-	for z in Catalog.ZONES:
-		var b := Button.new()
-		b.toggle_mode = true
-		b.custom_minimum_size = Vector2(130, 64)
-		b.pressed.connect(set_zone.bind(z))
-		top.add_child(b)
-		zone_buttons[z] = b
-	lang_button = Button.new()
-	lang_button.custom_minimum_size = Vector2(110, 64)
-	lang_button.pressed.connect(Loc.toggle)
-	top.add_child(lang_button)
-
-	message_label = Label.new()
-	_anchor_bottom(message_label, 190, 120)
-	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	message_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	message_label.add_theme_constant_override("outline_size", 8)
-	ui.add_child(message_label)
-
-	var scroll := ScrollContainer.new()
-	_anchor_bottom(scroll, 104, 16)
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	ui.add_child(scroll)
-	tool_bar = HBoxContainer.new()
-	tool_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tool_bar.alignment = BoxContainer.ALIGNMENT_CENTER
-	tool_bar.add_theme_constant_override("separation", 10)
-	scroll.add_child(tool_bar)
-
-	barn_panel = PanelContainer.new()
-	barn_panel.visible = false
-	barn_panel.set_anchors_preset(Control.PRESET_CENTER)
-	barn_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	barn_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	barn_panel.custom_minimum_size = Vector2(460, 0)
-	var box := StyleBoxFlat.new()
-	box.bg_color = Color("1b2428")
-	box.border_color = Color("c58a50")
-	box.set_border_width_all(3)
-	box.set_corner_radius_all(12)
-	box.set_content_margin_all(18)
-	barn_panel.add_theme_stylebox_override("panel", box)
-	barn_rows = VBoxContainer.new()
-	barn_rows.add_theme_constant_override("separation", 10)
-	barn_panel.add_child(barn_rows)
-	ui.add_child(barn_panel)
-
-func _anchor_bottom(c: Control, top_margin: float, bottom_margin: float) -> void:
-	c.anchor_left = 0.0
-	c.anchor_right = 1.0
-	c.anchor_top = 1.0
-	c.anchor_bottom = 1.0
-	c.offset_left = 16
-	c.offset_right = -16
-	c.offset_top = -top_margin
-	c.offset_bottom = -bottom_margin
+# ---------------------------------------------------------------- zones & state
 
 func set_zone(z: String) -> void:
 	zone = z
-	tool = (SEED_PREFIX + "wheat") if z == "farm" else "buy"
-	for k in zone_buttons:
-		zone_buttons[k].button_pressed = (k == z)
-	for child in tool_bar.get_children():
-		tool_bar.remove_child(child)
-		child.queue_free()
-	tool_buttons.clear()
-	var group := ButtonGroup.new()
-	var ids: Array[String] = []
-	if z == "farm":
-		for crop in Catalog.CROPS:
-			ids.append(SEED_PREFIX + crop)
-	ids.append("buy")
-	ids.append_array(Catalog.placeables_for(z))
-	ids.append("remove")
-	for id in ids:
-		var b := Button.new()
-		b.toggle_mode = true
-		b.button_group = group
-		b.custom_minimum_size = Vector2(124, 72)
-		b.button_pressed = (id == tool)
-		b.pressed.connect(_select_tool.bind(id))
-		tool_bar.add_child(b)
-		tool_buttons[id] = b
+	cancel_placement()
+	_deselect()
+	hud.close_modal()
+	hud.set_zone(z)
 	camera.position = Iso.cell_to_world(GameState.start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
-	if z == "farm":
-		show_message("HINT_FARM")
-	else:
-		show_message("HINT_START")
+	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
 	queue_redraw()
-
-func _select_tool(id: String) -> void:
-	tool = id
-	_refresh_text()
-
-func _tool_label(id: String) -> String:
-	if id == "buy":
-		return "%s\n%d" % [Loc.t("TOOL_BUY"), GameState.land_cost(zone)]
-	if id == "remove":
-		return Loc.t("TOOL_REMOVE")
-	if id.begins_with(SEED_PREFIX):
-		var crop: Dictionary = Catalog.CROPS[id.substr(SEED_PREFIX.length())]
-		return "%s\n%d" % [Loc.t("SEED_FMT") % Loc.t(crop.name), crop.seed]
-	var def: Dictionary = Catalog.PLACEABLES[id]
-	return "%s\n%d" % [Loc.t(def.name), def.cost]
-
-func _refresh_text() -> void:
-	coins_label.text = Loc.t("HUD_COINS") % GameState.coins
-	barn_button.text = Loc.t("BTN_BARN") % [GameState.inventory.total(), GameState.inventory.capacity]
-	zone_buttons["restaurant"].text = Loc.t("ZONE_RESTAURANT")
-	zone_buttons["farm"].text = Loc.t("ZONE_FARM")
-	lang_button.text = Loc.t("LANG_BUTTON")
-	for id in tool_buttons:
-		tool_buttons[id].text = _tool_label(id)
-	var msg := Loc.t(message_key)
-	message_label.text = msg % message_arg if message_arg != null else msg
 
 func _on_state_changed() -> void:
-	_refresh_text()
-	if barn_panel.visible:
-		_refresh_barn()
+	hud.refresh()
+	if selected_origin != NONE:
+		if GameState.grid(zone).objects.has(selected_origin):
+			hud.show_context(_context_info(selected_origin))
+		else:
+			_deselect()
+	if placing_id != "":
+		_update_placement_ui()
 	queue_redraw()
 
-func _on_language_changed() -> void:
-	_refresh_text()
-	if barn_panel.visible:
-		_refresh_barn()
+func _on_leveled_up(new_level: int) -> void:
+	hud.show_message("MSG_LEVEL_UP", [new_level, GameState.level_up_reward(new_level)])
+	hud.float_text(Loc.t("LEVEL_FMT") % new_level, get_viewport_rect().size * Vector2(0.5, 0.35), UiTheme.GOLD)
 
-func _toggle_barn() -> void:
-	barn_panel.visible = not barn_panel.visible
-	if barn_panel.visible:
-		_refresh_barn()
+func _on_reset() -> void:
+	GameState.reset()
+	GameState.save_game()
+	set_zone("restaurant")
+	GameState.changed.emit()
 
-func _refresh_barn() -> void:
-	for child in barn_rows.get_children():
-		barn_rows.remove_child(child)
-		child.queue_free()
-	var head := HBoxContainer.new()
-	var title := Label.new()
-	title.text = Loc.t("BARN_TITLE")
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(title)
-	var close := Button.new()
-	close.text = Loc.t("BTN_CLOSE")
-	close.custom_minimum_size = Vector2(100, 56)
-	close.pressed.connect(_toggle_barn)
-	head.add_child(close)
-	barn_rows.add_child(head)
-	var inv := GameState.inventory
-	if inv.items.is_empty():
-		var empty := Label.new()
-		empty.text = Loc.t("BARN_EMPTY")
-		barn_rows.add_child(empty)
-		barn_rows.add_child(_test_coins_button())
+func _fmt_time(seconds: int) -> String:
+	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
+
+func _screen_of(world_pos: Vector2) -> Vector2:
+	return get_canvas_transform() * world_pos
+
+# [message key, argument] for a failed placement code.
+func _error_text(code: String, item_id: String = "") -> Array:
+	match code:
+		"no_coins": return ["MSG_NO_COINS", null]
+		"locked": return ["MSG_LOCKED", null]
+		"occupied": return ["MSG_OCCUPIED", null]
+		"level": return ["MSG_LEVEL", Catalog.unlock_level(item_id) if item_id != "" else null]
+	return ["MSG_INVALID", null]
+
+# ---------------------------------------------------------------- placement mode
+
+func start_placement(id: String) -> void:
+	_deselect()
+	placing_id = id
+	moving_origin = NONE
+	ghost_cell = Iso.world_to_cell(camera.position)
+	_update_placement_ui()
+	queue_redraw()
+
+func start_move(origin: Vector2i) -> void:
+	var g := GameState.grid(zone)
+	if not g.objects.has(origin):
 		return
-	var worth := 0
-	for item in inv.items:
-		var row := HBoxContainer.new()
-		var label := Label.new()
-		label.text = "%s  x%d" % [Loc.t(Catalog.ITEMS[item].name), inv.count(item)]
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var sell := Button.new()
-		sell.text = "%s +%d" % [Loc.t("BTN_SELL"), inv.count(item) * int(Catalog.ITEMS[item].sell)]
-		sell.custom_minimum_size = Vector2(150, 56)
-		sell.pressed.connect(_sell_item.bind(item))
-		row.add_child(sell)
-		barn_rows.add_child(row)
-		worth += inv.count(item) * int(Catalog.ITEMS[item].sell)
-	var all := Button.new()
-	all.text = Loc.t("BTN_SELL_ALL") % worth
-	all.custom_minimum_size = Vector2(0, 64)
-	all.pressed.connect(_sell_everything)
-	barn_rows.add_child(all)
-	barn_rows.add_child(_test_coins_button())
+	_deselect()
+	placing_id = g.objects[origin]
+	moving_origin = origin
+	var sz: Vector2i = g.footprints[origin]
+	ghost_cell = origin + Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
+	_update_placement_ui()
+	queue_redraw()
 
-func _test_coins_button() -> Button:
-	var b := Button.new()
-	b.text = Loc.t("BTN_TEST_COINS") % GameState.TEST_GRANT
-	b.custom_minimum_size = Vector2(0, 56)
-	b.modulate = Color(1, 1, 1, 0.75)
-	b.pressed.connect(GameState.grant_test_coins)
-	return b
+func set_ghost(c: Vector2i) -> void:
+	ghost_cell = c
+	_update_placement_ui()
+	queue_redraw()
 
-func _sell_item(item: String) -> void:
-	var earned := GameState.sell(item, GameState.inventory.count(item))
-	if earned > 0:
-		show_message("MSG_SOLD", earned)
+func placement_status() -> String:
+	if placing_id == "":
+		return ""
+	if moving_origin != NONE:
+		return GameState.check_move(zone, moving_origin, ghost_cell)
+	return GameState.check_place(zone, ghost_cell, placing_id)
 
-func _sell_everything() -> void:
-	var earned := GameState.sell_all()
-	if earned > 0:
-		show_message("MSG_SOLD", earned)
+func _update_placement_ui() -> void:
+	var st := placement_status()
+	var def: Dictionary = Catalog.PLACEABLES[placing_id]
+	var detail := Loc.t("PLACE_HINT")
+	if st == "ok":
+		if moving_origin == NONE:
+			detail = str(GameState.place_cost(placing_id))
+	else:
+		var e := _error_text(st, placing_id)
+		detail = Loc.t(e[0]) % e[1] if e[1] != null else Loc.t(e[0])
+	hud.show_placement("%s\n%s" % [Loc.t(def.name), detail], st == "ok", moving_origin != NONE)
 
-func show_message(key: String, arg = null) -> void:
-	message_key = key
-	message_arg = arg
-	message_time = 4.0
-	_refresh_text()
+func confirm_placement() -> void:
+	if placing_id == "":
+		return
+	var st := placement_status()
+	if st != "ok":
+		var e := _error_text(st, placing_id)
+		hud.show_message(e[0], e[1])
+		return
+	if moving_origin != NONE:
+		GameState.move_object(zone, moving_origin, ghost_cell)
+		cancel_placement()
+		hud.show_message("MSG_MOVED")
+		return
+	var cost := GameState.place_cost(placing_id)
+	var at := Iso.cell_to_world(ghost_cell)
+	GameState.place_object(zone, ghost_cell, placing_id)
+	hud.float_text("-%d" % cost, _screen_of(at), UiTheme.BAD)
+	hud.show_message("MSG_PLACED")
+	# Step the ghost along so rows of plots or fences go down quickly.
+	set_ghost(ghost_cell + Vector2i(Catalog.size_of(placing_id).x, 0))
+
+func cancel_placement() -> void:
+	placing_id = ""
+	moving_origin = NONE
+	if hud != null:
+		hud.hide_placement()
+	queue_redraw()
+
+# ---------------------------------------------------------------- selecting & interacting
+
+func _deselect() -> void:
+	selected_origin = NONE
+	if hud != null:
+		hud.hide_context()
+	queue_redraw()
+
+func _on_tap(world: Vector2) -> void:
+	var c := Iso.world_to_cell(world)
+	var g := GameState.grid(zone)
+	if placing_id != "":
+		if g.in_bounds(c):
+			set_ghost(c)
+		return
+	if not g.in_bounds(c):
+		_deselect()
+		return
+	var origin := g.origin_at(c)
+	if origin != NONE:
+		_select(origin)
+		return
+	_deselect()
+	if not g.is_owned(c) and g.can_buy_parcel(WorldGrid.parcel_of(c)):
+		_ask_buy(c)
+
+func _ask_buy(c: Vector2i) -> void:
+	var cost := GameState.land_cost(zone)
+	hud.ask_confirm(Loc.t("CONFIRM_BUY_LAND") % cost, _buy_land.bind(c, cost))
+
+func _buy_land(c: Vector2i, cost: int) -> void:
+	var result := GameState.buy_land(zone, c)
+	if result == "ok":
+		hud.show_message("MSG_BOUGHT", cost)
+	elif result == "no_coins":
+		hud.show_message("MSG_NO_COINS")
+	else:
+		hud.show_message("MSG_INVALID")
+
+func _select(origin: Vector2i) -> void:
+	selected_origin = origin
+	var id: String = GameState.grid(zone).objects[origin]
+	if (id == "farm_plot_01" or id == "farm_coop_01") and GameState.progress(zone, origin) >= 1.0:
+		_do_interact(origin, "")
+		_deselect()
+		return
+	hud.show_context(_context_info(origin))
+	queue_redraw()
+
+func _context_info(origin: Vector2i) -> Dictionary:
+	var g := GameState.grid(zone)
+	var id: String = g.objects[origin]
+	var def: Dictionary = Catalog.PLACEABLES[id]
+	var info := {"title": Loc.t(def.name), "status": "", "sell": GameState.refund_for(zone, origin)}
+	var prog := GameState.progress(zone, origin)
+	if id == "farm_plot_01":
+		if prog < 0.0:
+			info.status = Loc.t("STATUS_EMPTY")
+			var crops: Array = []
+			for crop in Catalog.CROPS:
+				var cd: Dictionary = Catalog.CROPS[crop]
+				var locked := GameState.level < int(cd.level)
+				var free_wheat: bool = crop == "wheat" and GameState.is_broke()
+				crops.append({
+					"id": crop,
+					"text": (Loc.t("LOCKED_LV") % cd.level) if locked else "%s\n%d" % [Loc.t(cd.name), cd.seed],
+					"enabled": not locked and (GameState.coins >= int(cd.seed) or free_wheat)})
+			info.crops = crops
+		else:
+			info.status = Loc.t("STATUS_GROWING") % _fmt_time(GameState.seconds_left(zone, origin))
+	elif id == "farm_coop_01":
+		if prog < 0.0:
+			info.status = Loc.t("STATUS_COOP_IDLE")
+			info.action = {"text": Loc.t("BTN_FEED"), "enabled": GameState.inventory.count(Catalog.COOP.feed) > 0}
+		else:
+			info.status = Loc.t("STATUS_COOP_BUSY") % _fmt_time(GameState.seconds_left(zone, origin))
+	return info
+
+func _on_crop_chosen(crop: String) -> void:
+	if selected_origin == NONE:
+		return
+	var origin := selected_origin
+	_do_interact(origin, crop)
+	_deselect()
+
+func _on_action_pressed() -> void:
+	if selected_origin == NONE:
+		return
+	var origin := selected_origin
+	_do_interact(origin, "")
+	_deselect()
+
+func _do_interact(origin: Vector2i, seed_id: String) -> void:
+	var g := GameState.grid(zone)
+	var crop: String = g.states.get(origin, {}).get("crop", "")
+	var at := _screen_of(Iso.footprint_center(origin, g.footprints[origin]))
+	var result := GameState.interact(zone, origin, seed_id)
+	match result:
+		"planted": hud.show_message("MSG_PLANTED")
+		"harvested":
+			hud.show_message("MSG_HARVESTED")
+			hud.float_text(Loc.t("FLOAT_GAIN") % [1, Loc.t(Catalog.CROPS[crop].name)], at, UiTheme.GOOD)
+			hud.float_text(Loc.t("FLOAT_XP") % int(Catalog.CROPS[crop].xp), at + Vector2(0, 32), UiTheme.GOLD)
+		"fed": hud.show_message("MSG_FED")
+		"collected":
+			hud.show_message("MSG_COLLECTED")
+			hud.float_text(Loc.t("FLOAT_GAIN") % [1, Loc.t("ITEM_EGG")], at, UiTheme.GOOD)
+			hud.float_text(Loc.t("FLOAT_XP") % int(Catalog.COOP.xp), at + Vector2(0, 32), UiTheme.GOLD)
+		"growing": hud.show_message("MSG_GROWING", _fmt_time(GameState.seconds_left(zone, origin)))
+		"busy": hud.show_message("MSG_BUSY", _fmt_time(GameState.seconds_left(zone, origin)))
+		"no_coins": hud.show_message("MSG_NO_COINS")
+		"no_feed": hud.show_message("MSG_NO_FEED")
+		"full": hud.show_message("MSG_FULL")
+		"level": hud.show_message("MSG_LEVEL", int(Catalog.CROPS[seed_id].level) if Catalog.CROPS.has(seed_id) else 1)
+		_: hud.show_message("MSG_INVALID")
+
+func _on_move_requested() -> void:
+	if selected_origin != NONE:
+		start_move(selected_origin)
+
+func _on_sell_requested() -> void:
+	if selected_origin == NONE:
+		return
+	var origin := selected_origin
+	var g := GameState.grid(zone)
+	var refund := GameState.refund_for(zone, origin)
+	var has_crop: bool = g.states.has(origin) and g.objects[origin] == "farm_plot_01"
+	var text := Loc.t("CONFIRM_SELL_CROP" if has_crop else "CONFIRM_SELL") % refund
+	hud.ask_confirm(text, func() -> void:
+		if GameState.remove_object(zone, origin) == "ok":
+			hud.show_message("MSG_REMOVED", refund))
+
+# ---------------------------------------------------------------- frame & input
 
 func _process(delta: float) -> void:
-	if message_time > 0.0:
-		message_time -= delta
-		message_label.modulate.a = clampf(message_time, 0.0, 1.0)
 	if zone == "farm":
 		redraw_timer += delta
 		if redraw_timer >= REDRAW_EVERY:
 			redraw_timer = 0.0
 			queue_redraw()
+	if selected_origin != NONE and hud.context.visible:
+		var g := GameState.grid(zone)
+		if g.objects.has(selected_origin):
+			var top := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])[0]
+			hud.place_context(_screen_of(top))
+		context_timer += delta
+		if context_timer >= 1.0:
+			context_timer = 0.0
+			if g.objects.has(selected_origin):
+				hud.show_context(_context_info(selected_origin))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
@@ -321,53 +371,7 @@ func _clamp_camera() -> void:
 	camera.position = camera.position.clamp(lo, hi)
 	queue_redraw()
 
-func _fmt_time(seconds: int) -> String:
-	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
-
-func _on_tap(world: Vector2) -> void:
-	var c := Iso.world_to_cell(world)
-	var g := GameState.grid(zone)
-	if not g.in_bounds(c):
-		return
-	if tool.begins_with(SEED_PREFIX):
-		_report_farm(GameState.interact(zone, c, tool.substr(SEED_PREFIX.length())), c)
-		return
-	var result := ""
-	var amount := 0
-	if tool == "buy":
-		amount = GameState.land_cost(zone)
-		result = GameState.buy_land(zone, c)
-	elif tool == "remove":
-		amount = GameState.refund_for(zone, c)
-		result = GameState.remove_object(zone, c)
-	else:
-		result = GameState.place_object(zone, c, tool)
-	match result:
-		"ok":
-			if tool == "buy":
-				show_message("MSG_BOUGHT", amount)
-			elif tool == "remove":
-				show_message("MSG_REMOVED", amount)
-			else:
-				show_message("MSG_PLACED")
-		"no_coins": show_message("MSG_NO_COINS")
-		"locked": show_message("MSG_LOCKED")
-		"occupied": show_message("MSG_OCCUPIED")
-		"empty": show_message("MSG_EMPTY")
-		_: show_message("MSG_INVALID")
-
-func _report_farm(result: String, c: Vector2i) -> void:
-	match result:
-		"planted": show_message("MSG_PLANTED")
-		"harvested": show_message("MSG_HARVESTED")
-		"fed": show_message("MSG_FED")
-		"collected": show_message("MSG_COLLECTED")
-		"growing": show_message("MSG_GROWING", _fmt_time(GameState.seconds_left(zone, c)))
-		"busy": show_message("MSG_BUSY", _fmt_time(GameState.seconds_left(zone, c)))
-		"no_coins": show_message("MSG_NO_COINS")
-		"no_feed": show_message("MSG_NO_FEED")
-		"full": show_message("MSG_FULL")
-		_: show_message("MSG_INVALID")
+# ---------------------------------------------------------------- drawing
 
 func _visible_cell_range(g: WorldGrid) -> Rect2i:
 	var view := get_canvas_transform().affine_inverse() * Rect2(Vector2.ZERO, get_viewport_rect().size)
@@ -399,6 +403,12 @@ func _draw() -> void:
 		return a.x + a.y + g.footprints[a].x + g.footprints[a].y < b.x + b.y + g.footprints[b].x + g.footprints[b].y)
 	for o in origins:
 		_draw_object(o, g.objects[o])
+	if selected_origin != NONE and g.objects.has(selected_origin):
+		var pts := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])
+		pts.append(pts[0])
+		draw_polyline(pts, Color.WHITE, 3.0)
+	if placing_id != "":
+		_draw_ghost()
 
 func _draw_buyable_parcels(g: WorldGrid) -> void:
 	var font := ThemeDB.fallback_font
@@ -417,6 +427,22 @@ func _draw_buyable_parcels(g: WorldGrid) -> void:
 			var at := Iso.footprint_center(origin, psize) + Vector2(-60, 12)
 			draw_string_outline(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, 8, Color("1b1208"))
 			draw_string(font, at, label, HORIZONTAL_ALIGNMENT_CENTER, 120, 40, Color("ffd66b"))
+
+func _draw_ghost() -> void:
+	var ok := placement_status() == "ok"
+	var sz: Vector2i = Catalog.size_of(placing_id)
+	var origin := GameState.footprint_origin(ghost_cell, sz)
+	var pts := Iso.footprint_corners(origin, sz)
+	var tint := Color(0.4, 0.9, 0.4, 0.45) if ok else Color(0.95, 0.3, 0.25, 0.45)
+	draw_colored_polygon(pts, tint)
+	var edge := pts.duplicate()
+	edge.append(pts[0])
+	draw_polyline(edge, Color(tint, 1.0), 3.0)
+	var def: Dictionary = Catalog.PLACEABLES[placing_id]
+	if def.get("flat", false):
+		return
+	if not _draw_sprite(placing_id, origin, sz, Color(1, 1, 1, 0.75)):
+		_draw_box(origin, sz, Color(def.color, 0.75))
 
 func _diamond(p: Vector2, hw: float, hh: float) -> PackedVector2Array:
 	return PackedVector2Array([p + Vector2(0, -hh), p + Vector2(hw, 0), p + Vector2(0, hh), p + Vector2(-hw, 0)])
@@ -439,13 +465,13 @@ func _draw_floor(id: String, p: Vector2, fallback: Color, tint: Color = Color.WH
 	draw_polyline(pts, fallback.darkened(0.25), 1.0)
 
 # Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom corner.
-func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i) -> bool:
+func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE) -> bool:
 	var tex := Assets.get_tex(id)
 	if tex == null:
 		return false
 	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
 	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
-	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false)
+	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false, tint)
 	return true
 
 func _object_height(sz: Vector2i) -> float:

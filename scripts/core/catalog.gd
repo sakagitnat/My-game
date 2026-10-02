@@ -11,21 +11,21 @@ const FLOOR_COLOR := {"restaurant": Color("c58a50"), "farm": Color("6fae58")}
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 const PLACEABLES := {
 	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE", "color": Color("b8793f")},
-	"rest_stove_01": {"zone": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE", "color": Color("6b6f78")},
+	"rest_stove_01": {"zone": "restaurant", "cost": 80, "level": 2, "size": Vector2i(2, 2), "name": "ITEM_STOVE", "color": Color("6b6f78")},
 	"farm_plot_01": {"zone": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "color": Color("6b4a2f"), "flat": true},
 	"farm_fence_01": {"zone": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE", "color": Color("d9c7a0")},
-	"farm_coop_01": {"zone": "farm", "cost": 120, "size": Vector2i(3, 3), "name": "ITEM_COOP", "color": Color("b5503c")},
+	"farm_coop_01": {"zone": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP", "color": Color("b5503c")},
 }
 
 # time: seconds to grow. seed: coin cost per planting. yield: items per harvest.
 const CROPS := {
-	"wheat": {"time": 60.0, "seed": 2, "yield": 1, "name": "CROP_WHEAT", "color": Color("e6c35c")},
-	"tomato": {"time": 180.0, "seed": 6, "yield": 1, "name": "CROP_TOMATO", "color": Color("d9453b")},
-	"cabbage": {"time": 300.0, "seed": 10, "yield": 1, "name": "CROP_CABBAGE", "color": Color("8fcf6a")},
+	"wheat": {"time": 60.0, "seed": 2, "yield": 1, "xp": 1, "level": 1, "name": "CROP_WHEAT", "color": Color("e6c35c")},
+	"tomato": {"time": 180.0, "seed": 6, "yield": 1, "xp": 3, "level": 2, "name": "CROP_TOMATO", "color": Color("d9453b")},
+	"cabbage": {"time": 300.0, "seed": 10, "yield": 1, "xp": 5, "level": 3, "name": "CROP_CABBAGE", "color": Color("8fcf6a")},
 }
 
 # A coop turns 1 wheat into 1 egg after `time` seconds.
-const COOP := {"feed": "wheat", "product": "egg", "time": 120.0}
+const COOP := {"feed": "wheat", "product": "egg", "time": 120.0, "xp": 3}
 
 const ITEMS := {
 	"wheat": {"sell": 4, "name": "CROP_WHEAT"},
@@ -33,6 +33,10 @@ const ITEMS := {
 	"cabbage": {"sell": 25, "name": "CROP_CABBAGE"},
 	"egg": {"sell": 10, "name": "ITEM_EGG"},
 }
+
+# Level needed to place an item (default 1).
+static func unlock_level(id: String) -> int:
+	return int(PLACEABLES[id].get("level", 1))
 
 static func size_of(id: String) -> Vector2i:
 	return PLACEABLES[id].size

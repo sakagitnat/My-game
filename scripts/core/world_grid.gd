@@ -87,6 +87,28 @@ func place(origin: Vector2i, id: String, sz: Vector2i) -> bool:
 		occupied[c] = origin
 	return true
 
+# Moves the object at `origin` so its top-left cell is `new_origin`, keeping its state. False if it does not fit.
+func move(origin: Vector2i, new_origin: Vector2i) -> bool:
+	if not objects.has(origin):
+		return false
+	var sz: Vector2i = footprints[origin]
+	for c in cells_of(new_origin, sz):
+		if not in_bounds(c) or not is_owned(c):
+			return false
+		if occupied.has(c) and occupied[c] != origin:
+			return false
+	var id: String = objects[origin]
+	var st = states.get(origin)
+	for c in cells_of(origin, sz):
+		occupied.erase(c)
+	objects.erase(origin)
+	footprints.erase(origin)
+	states.erase(origin)
+	place(new_origin, id, sz)
+	if st != null:
+		states[new_origin] = st
+	return true
+
 # Origin of the object covering cell `c`, or NONE.
 func origin_at(c: Vector2i) -> Vector2i:
 	return occupied.get(c, NONE)

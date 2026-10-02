@@ -16,6 +16,7 @@ func run() -> void:
 	gs.save_path = "user://test_salvora2.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	gs.reset()
+	gs.level = 10
 	gs.autosave = false
 	gs.clock_override = 1000.0
 	var plot := Vector2i(12, 12)
@@ -116,6 +117,7 @@ func run() -> void:
 
 	# Never soft-lock: with no coins, nothing to sell and nothing growing, the player can still start over
 	gs.reset()
+	gs.level = 10
 	gs.autosave = false
 	gs.coins = 0
 	check(gs.is_broke(), "broke when nothing can earn money")
@@ -147,40 +149,50 @@ func run() -> void:
 	for n in names:
 		check(parsed.has(n) and str(parsed[n].en) != "" and str(parsed[n].th) != "", "string %s present" % n)
 
-	# World scene: tap-to-plant, harvest, barn panel and selling through the UI code
+	# World scene: placement mode, tap-to-plant bubble, instant harvest, barn modal and selling
 	gs.reset()
+	gs.level = 10
 	gs.autosave = false
 	gs.clock_override = 9000.0
 	var world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(world)
 	await process_frame
 	world.set_zone("farm")
-	check(world.tool == "seed:wheat" and world.tool_buttons.has("seed:tomato") and world.tool_buttons.has("farm_plot_01"), "farm toolbar")
-	world.tool = "farm_plot_01"
+	world.start_placement("farm_plot_01")
+	world.set_ghost(plot)
+	check(world.placement_status() == "ok" and world.hud.placement_bar.visible and not world.hud.placement_ok.disabled, "placement bar enabled for a valid spot")
+	world.confirm_placement()
+	check(gs.grid("farm").objects.get(plot) == "farm_plot_01", "confirm places the plot")
+	check(world.ghost_cell == plot + Vector2i(2, 0) and world.placement_status() == "ok", "ghost steps to the next free spot after placing")
+	world.set_ghost(plot)
+	check(world.placement_status() == "occupied" and world.hud.placement_ok.disabled, "the used spot is now blocked")
+	world.cancel_placement()
+	check(not world.hud.placement_bar.visible, "cancel hides the placement bar")
 	world._on_tap(Iso.cell_to_world(plot))
-	check(gs.grid("farm").objects.get(plot) == "farm_plot_01", "tap places plot")
-	world.tool = "seed:wheat"
+	check(world.hud.context.visible and world.selected_origin == plot, "tap on an empty plot opens the bubble")
+	world._on_crop_chosen("wheat")
+	check(gs.grid("farm").states.has(plot) and not world.hud.context.visible, "choosing a crop plants it")
 	world._on_tap(Iso.cell_to_world(plot))
-	check(gs.grid("farm").states.has(plot), "tap plants")
-	world._on_tap(Iso.cell_to_world(plot))
-	check(world.message_key == "MSG_GROWING" and str(world.message_arg) == "1:00", "tap on growing shows countdown")
+	check(world.hud.context.visible, "tap on a growing plot shows its status")
+	world._deselect()
 	gs.clock_override = 9061.0
-	world.queue_redraw()
-	await process_frame
 	world._on_tap(Iso.cell_to_world(plot))
-	check(gs.inventory.count("wheat") == 1, "tap harvests")
-	world._toggle_barn()
-	check(world.barn_panel.visible and world.barn_rows.get_child_count() >= 2, "barn panel lists items")
-	var last: Node = world.barn_rows.get_child(world.barn_rows.get_child_count() - 1)
-	check(last is Button and last.text.contains("500"), "barn has the test coins button")
+	check(gs.inventory.count("wheat") == 1 and not world.hud.context.visible, "one tap harvests a ripe plot")
+	world.hud.open_modal("barn")
+	check(world.hud.modal.visible and world.hud.modal_kind == "barn", "barn modal opens")
 	var coins_before: int = gs.coins
-	world._sell_everything()
-	check(gs.coins == coins_before + 4 and gs.inventory.total() == 0, "barn sells everything")
+	check(gs.sell_all() == 4 and gs.coins == coins_before + 4, "barn sells everything")
+	check(world.hud.modal_body.get_child_count() >= 2, "barn modal rebuilt after selling")
+	var cap_before: int = gs.inventory.capacity
+	gs.coins = 1000
+	check(gs.barn_upgrade_cost() == 100 and gs.upgrade_barn() == "ok" and gs.inventory.capacity == cap_before + 30 and gs.coins == 900, "barn upgrade")
+	check(gs.barn_upgrade_cost() == 200, "barn upgrade cost grows")
+	world.hud.close_modal()
 	loc.set_language("th")
-	world._refresh_barn()
+	world.hud.open_modal("barn")
 	loc.set_language("en")
 	world.set_zone("restaurant")
-	check(not world.tool_buttons.has("seed:wheat") and world.tool == "buy", "restaurant toolbar has no seeds")
+	check(not world.hud.modal.visible, "switching zone closes panels")
 	await process_frame
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))

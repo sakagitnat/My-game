@@ -17,6 +17,7 @@ func run() -> void:
 	gs.save_path = "user://test_salvora.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	gs.reset()
+	gs.level = 10
 
 	# Iso grid maths
 	for c in [Vector2i(0, 0), Vector2i(3, 5), Vector2i(29, 0), Vector2i(0, 29)]:
@@ -125,8 +126,9 @@ func run() -> void:
 	for id in Catalog.PLACEABLES:
 		check(Catalog.PLACEABLES[id].zone in Catalog.ZONES, "placeable zone valid %s" % id)
 
-	# World scene: build, tap through the real input path
+	# World scene: HUD, confirmation before buying, placement mode, selecting and selling
 	gs.reset()
+	gs.level = 10
 	gs.autosave = false
 	var world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(world)
@@ -134,17 +136,45 @@ func run() -> void:
 	await process_frame
 	world.camera.position = Iso.cell_to_world(gs.start_cell())
 	world.camera.zoom = Vector2.ONE
-	world.tool = "buy"
+	check(world.hud.level_label.text.contains("10") and world.hud.coins_label.text == "500", "HUD shows level and coins")
 	world._on_tap(Iso.cell_to_world(Vector2i(20, 14)))
-	check(gs.grid("restaurant").is_owned(Vector2i(20, 14)) and gs.coins == 350, "tap buys a whole block")
-	world.tool = "rest_table_small_01"
-	world._on_tap(Iso.cell_to_world(Vector2i(14, 14)))
-	check(gs.grid("restaurant").objects.has(Vector2i(14, 14)), "tap places table")
-	world.tool = "remove"
+	check(world.hud.modal.visible and world.hud.modal_kind == "confirm" and gs.coins == 500, "tapping a block asks before buying")
+	world.hud.close_modal()
+	check(not gs.grid("restaurant").is_owned(Vector2i(20, 14)), "cancel keeps the land unbought")
+	world._on_tap(Iso.cell_to_world(Vector2i(20, 14)))
+	world.hud.confirm_yes.call()
+	check(gs.grid("restaurant").is_owned(Vector2i(20, 14)) and gs.coins == 350, "confirming buys the whole block")
+	check(world.hud.coins_label.text == "350", "HUD updates after buying")
+	world.start_placement("rest_table_small_01")
+	world.set_ghost(Vector2i(14, 14))
+	check(world.placement_status() == "ok", "ghost on free owned land is valid")
+	world.set_ghost(Vector2i(3, 3))
+	check(world.placement_status() == "locked" and world.hud.placement_ok.disabled, "ghost on unowned land is invalid")
+	world.set_ghost(Vector2i(14, 14))
+	world.confirm_placement()
+	check(gs.grid("restaurant").objects.has(Vector2i(14, 14)) and gs.coins == 320, "confirm places the table")
+	world.cancel_placement()
 	world._on_tap(Iso.cell_to_world(Vector2i(15, 15)))
-	check(gs.grid("restaurant").objects.is_empty(), "tap on any covered cell removes table")
-	world.set_zone("farm")
-	check(world.tool_buttons.has("farm_fence_01") and not world.tool_buttons.has("rest_table_small_01"), "farm palette")
+	check(world.selected_origin == Vector2i(14, 14) and world.hud.context.visible, "tapping any covered cell selects the table")
+	world._on_move_requested()
+	check(world.moving_origin == Vector2i(14, 14) and world.placing_id == "rest_table_small_01" and not world.hud.context.visible, "move starts placement mode")
+	world.set_ghost(Vector2i(16, 16))
+	world.confirm_placement()
+	check(gs.grid("restaurant").objects.has(Vector2i(16, 16)) and not gs.grid("restaurant").objects.has(Vector2i(14, 14)) and gs.coins == 320, "moving is free and relocates the object")
+	check(world.placing_id == "", "move ends placement mode")
+	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))
+	world._on_sell_requested()
+	check(world.hud.modal.visible and world.hud.modal_kind == "confirm", "selling asks for confirmation")
+	world.hud.confirm_yes.call()
+	check(gs.grid("restaurant").objects.is_empty() and gs.coins == 335, "confirmed sale removes it and refunds half")
+	world.hud.open_modal("shop")
+	check(world.hud.modal_kind == "shop" and world.hud.modal_body.get_child_count() >= 2, "shop lists items")
+	world.hud.close_modal()
+	world.hud.zone_toggled.emit()
+	check(world.zone == "farm", "zone button switches zone")
+	world.hud.open_modal("settings")
+	check(world.hud.modal_kind == "settings", "menu opens")
+	world.hud.close_modal()
 	world.queue_redraw()
 	await process_frame
 
