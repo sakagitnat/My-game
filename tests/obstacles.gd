@@ -57,11 +57,11 @@ func run() -> void:
 	g.blocked[Vector2i(14, 14)] = "tree"
 	g.blocked[Vector2i(12, 17)] = "rock"
 	g.blocked[Vector2i(20, 14)] = "bush"
-	check(gs.check_place("farm", Vector2i(13, 13), "farm_plot_01") == "blocked", "obstacle inside a footprint blocks placing")
-	check(gs.place_object("farm", Vector2i(13, 13), "farm_plot_01") == "blocked" and gs.coins == 500, "blocked placement is free and does nothing")
-	check(gs.check_place("farm", Vector2i(15, 13), "farm_plot_01") == "ok", "free spot next to it is fine")
-	gs.place_object("farm", Vector2i(15, 13), "farm_plot_01")
-	check(gs.check_move("farm", Vector2i(15, 13), Vector2i(14, 14)) == "blocked", "cannot move onto an obstacle")
+	check(gs.check_place("farm", Vector2i(27, 27), "farm_plot_01") == "blocked", "obstacle inside a footprint blocks placing")
+	check(gs.place_object("farm", Vector2i(27, 27), "farm_plot_01") == "blocked" and gs.coins == 500, "blocked placement is free and does nothing")
+	check(gs.check_place("farm", Vector2i(31, 27), "farm_plot_01") == "ok", "free spot next to it is fine")
+	gs.place_object("farm", Vector2i(31, 27), "farm_plot_01")
+	check(gs.check_move("farm", Vector2i(31, 27), Vector2i(29, 29)) == "blocked", "cannot move onto an obstacle")
 	check(gs.clear_obstacle("farm", Vector2i(20, 14)) == "locked", "cannot clear on land you do not own")
 	check(gs.clear_obstacle("farm", Vector2i(1, 1)) == "empty", "nothing to clear on an empty cell")
 	gs.coins = 10
@@ -70,7 +70,7 @@ func run() -> void:
 	var xp_before: int = gs.xp
 	check(gs.clear_obstacle("farm", Vector2i(14, 14)) == "ok", "clear a tree")
 	check(gs.coins == 70 and gs.inventory.count("wood") == 1 and gs.xp == xp_before + 2 and not g.blocked.has(Vector2i(14, 14)), "tree costs 30, gives wood and 2 XP")
-	check(gs.check_place("farm", Vector2i(13, 13), "farm_plot_01") == "ok", "cleared ground can be built on")
+	check(gs.check_place("farm", Vector2i(27, 27), "farm_plot_01") == "ok", "cleared ground can be built on")
 	check(gs.clear_obstacle("farm", Vector2i(12, 17)) == "ok" and gs.inventory.count("stone") == 1 and gs.coins == 50, "rock costs 20 and gives stone")
 	g.blocked[Vector2i(16, 16)] = "bush"
 	check(gs.clear_obstacle("farm", Vector2i(16, 16)) == "ok" and gs.coins == 40 and gs.inventory.total() == 2, "bush costs 10 and gives nothing")
@@ -97,7 +97,7 @@ func run() -> void:
 	gs.grid("farm").blocked.clear()
 	check(gs.load_game() and gs.grid("farm").blocked.size() > 40, "a save from before obstacles gets a fresh scatter")
 	for c in gs.grid("farm").blocked:
-		check(not gs.grid("farm").occupied.has(c), "scatter never lands on an object")
+		check(not gs.grid("farm").cell_occupied(c), "scatter never lands on an object")
 		break
 	gs.spawn_obstacles = false
 
@@ -122,7 +122,7 @@ func run() -> void:
 			move_buttons += 1
 	check(move_buttons == 0, "obstacle bubble has no Move or Sell")
 	world.start_placement("rest_table_small_01")
-	world.set_ghost(Vector2i(16, 16))
+	world.set_ghost(Vector2i(33, 33))
 	check(world.placement_status() == "blocked" and world.hud.placement_ok.disabled, "ghost over an obstacle is invalid")
 	world.cancel_placement()
 	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))

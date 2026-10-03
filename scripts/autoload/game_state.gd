@@ -101,10 +101,10 @@ func _place_map_obstacles(zone: String) -> void:
 	var l := layout_for(zone)
 	for o in l.obstacles:
 		var c := Vector2i(int(o[0]), int(o[1]))
-		if l.is_solid(c) and not g.occupied.has(c):
+		if l.is_solid(c) and not g.cell_occupied(c):
 			g.blocked[c] = str(o[2])
 
-# Furniture and other objects the map starts with (free, not owned-land checked: the owner put them there).
+# Furniture and other objects the map starts with (free, not owned-land checked: the owner put them there). Origins are in units.
 func _place_map_objects(zone: String) -> void:
 	var g := grid(zone)
 	for o in layout_for(zone).objects:
@@ -125,7 +125,7 @@ func scatter_obstacles(zone: String) -> void:
 	for y in range(g.size.y):
 		for x in range(g.size.x):
 			var c := Vector2i(x, y)
-			if g.occupied.has(c) or in_start_clearing(zone, c) or l.edge_distance(c) < 3 or not l.is_solid(c):
+			if g.cell_occupied(c) or in_start_clearing(zone, c) or l.edge_distance(c) < 3 or not l.is_solid(c):
 				continue
 			var forest := smoothstep(0.5, 0.78, Noise2D.value(x * 0.2, y * 0.2, seed_v))
 			var wild := 0.0 if g.is_owned(c) else 0.04
@@ -241,11 +241,11 @@ func grant_test_coins() -> void:
 	coins += TEST_GRANT
 	_commit()
 
-# Top-left cell of a footprint of `sz` centred on the tapped cell `c`.
+# Top-left unit of a footprint of `sz` units centred on the tapped unit `c`.
 func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 	return c - Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 
-# Why `id` can or cannot be placed with a footprint centred on `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
+# Why `id` can or cannot be placed with a footprint centred on unit `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
 func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or not (def.area == zone or layout_for(zone).area == "any"):
@@ -273,15 +273,15 @@ func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> Stri
 
 # Nothing may stand in the water or on the waterline.
 func _footprint_solid(zone: String, origin: Vector2i, sz: Vector2i) -> bool:
-	for c in grid(zone).cells_of(origin, sz):
-		if not layout_for(zone).is_solid(c):
+	for u in grid(zone).cells_of(origin, sz):
+		if not layout_for(zone).is_solid(Iso.cell_of_unit(u)):
 			return false
 	return true
 
 # Every cell of the footprint must lie on land meant for this kind of item.
 func _footprint_in_area(zone: String, origin: Vector2i, sz: Vector2i, area: String) -> bool:
-	for c in grid(zone).cells_of(origin, sz):
-		if not layout_for(zone).allows(area, c):
+	for u in grid(zone).cells_of(origin, sz):
+		if not layout_for(zone).allows(area, Iso.cell_of_unit(u)):
 			return false
 	return true
 

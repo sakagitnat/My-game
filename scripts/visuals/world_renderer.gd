@@ -90,7 +90,7 @@ func _draw() -> void:
 		var fp: Vector2i = g.footprints[o]
 		items.append([float(o.y + fp.y) * 1000.0 + o.x, 0, o])
 	for c in g.blocked:
-		items.append([float(c.y + 1) * 1000.0 + c.x, 1, c])
+		items.append([float((c.y + 1) * Iso.SUB) * 1000.0 + c.x * Iso.SUB, 1, c])
 	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	for it in items:
 		if it[1] == 0:
@@ -98,7 +98,7 @@ func _draw() -> void:
 		else:
 			_draw_obstacle(it[2], g.blocked[it[2]])
 	if view.selected_origin != NONE and g.objects.has(view.selected_origin):
-		var pts := Iso.footprint_corners(view.selected_origin, g.footprints[view.selected_origin])
+		var pts := Iso.unit_corners(view.selected_origin, g.footprints[view.selected_origin])
 		pts.append(pts[0])
 		draw_polyline(pts, Color.WHITE, 3.0)
 	if view.selected_obstacle != NONE:
@@ -148,7 +148,7 @@ func _draw_ghost() -> void:
 	var facing := view.ghost_facing
 	var sz: Vector2i = Catalog.size_facing(view.ghost_id, facing)
 	var origin := GameState.footprint_origin(view.ghost_cell, sz)
-	var pts := Iso.footprint_corners(origin, sz)
+	var pts := Iso.unit_corners(origin, sz)
 	var tint := Color(0.4, 0.9, 0.4, 0.45) if ok else Color(0.95, 0.3, 0.25, 0.45)
 	draw_colored_polygon(pts, tint)
 	var edge := pts.duplicate()
@@ -175,8 +175,8 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	var tex := Assets.get_tex(id)
 	if tex == null:
 		return false
-	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
-	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
+	var s := tex.get_size() * (Iso.unit_width(sz) / tex.get_width())
+	var foot := Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.5)
 	# art anchor: the bottom edge of the canvas is the bottom edge of the cells the thing stands on
 	var rect := Rect2(foot - Vector2(s.x * 0.5, s.y), s)
 	if flip:
@@ -185,7 +185,7 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	return true
 
 func _object_height(sz: Vector2i) -> float:
-	return 20.0 * sz.y + 16.0
+	return 20.0 * sz.y / Iso.SUB + 16.0
 
 func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
@@ -195,7 +195,7 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 	if def.get("flat", false):
 		_draw_plot(origin, sz)
 		return
-	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.32), Iso.footprint_width(sz) * 0.42)
+	_draw_shadow(Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.32), Iso.unit_width(sz) * 0.42)
 	var fa := ArtCatalog.facing_art(id, facing)
 	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
 		_draw_box(origin, sz, ArtCatalog.placeable_color(id), facing if Catalog.is_rotatable(id) else -1)
@@ -204,9 +204,9 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 # `facing` >= 0 marks the front of the stand-in with a dark band (0 front face, 1 left, 2 back/top, 3 right).
 func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1) -> void:
 	# A stand-in seen from the front and a little from above: a front face under a shorter top face.
-	var k := Iso.footprint_corners(origin, sz)
+	var k := Iso.unit_corners(origin, sz)
 	var h := _object_height(sz)
-	var depth := Iso.footprint_height(sz) * 0.5
+	var depth := Iso.unit_height(sz) * 0.5
 	var bl := k[3]
 	var br := k[2]
 	var front := PackedVector2Array([bl + Vector2(0, -h), br + Vector2(0, -h), br, bl])
@@ -228,11 +228,11 @@ func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1) -> 
 
 func _draw_plot(origin: Vector2i, sz: Vector2i) -> void:
 	var g := GameState.grid(view.zone)
-	var center := Iso.footprint_center(origin, sz)
+	var center := Iso.unit_center(origin, sz)
 	var prog := GameState.progress(view.zone, origin)
 	var wet := prog >= 0.0
-	if not _draw_flat_art("tile_soil_wet_01" if wet else "tile_soil_dry_01", center, Iso.footprint_width(sz)):
-		var pts := Iso.footprint_corners(origin, sz)
+	if not _draw_flat_art("tile_soil_wet_01" if wet else "tile_soil_dry_01", center, Iso.unit_width(sz)):
+		var pts := Iso.unit_corners(origin, sz)
 		draw_colored_polygon(pts, Color("4c331e") if wet else Color("7a5535"))
 		pts.append(pts[0])
 		draw_polyline(pts, Color("2b1d12"), 1.5)
@@ -259,7 +259,7 @@ func _draw_status(origin: Vector2i, sz: Vector2i, height: float) -> void:
 	var prog := GameState.progress(view.zone, origin)
 	if prog < 0.0:
 		return
-	var corners := Iso.footprint_corners(origin, sz)
+	var corners := Iso.unit_corners(origin, sz)
 	var top := (corners[0] + corners[1]) * 0.5 + Vector2(0, -height - 12.0)
 	if prog >= 1.0:
 		draw_circle(top, 11, Color("2b1d12"))

@@ -20,7 +20,7 @@ var painting := false
 var placing_id: String = ""
 var moving_origin: Vector2i = NONE
 var placing_facing: int = 0          # turn of the item being placed or moved (0 front, 1 left, 2 back, 3 right)
-var ghost_cell: Vector2i = Vector2i.ZERO
+var ghost_cell: Vector2i = Vector2i.ZERO   # in units (Iso.SUB per cell)
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
 var selected_land: Vector2i = NONE   # a cell on an owned, empty block of the restaurant (opens the floor/grass bubble)
@@ -194,7 +194,7 @@ func start_placement(id: String) -> void:
 	placing_id = id
 	moving_origin = NONE
 	placing_facing = 0
-	ghost_cell = Iso.world_to_cell(camera.position)
+	ghost_cell = Iso.world_to_unit(camera.position)
 	_update_placement_ui()
 	_redraw_all()
 
@@ -257,7 +257,7 @@ func confirm_placement() -> void:
 		hud.show_message("MSG_MOVED")
 		return
 	var cost := GameState.place_cost(placing_id)
-	var at := Iso.cell_to_world(ghost_cell)
+	var at := Iso.unit_to_world(ghost_cell)
 	GameState.place_object(zone, ghost_cell, placing_id, placing_facing)
 	hud.float_text("-%d" % cost, _screen_of(at), UiTheme.BAD)
 	hud.show_message("MSG_PLACED")
@@ -284,15 +284,16 @@ func _deselect() -> void:
 
 func _on_tap(world: Vector2) -> void:
 	var c := Iso.world_to_cell(world)
+	var u := Iso.world_to_unit(world)   # things stand on the finer unit grid, land on whole cells
 	var g := GameState.grid(zone)
 	if placing_id != "":
 		if g.in_bounds(c):
-			set_ghost(c)
+			set_ghost(u)
 		return
 	if not g.in_bounds(c):
 		_deselect()
 		return
-	var origin := g.origin_at(c)
+	var origin := g.origin_at(u)
 	if origin != NONE:
 		_select(origin)
 		return
@@ -452,7 +453,7 @@ func _clear_selected_obstacle() -> void:
 func _do_interact(origin: Vector2i, seed_id: String) -> void:
 	var g := GameState.grid(zone)
 	var crop: String = g.states.get(origin, {}).get("crop", "")
-	var at := _screen_of(Iso.footprint_center(origin, g.footprints[origin]))
+	var at := _screen_of(Iso.unit_center(origin, g.footprints[origin]))
 	var result := GameState.interact(zone, origin, seed_id)
 	match result:
 		"planted": hud.show_message("MSG_PLANTED")
@@ -515,7 +516,7 @@ func _process(delta: float) -> void:
 	if selected_origin != NONE and hud.context.visible:
 		var g := GameState.grid(zone)
 		if g.objects.has(selected_origin):
-			var top := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])
+			var top := Iso.unit_corners(selected_origin, g.footprints[selected_origin])
 			hud.place_context(_screen_of((top[0] + top[1]) * 0.5 + Vector2(0, -24)))
 		context_timer += delta
 		if context_timer >= 1.0:

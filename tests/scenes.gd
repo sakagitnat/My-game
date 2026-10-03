@@ -84,12 +84,12 @@ func run() -> void:
 	gs.set_floor("restaurant", Vector2i(1, 1) * 6, true)
 
 	# Items only where they belong
-	check(gs.check_place("restaurant", gs.start_cell(), "rest_table_small_01") == "ok", "table in the shop")
-	check(gs.check_place("restaurant", gs.start_cell(), "farm_plot_01") == "ok", "farm items can be placed on the one main map")
-	check(gs.check_place("restaurant", Vector2i(36, 2), "rest_table_small_01") == "area", "nothing on the road")
-	check(gs.check_place("restaurant", Vector2i(36, 50), "rest_table_small_01") == "invalid", "nothing in the sea")
-	check(gs.check_place("restaurant", Vector2i(2, 3) * 6 + Vector2i(3, 3), "rest_table_small_01") == "locked", "unbought land is locked")
-	check(gs.check_place("restaurant", Vector2i(1, 1) * 6 + Vector2i(3, 3), "rest_table_small_01") == "ok", "tables go on bought land")
+	check(gs.check_place("restaurant", gs.start_cell() * 2, "rest_table_small_01") == "ok", "table in the shop")
+	check(gs.check_place("restaurant", gs.start_cell() * 2, "farm_plot_01") == "ok", "farm items can be placed on the one main map")
+	check(gs.check_place("restaurant", Vector2i(72, 4), "rest_table_small_01") == "area", "nothing on the road")
+	check(gs.check_place("restaurant", Vector2i(72, 100), "rest_table_small_01") == "invalid", "nothing in the sea")
+	check(gs.check_place("restaurant", Vector2i(2, 3) * 12 + Vector2i(7, 7), "rest_table_small_01") == "locked", "unbought land is locked")
+	check(gs.check_place("restaurant", Vector2i(1, 1) * 12 + Vector2i(7, 7), "rest_table_small_01") == "ok", "tables go on bought land")
 
 	# Obstacles are part of the map: none in the shop, on the road or in the water
 	var bad := 0
@@ -104,7 +104,7 @@ func run() -> void:
 	check(farm.cells == Vector2i(30, 30) and gs.grid("farm").owned_parcels.size() == 1, "the farm is 30x30 with one starting block")
 	check(gs.farm_start_cell() == Vector2i(15, 15), "the farm camera starts in the middle")
 	check(farm.sale_parcels().size() == 24 and gs.grid("farm").blocked.size() > 30, "farm blocks are for sale and trees stand about")
-	check(gs.check_place("farm", Vector2i(15, 15), "farm_plot_01") == "ok" and gs.check_place("farm", Vector2i(15, 15), "rest_table_small_01") == "invalid", "farm items in the farm only")
+	check(gs.check_place("farm", Vector2i(31, 31), "farm_plot_01") == "ok" and gs.check_place("farm", Vector2i(31, 31), "rest_table_small_01") == "invalid", "farm items in the farm only")
 
 	# Maps are data: round trip through text, painting, the smooth shoreline, and the owner's copy in user storage
 	var copy := SceneLayout.from_dict(MapStore.parse(MapStore.to_text(lay)))
@@ -167,10 +167,10 @@ func run() -> void:
 	world._on_tap(Iso.cell_to_world(Vector2i(6, 2)))
 	check(world.hud.message_key == "MSG_AREA_INFO", "tapping land that is not for sale says so")
 	world.start_placement("rest_table_small_01")
-	world.set_ghost(Vector2i(18, 12))
+	world.set_ghost(Vector2i(37, 25))
 	await process_frame
 	check(world.view.ghost_id == "rest_table_small_01" and world.placement_status() == "ok", "placing shows a ghost the decor layer can draw a grid for")
-	world.set_ghost(Vector2i(36, 2))
+	world.set_ghost(Vector2i(72, 4))
 	check(world.placement_status() == "area" and world.hud.placement_ok.disabled, "a ghost on the road is invalid")
 	world.cancel_placement()
 	world.hud.zone_toggled.emit()

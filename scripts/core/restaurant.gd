@@ -52,12 +52,12 @@ func stoves() -> Array:
 func has_service() -> bool:
 	return not tables().is_empty() and not stoves().is_empty()
 
-# Two seats per table: one on each side. `cell` is the cell next to the table where the customer sits.
+# Two seats per table: one on each side. `cell` is the unit (Iso.SUB per cell) at the corner of the cell next to the table where the customer sits.
 func seats() -> Array:
 	var out: Array = []
 	for t in tables():
-		out.append({"table": t, "index": 0, "cell": t + Vector2i(-1, 0)})
-		out.append({"table": t, "index": 1, "cell": t + Vector2i(2, 1)})
+		out.append({"table": t, "index": 0, "cell": t + Vector2i(-2, 0)})
+		out.append({"table": t, "index": 1, "cell": t + Vector2i(4, 2)})
 	return out
 
 func free_seats() -> Array:

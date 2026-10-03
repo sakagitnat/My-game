@@ -131,7 +131,7 @@ func resize(block_count: Vector2i) -> void:
 		if not edge_in_bounds(Vector2i(int(p[0]), int(p[1])), p[2]):
 			walls.erase(key)
 	obstacles = obstacles.filter(func(o: Array) -> bool: return in_bounds(Vector2i(o[0], o[1])))
-	objects = objects.filter(func(o: Array) -> bool: return in_bounds(Vector2i(o[0], o[1])))
+	objects = objects.filter(func(o: Array) -> bool: return in_bounds(Iso.cell_of_unit(Vector2i(o[0], o[1]))))
 	var new_rows: Array[String] = []
 	for y in range(block_count.y):
 		var row := parcels[y] if y < parcels.size() else ""
@@ -149,7 +149,7 @@ func prune_props() -> void:
 		var sz: Vector2i = Catalog.size_of(str(o[2]))
 		for y in range(sz.y):
 			for x in range(sz.x):
-				var t := tile_at(Vector2i(o[0] + x, o[1] + y))
+				var t := tile_at(Iso.cell_of_unit(Vector2i(o[0] + x, o[1] + y)))
 				if t == Tile.WATER or t == Tile.ROAD:
 					return false
 		return true)

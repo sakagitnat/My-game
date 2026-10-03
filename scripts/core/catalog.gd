@@ -7,15 +7,16 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # Game rules only; how things look (colours, sprite sizing) is in scripts/visuals/art_catalog.gd.
 # Placeable keys are also art file names under assets/ (see docs/ASSETS.md).
 # "area" is the kind of land an item may stand on (see Island).
-# "size" is the footprint in cells (owned by game rules: do not change it to fix a picture).
+# "size" is the footprint in UNITS: finer than a cell, Iso.SUB x Iso.SUB units per cell, so (4, 4) is a 2x2-cell table
+# (owned by game rules: do not change it to fix a picture).
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 # "rotatable" objects have a front: the player buys one and turns it (facing 0 front, 1 left, 2 back, 3 right).
 const PLACEABLES := {
-	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE"},
-	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE", "rotatable": true},
-	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "flat": true},
-	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE"},
-	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP"},
+	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 4), "name": "ITEM_TABLE"},
+	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(4, 4), "name": "ITEM_STOVE", "rotatable": true},
+	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(4, 4), "name": "ITEM_PLOT", "flat": true},
+	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(2, 2), "name": "ITEM_FENCE"},
+	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(6, 6), "name": "ITEM_COOP"},
 }
 
 # time: seconds to grow. seed: coin cost per planting. yield: items per harvest.

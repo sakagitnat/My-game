@@ -73,7 +73,7 @@ func apply_at(world_pos: Vector2) -> bool:
 	match tool:
 		"ground": did = _paint_ground(cell)
 		"wall": did = _paint_wall(fpos, wall_kind)
-		"prop": did = _place_prop(cell)
+		"prop": did = _place_prop(cell, Iso.world_to_unit(world_pos))
 		"land": did = _set_land(cell)
 		"erase": did = _erase(cell, fpos)
 	if did:
@@ -143,7 +143,7 @@ func _set_land(cell: Vector2i) -> bool:
 	l.set_parcel_label(p, land_label)
 	return true
 
-# Cells covered by the objects already on the map.
+# Units covered by the objects already on the map (objects are placed in units, see Iso.SUB).
 func _object_cells(l: SceneLayout, skip: int = -1) -> Dictionary:
 	var out := {}
 	for i in range(l.objects.size()):
@@ -162,11 +162,18 @@ func _obstacle_at(l: SceneLayout, c: Vector2i) -> int:
 			return i
 	return -1
 
-func _place_prop(cell: Vector2i) -> bool:
+func _unit_has_object(occupied: Dictionary, cell: Vector2i) -> bool:
+	for dy in range(Iso.SUB):
+		for dx in range(Iso.SUB):
+			if occupied.has(cell * Iso.SUB + Vector2i(dx, dy)):
+				return true
+	return false
+
+func _place_prop(cell: Vector2i, unit: Vector2i) -> bool:
 	var l := current()
 	var occupied := _object_cells(l)
 	if Catalog.OBSTACLES.has(prop_id):
-		if not l.is_solid(cell) or occupied.has(cell) or _obstacle_at(l, cell) >= 0:
+		if not l.is_solid(cell) or _unit_has_object(occupied, cell) or _obstacle_at(l, cell) >= 0:
 			return false
 		var t := l.tile_at(cell)
 		if t != SceneLayout.Tile.GRASS and t != SceneLayout.Tile.SAND and t != SceneLayout.Tile.DIRT:
@@ -176,11 +183,12 @@ func _place_prop(cell: Vector2i) -> bool:
 	if not Catalog.PLACEABLES.has(prop_id):
 		return false
 	var sz: Vector2i = Catalog.size_of(prop_id)
-	var origin := GameState.footprint_origin(cell, sz)
+	var origin := GameState.footprint_origin(unit, sz)
 	for y in range(sz.y):
 		for x in range(sz.x):
-			var c := origin + Vector2i(x, y)
-			if not l.is_solid(c) or not l.allows(str(Catalog.PLACEABLES[prop_id].area), c) or occupied.has(c) or _obstacle_at(l, c) >= 0:
+			var u := origin + Vector2i(x, y)
+			var c := Iso.cell_of_unit(u)
+			if not l.is_solid(c) or not l.allows(str(Catalog.PLACEABLES[prop_id].area), c) or occupied.has(u) or _obstacle_at(l, c) >= 0:
 				return false
 	l.objects.append([origin.x, origin.y, prop_id])
 	return true
@@ -199,8 +207,9 @@ func _erase(cell: Vector2i, fpos: Vector2) -> bool:
 		l.obstacles.remove_at(oi)
 		did = true
 	var cells := _object_cells(l)
-	if cells.has(cell):
-		l.objects.remove_at(cells[cell])
+	var unit := Iso.world_to_unit(Iso.cell_to_world_f(fpos))
+	if cells.has(unit):
+		l.objects.remove_at(cells[unit])
 		did = true
 	return did
 

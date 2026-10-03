@@ -23,16 +23,19 @@ func run() -> void:
 	gs.level = 10
 	gs.autosave = false
 	gs.clock_override = 1000.0
-	var plot := Vector2i(12, 12)
-	var plot2 := Vector2i(14, 12)
-	var coop := Vector2i(16, 16)
-	var coop_origin := Vector2i(15, 15)
+	# things sit on the finer unit grid (Iso.SUB per cell); a placement is given by the unit its footprint is centred on
+	var plot := Vector2i(24, 24)            # origin of a 2x2-cell plot
+	var plot_c := plot + Vector2i(1, 1)     # the unit to tap to place it there
+	var plot2 := Vector2i(28, 24)           # origin of a 1-cell fence (a fence is centred on its own origin)
+	var plot2_c := Vector2i(29, 25)         # centre unit of a second plot
+	var coop_origin := Vector2i(30, 30)
+	var coop := coop_origin + Vector2i(2, 2)
 
 	check(Catalog.crop_stage(0.0) == 1 and Catalog.crop_stage(0.4) == 2 and Catalog.crop_stage(0.7) == 3 and Catalog.crop_stage(1.0) == 4, "crop stages")
 
 	# Plots only exist once placed; planting is rejected elsewhere
 	check(gs.interact("farm", plot, "wheat") == "invalid", "no plot yet")
-	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.coins == 490, "place plot")
+	check(gs.place_object("farm", plot_c, "farm_plot_01") == "ok" and gs.coins == 490, "place plot")
 	check(gs.interact("farm", plot, "bogus") == "invalid", "unknown seed")
 
 	# Plant, grow, harvest
@@ -68,17 +71,17 @@ func run() -> void:
 	check(gs.interact("farm", plot, "wheat") == "harvested" and gs.inventory.count("wheat") == 2, "harvest after freeing space")
 
 	# Coop: needs wheat, produces egg
-	check(gs.place_object("farm", coop, "farm_coop_01") == "ok" and gs.grid("farm").origin_at(Vector2i(17, 17)) == coop_origin, "place 3x3 coop centred on the tapped cell")
-	check(gs.place_object("farm", Vector2i(16, 14), "farm_plot_01") == "occupied", "plot cannot overlap the coop")
+	check(gs.place_object("farm", coop, "farm_coop_01") == "ok" and gs.grid("farm").origin_at(Vector2i(34, 34)) == coop_origin, "place 3x3 coop centred on the tapped cell")
+	check(gs.place_object("farm", Vector2i(33, 29), "farm_plot_01") == "occupied", "plot cannot overlap the coop")
 	gs.inventory.remove("wheat", 2)
-	check(gs.interact("farm", Vector2i(17, 17), "wheat") == "no_feed", "coop needs feed (tapping any of its cells)")
+	check(gs.interact("farm", Vector2i(34, 34), "wheat") == "no_feed", "coop needs feed (tapping any of its cells)")
 	gs.inventory.add("wheat", 1)
-	check(gs.interact("farm", coop, "wheat") == "fed" and gs.inventory.count("wheat") == 0, "feed coop")
-	check(gs.interact("farm", coop, "wheat") == "busy", "coop busy")
+	check(gs.interact("farm", coop_origin, "wheat") == "fed" and gs.inventory.count("wheat") == 0, "feed coop")
+	check(gs.interact("farm", coop_origin, "wheat") == "busy", "coop busy")
 	gs.clock_override += 119.0
-	check(gs.interact("farm", coop, "wheat") == "busy", "coop not ready at 119s")
+	check(gs.interact("farm", coop_origin, "wheat") == "busy", "coop not ready at 119s")
 	gs.clock_override += 1.0
-	check(gs.interact("farm", coop, "wheat") == "collected" and gs.inventory.count("egg") == 1, "collect egg")
+	check(gs.interact("farm", coop_origin, "wheat") == "collected" and gs.inventory.count("egg") == 1, "collect egg")
 
 	# Fence and other objects are not interactive
 	check(gs.place_object("farm", plot2, "farm_fence_01") == "ok", "place fence")
@@ -96,7 +99,7 @@ func run() -> void:
 	gs.interact("farm", plot, "cabbage")
 	check(gs.grid("farm").states.has(plot), "state exists while growing")
 	check(gs.remove_object("farm", plot) == "ok" and not gs.grid("farm").states.has(plot), "remove clears state")
-	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.progress("farm", plot) == -1.0, "re-placed plot is empty")
+	check(gs.place_object("farm", plot_c, "farm_plot_01") == "ok" and gs.progress("farm", plot) == -1.0, "re-placed plot is empty")
 
 	# Persistence including offline growth
 	gs.autosave = true
@@ -125,12 +128,12 @@ func run() -> void:
 	gs.autosave = false
 	gs.coins = 0
 	check(gs.is_broke(), "broke when nothing can earn money")
-	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.coins == 0, "first plot is free when broke")
+	check(gs.place_object("farm", plot_c, "farm_plot_01") == "ok" and gs.coins == 0, "first plot is free when broke")
 	check(gs.interact("farm", plot, "tomato") == "no_coins", "only wheat is free")
 	check(gs.interact("farm", plot, "wheat") == "planted" and gs.coins == 0, "free wheat when broke")
 	check(not gs.is_broke(), "growing crop means not broke")
 	gs.coins = 0
-	check(gs.place_object("farm", plot2, "farm_plot_01") == "no_coins", "second plot is not free")
+	check(gs.place_object("farm", plot2_c, "farm_plot_01") == "no_coins", "second plot is not free")
 	gs.clock_override = 99999.0
 	gs.interact("farm", plot, "wheat")
 	check(gs.inventory.count("wheat") == 1 and not gs.is_broke(), "harvest gives sellable item")
@@ -163,24 +166,24 @@ func run() -> void:
 	await process_frame
 	world.set_zone("farm")
 	world.start_placement("farm_plot_01")
-	world.set_ghost(plot)
+	world.set_ghost(plot_c)
 	check(world.placement_status() == "ok" and world.hud.placement_bar.visible and not world.hud.placement_ok.disabled, "placement bar enabled for a valid spot")
 	world.confirm_placement()
 	check(gs.grid("farm").objects.get(plot) == "farm_plot_01", "confirm places the plot")
-	check(world.ghost_cell == plot + Vector2i(2, 0) and world.placement_status() == "ok", "ghost steps to the next free spot after placing")
-	world.set_ghost(plot)
+	check(world.ghost_cell == plot_c + Vector2i(4, 0) and world.placement_status() == "ok", "ghost steps to the next free spot after placing")
+	world.set_ghost(plot_c)
 	check(world.placement_status() == "occupied" and world.hud.placement_ok.disabled, "the used spot is now blocked")
 	world.cancel_placement()
 	check(not world.hud.placement_bar.visible, "cancel hides the placement bar")
-	world._on_tap(Iso.cell_to_world(plot))
+	world._on_tap(Iso.unit_corner(plot) + Vector2(8, 8))
 	check(world.hud.context.visible and world.selected_origin == plot, "tap on an empty plot opens the bubble")
 	world._on_crop_chosen("wheat")
 	check(gs.grid("farm").states.has(plot) and not world.hud.context.visible, "choosing a crop plants it")
-	world._on_tap(Iso.cell_to_world(plot))
+	world._on_tap(Iso.unit_corner(plot) + Vector2(8, 8))
 	check(world.hud.context.visible, "tap on a growing plot shows its status")
 	world._deselect()
 	gs.clock_override = 9061.0
-	world._on_tap(Iso.cell_to_world(plot))
+	world._on_tap(Iso.unit_corner(plot) + Vector2(8, 8))
 	check(gs.inventory.count("wheat") == 1 and not world.hud.context.visible, "one tap harvests a ripe plot")
 	world.hud.open_modal("barn")
 	check(world.hud.modal.visible and world.hud.modal_kind == "barn", "barn modal opens")

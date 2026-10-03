@@ -115,7 +115,7 @@ func _draw_decor(g: WorldGrid, vis: Rect2i) -> void:
 	for y in range(vis.position.y, vis.end.y):
 		for x in range(vis.position.x, vis.end.x):
 			var c := Vector2i(x, y)
-			if GameState.edge_distance(zone, c) < 3 or g.occupied.has(c) or GameState.layout_for(zone).tile_at(c) != SceneLayout.Tile.GRASS or g.has_floor(WorldGrid.parcel_of(c)) or g.blocked.has(c):
+			if GameState.edge_distance(zone, c) < 3 or g.cell_occupied(c) or GameState.layout_for(zone).tile_at(c) != SceneLayout.Tile.GRASS or g.has_floor(WorldGrid.parcel_of(c)) or g.blocked.has(c):
 				continue
 			var h := Noise2D.hash2(x, y, 5)
 			if h > 0.13:
