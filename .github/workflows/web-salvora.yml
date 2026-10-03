@@ -47,6 +47,12 @@ jobs:
           godot --headless --path . --export-release Web build/web/index.html
           test -s build/web/index.wasm
           touch build/web/.nojekyll
+      - name: Include drawing workshop
+        run: |
+          if [ -f assets/td/art_workshop/index.html ]; then
+            mkdir -p build/web/art-workshop
+            cp assets/td/art_workshop/index.html build/web/art-workshop/index.html
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
