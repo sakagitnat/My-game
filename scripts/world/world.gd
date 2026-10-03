@@ -488,8 +488,8 @@ func _process(delta: float) -> void:
 	if selected_origin != NONE and hud.context.visible:
 		var g := GameState.grid(zone)
 		if g.objects.has(selected_origin):
-			var top := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])[0]
-			hud.place_context(_screen_of(top))
+			var top := Iso.footprint_corners(selected_origin, g.footprints[selected_origin])
+			hud.place_context(_screen_of((top[0] + top[1]) * 0.5 + Vector2(0, -24)))
 		context_timer += delta
 		if context_timer >= 1.0:
 			context_timer = 0.0
@@ -556,7 +556,7 @@ func _zoom_by(f: float) -> void:
 
 func _clamp_camera() -> void:
 	var s := GameState.grid(zone).size
-	var lo := Vector2(Iso.cell_to_world(Vector2i(0, s.y)).x, 0.0)
-	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
+	var lo := Iso.cell_to_world(Vector2i.ZERO)
+	var hi := Iso.cell_to_world(s)
 	camera.position = camera.position.clamp(lo, hi)
 	_redraw_all()

@@ -88,9 +88,9 @@ func _draw() -> void:
 	var items: Array = []
 	for o in g.objects:
 		var fp: Vector2i = g.footprints[o]
-		items.append([o.x + o.y + fp.x + fp.y, 0, o])
+		items.append([float(o.y + fp.y) * 1000.0 + o.x, 0, o])
 	for c in g.blocked:
-		items.append([c.x + c.y + 1, 1, c])
+		items.append([float(c.y + 1) * 1000.0 + c.x, 1, c])
 	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	for it in items:
 		if it[1] == 0:
@@ -119,7 +119,7 @@ func _draw_obstacle(c: Vector2i, kind: String) -> void:
 	var art := ArtCatalog.obstacle(kind)
 	var p := Iso.cell_to_world(c)
 	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
-	_draw_shadow(p + Vector2(0, 6), Iso.TILE_W * 0.34 * float(art.scale))
+	_draw_shadow(foot + Vector2(0, -6), Iso.TILE_W * 0.2 * float(art.scale) + 4.0)
 	var tex := Assets.get_tex(art.art)
 	if tex != null:
 		var s := tex.get_size() * (Iso.TILE_W * float(art.scale) / tex.get_width())
@@ -159,7 +159,7 @@ func _draw_ghost() -> void:
 	if not _draw_sprite(view.ghost_id, origin, sz, Color(1, 1, 1, 0.75)):
 		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75))
 
-# Floor-style art: the canvas width maps to `width`, the diamond is centred in the canvas.
+# Floor-style art: the canvas width maps to `width` and the canvas is centred on `center`.
 func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
 	var tex := Assets.get_tex(id)
 	if tex == null:
@@ -168,7 +168,7 @@ func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Col
 	draw_texture_rect(tex, Rect2(center - s * 0.5, s), false, tint)
 	return true
 
-# Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom corner.
+# Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom edge.
 func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE) -> bool:
 	var tex := Assets.get_tex(id)
 	if tex == null:
@@ -179,7 +179,7 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	return true
 
 func _object_height(sz: Vector2i) -> float:
-	return 9.5 * (sz.x + sz.y)
+	return 20.0 * sz.y + 16.0
 
 func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
@@ -187,24 +187,24 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 	if def.get("flat", false):
 		_draw_plot(origin, sz)
 		return
-	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.18), Iso.footprint_width(sz) * 0.42)
+	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.32), Iso.footprint_width(sz) * 0.42)
 	if not _draw_sprite(id, origin, sz):
 		_draw_box(origin, sz, ArtCatalog.placeable_color(id))
 	_draw_status(origin, sz, _object_height(sz))
 
 func _draw_box(origin: Vector2i, sz: Vector2i, col: Color) -> void:
+	# A stand-in seen from the front and a little from above: a front face under a shorter top face.
 	var k := Iso.footprint_corners(origin, sz)
-	var up := Vector2(0, -_object_height(sz))
-	var top := k[0]
-	var right := k[1]
-	var bottom := k[2]
-	var left := k[3]
-	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + up, left + up]), col.darkened(0.25))
-	draw_colored_polygon(PackedVector2Array([bottom, right, right + up, bottom + up]), col.darkened(0.45))
-	var lid := PackedVector2Array([left + up, top + up, right + up, bottom + up])
-	draw_colored_polygon(lid, col)
-	lid.append(lid[0])
-	draw_polyline(lid, col.darkened(0.35), 1.5)
+	var h := _object_height(sz)
+	var depth := Iso.footprint_height(sz) * 0.5
+	var bl := k[3]
+	var br := k[2]
+	var front := PackedVector2Array([bl + Vector2(0, -h), br + Vector2(0, -h), br, bl])
+	draw_colored_polygon(front, col.darkened(0.25))
+	var top := PackedVector2Array([bl + Vector2(0, -h - depth), br + Vector2(0, -h - depth), br + Vector2(0, -h), bl + Vector2(0, -h)])
+	draw_colored_polygon(top, col)
+	top.append(top[0])
+	draw_polyline(top, col.darkened(0.35), 1.5)
 
 func _draw_plot(origin: Vector2i, sz: Vector2i) -> void:
 	var g := GameState.grid(view.zone)
@@ -239,7 +239,8 @@ func _draw_status(origin: Vector2i, sz: Vector2i, height: float) -> void:
 	var prog := GameState.progress(view.zone, origin)
 	if prog < 0.0:
 		return
-	var top := Iso.footprint_corners(origin, sz)[0] + Vector2(0, -height - 12.0)
+	var corners := Iso.footprint_corners(origin, sz)
+	var top := (corners[0] + corners[1]) * 0.5 + Vector2(0, -height - 12.0)
 	if prog >= 1.0:
 		draw_circle(top, 11, Color("2b1d12"))
 		draw_circle(top, 8, Color("ffd66b"))

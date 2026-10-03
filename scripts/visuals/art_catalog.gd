@@ -20,9 +20,9 @@ const CROP_COLOR := {
 
 # `art`: sprite id under assets/. `scale`: sprite width in cells.
 const OBSTACLE := {
-	"tree": {"art": "obs_tree_01", "scale": 2.6},
-	"rock": {"art": "obs_rock_01", "scale": 1.3},
-	"bush": {"art": "obs_bush_01", "scale": 1.6},
+	"tree": {"art": "obs_tree_01", "scale": 2.0},
+	"rock": {"art": "obs_rock_01", "scale": 1.0},
+	"bush": {"art": "obs_bush_01", "scale": 1.0},
 }
 
 static func placeable_color(id: String) -> Color:
