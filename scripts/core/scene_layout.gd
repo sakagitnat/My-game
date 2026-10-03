@@ -276,14 +276,27 @@ func allows(group: String, c: Vector2i) -> bool:
 	var t := tile_at(c)
 	return t != Tile.WATER and t != Tile.ROAD
 
-# Cell in the middle of the starting blocks (where the camera starts).
+# Cell in the middle of the first group of touching starting blocks (where the camera starts). A map with
+# several separate starting areas (the shop and the farm) starts at the first one.
 func start_cell() -> Vector2i:
 	if starts.is_empty():
 		return cells / 2
-	var sum := Vector2.ZERO
+	var first: Vector2i = starts[0]
 	for p in starts:
+		if p.y < first.y or (p.y == first.y and p.x < first.x):
+			first = p
+	var group: Array[Vector2i] = [first]
+	var i := 0
+	while i < group.size():
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = group[i] + d
+			if starts.has(q) and not group.has(q):
+				group.append(q)
+		i += 1
+	var sum := Vector2.ZERO
+	for p in group:
 		sum += Vector2(p * WorldGrid.PARCEL + Vector2i.ONE * (WorldGrid.PARCEL / 2))
-	return Vector2i((sum / starts.size()).round())
+	return Vector2i((sum / group.size()).round())
 
 # ---------------------------------------------------------------- coast
 

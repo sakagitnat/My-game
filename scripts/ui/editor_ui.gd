@@ -158,6 +158,7 @@ func refresh() -> void:
 	undo_button.disabled = not editor.can_undo()
 	redo_button.disabled = not editor.can_redo()
 	scene_button.text = Loc.t("ZONE_RESTAURANT" if editor.zone == "restaurant" else "ZONE_FARM")
+	scene_button.visible = GameState.has_farm_zone()
 	for t in tool_buttons:
 		tool_buttons[t].set_pressed_no_signal(t == editor.tool)
 		tool_buttons[t].text = Loc.t(TOOL_KEYS[t])
@@ -178,7 +179,7 @@ func refresh() -> void:
 		"prop":
 			for k in Catalog.OBSTACLES:
 				_item(Loc.t(Catalog.OBSTACLES[k].name), editor.prop_id == k, func() -> void: editor.prop_id = k)
-			for k in Catalog.placeables_for(editor.current().area if editor.current().area != "any" else editor.zone):
+			for k in GameState.placeables_in(editor.zone):
 				_item(Loc.t(Catalog.PLACEABLES[k].name), editor.prop_id == k, func() -> void: editor.prop_id = k)
 		"land":
 			for k in LAND_KEYS:
