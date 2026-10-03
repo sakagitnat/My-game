@@ -72,7 +72,7 @@ func run() -> void:
 	check(gs.place_object("restaurant", Vector2i(14, 14), "rest_stove_01") == "occupied", "overlap rejected")
 	check(gs.place_object("restaurant", Vector2i(0, 0), "rest_stove_01") == "locked", "locked")
 	check(gs.place_object("restaurant", Vector2i(17, 13), "rest_stove_01") == "ok" and gs.coins == 240, "footprint may span two owned blocks")
-	check(gs.place_object("restaurant", Vector2i(5, 5), "farm_fence_01") == "invalid", "wrong zone item")
+	check(gs.place_object("restaurant", Vector2i(10, 52), "farm_fence_01") == "invalid", "an item does not stand on the sea")
 	check(gs.remove_object("restaurant", Vector2i(14, 14)) == "ok" and gs.coins == 240 + 15, "remove from any covered cell refunds half")
 	gs.remove_object("restaurant", Vector2i(18, 14))
 	gs.coins = 5
