@@ -188,16 +188,25 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_circle(a + Vector2(44, -48), 2.5, Color("e8c98a"))
 
 # A wall along the left edge of cell (x, y). Seen from the front it is a thin band; its cap sits a wall height up.
+# Consecutive cells of the same kind are drawn as ONE continuous strip, so no seams show between cells.
 func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
 	if kind == "door":
 		return   # an opening in a side wall: nothing to see but the mat
+	if str(lay.walls.get("%d,%d,w" % [x, y - 1], "")) == kind:
+		return   # drawn as part of the run that starts above
+	var end_y := y
+	while str(lay.walls.get("%d,%d,w" % [x, end_y + 1], "")) == kind:
+		end_y += 1
 	var a := _pt(x - 0.5, y - 0.5)
-	var b := _pt(x - 0.5, y + 0.5)
+	var b := _pt(x - 0.5, end_y + 0.5)
 	var h := LOW_H if kind == "low" else WALL_H
 	var rect := Rect2(Vector2(a.x - SIDE_W * 0.5, a.y - h), Vector2(SIDE_W, b.y - a.y + h))
 	var tex := Assets.get_tex(WALL_SIDE_ART)
 	if tex != null and kind != "low":
-		draw_texture_rect(tex, Rect2(Vector2(a.x - SIDE_W * 0.5, b.y - WALL_H), Vector2(SIDE_W, WALL_H)), false)
+		var n := end_y - y + 1
+		for i in n:
+			var yy := b.y - float(n - 1 - i) * Iso.TILE_H
+			draw_texture_rect(tex, Rect2(Vector2(a.x - SIDE_W * 0.5, yy - WALL_H), Vector2(SIDE_W, WALL_H)), false)
 	else:
 		draw_rect(rect, WALL_SIDE)
 		draw_rect(Rect2(rect.position + Vector2(0, rect.size.y - 8), Vector2(SIDE_W, 8)), BASEBOARD)
