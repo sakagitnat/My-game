@@ -30,17 +30,17 @@ ITEMS = [
     # customer area
     ("rest_table_small", "furniture", "rest_table_small_01", 128, 128, "โซนลูกค้า", "โต๊ะเล็ก", "table", ""),
     ("rest_table_long", "furniture", "rest_table_long_01", 256, 128, "โซนลูกค้า", "โต๊ะยาว", "table", ""),
-    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
-    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
-    ("rest_chair_left", "furniture", "rest_chair_left_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันซ้าย", "chair", ""),
-    ("rest_chair_right", "furniture", "rest_chair_right_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันขวา", "chair", ""),
+    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
+    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
+    ("rest_chair_left", "furniture", "rest_chair_left_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันซ้าย", "chair", ""),
+    ("rest_chair_right", "furniture", "rest_chair_right_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันขวา", "chair", ""),
     ("rest_stool", "furniture", "rest_stool_01", 128, 128, "โซนลูกค้า", "สตูล", "stool", ""),
     ("rest_bench", "furniture", "rest_bench_01", 256, 128, "โซนลูกค้า", "ม้านั่งยาว", "table", ""),
     ("rest_register", "furniture", "rest_register_01", 128, 128, "โซนลูกค้า", "เครื่องคิดเงิน", "register", ""),
     ("rest_shelf", "furniture", "rest_shelf_01", 128, 256, "โซนลูกค้า", "ชั้นวางของ", "shelf", ""),
-    ("rest_menu_sign", "furniture", "rest_menu_sign_01", 128, 128, "โซนลูกค้า", "ป้ายเมนูตั้งพื้น", "sign", ""),
+    ("rest_menu_sign", "furniture", "rest_menu_sign_01", 128, 160, "โซนลูกค้า", "ป้ายเมนูตั้งพื้น", "sign", ""),
     # decoration
-    ("deco_plant", "deco", "deco_plant_pot_01", 128, 128, "ตกแต่ง", "กระถางต้นไม้", "plant", ""),
+    ("deco_plant", "deco", "deco_plant_pot_01", 128, 192, "ตกแต่ง", "กระถางต้นไม้", "plant", ""),
     ("deco_rug", "deco", "deco_rug_01", 256, 256, "ตกแต่ง", "พรม (ภาพแบนบนพื้น)", "rug", "flat"),
     ("deco_lamp_floor", "deco", "deco_lamp_floor_01", 128, 256, "ตกแต่ง", "โคมไฟตั้งพื้น", "floorlamp", ""),
     ("deco_bin", "deco", "deco_trash_bin_01", 128, 128, "ตกแต่ง", "ถังขยะ", "bin", ""),
@@ -57,6 +57,11 @@ ITEMS = [
     ("prop_bottle", "props", "prop_bottle_01", 64, 64, "ของเล็ก", "ขวด", "prop", ""),
 ]
 CATEGORIES = ["พื้น", "ผนัง", "ของติดผนัง", "ครัว", "โซนลูกค้า", "ตกแต่ง", "ของเล็ก"]
-def anchor(w, h):
-    """Base line of the object: 24 px above the bottom of a 128 px canvas (12 px for the 64 px small things)."""
-    return (w // 2, h - (12 if w <= 64 and h <= 64 else 24))
+WALL_DECO = ("window", "door", "dooropen", "lamp", "painting", "hood")
+def anchor(w, h, hint=""):
+    """Where the piece stands. Things on the floor (furniture, kitchen modules, decoration, small things) stand with the
+    bottom edge of the canvas on the bottom edge of the cell(s) they take, so they touch the floor and the wall behind.
+    Pieces that hang on a wall keep a base line 24 px above the canvas bottom. Tiles and walls have no anchor of their own."""
+    if hint in WALL_DECO:
+        return (w // 2, h - 24)
+    return (w // 2, h)
