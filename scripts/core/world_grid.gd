@@ -1,8 +1,9 @@
 class_name WorldGrid
 extends RefCounted
 
-# Land is owned in PARCEL x PARCEL blocks of cells. Objects cover one or more
-# cells, are keyed by their top-left "origin" cell and may only sit on owned land.
+# Land is owned in PARCEL x PARCEL blocks of cells. Objects are counted in finer "units" (Iso.SUB x Iso.SUB per cell):
+# they cover one or more units, are keyed by their top-left "origin" unit and may only sit on owned land.
+# `occupied`, `objects`, `footprints`, `states` and `facings` are all in units; land, `blocked` and `styles` stay in cells.
 const PARCEL := 6
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const NONE := Vector2i(-9999, -9999)
@@ -76,14 +77,28 @@ func cells_of(origin: Vector2i, sz: Vector2i) -> Array[Vector2i]:
 			out.append(origin + Vector2i(x, y))
 	return out
 
+# `origin` and `sz` are in units.
 func footprint_in_bounds(origin: Vector2i, sz: Vector2i) -> bool:
-	return in_bounds(origin) and in_bounds(origin + sz - Vector2i.ONE)
+	return origin.x >= 0 and origin.y >= 0 and origin.x + sz.x <= size.x * Iso.SUB and origin.y + sz.y <= size.y * Iso.SUB
 
 func footprint_owned(origin: Vector2i, sz: Vector2i) -> bool:
-	for c in cells_of(origin, sz):
-		if not is_owned(c):
+	for u in cells_of(origin, sz):
+		if not is_owned(Iso.cell_of_unit(u)):
 			return false
 	return true
+
+# Whether any unit of cell `c` holds part of an object.
+func cell_occupied(c: Vector2i) -> bool:
+	for dy in range(Iso.SUB):
+		for dx in range(Iso.SUB):
+			if occupied.has(c * Iso.SUB + Vector2i(dx, dy)):
+				return true
+	return false
+
+# A unit may hold an object when it lies on owned land with no tree, rock or bush.
+func _unit_usable(u: Vector2i) -> bool:
+	var c := Iso.cell_of_unit(u)
+	return in_bounds(c) and is_owned(c) and not blocked.has(c)
 
 func footprint_free(origin: Vector2i, sz: Vector2i) -> bool:
 	for c in cells_of(origin, sz):
@@ -93,8 +108,8 @@ func footprint_free(origin: Vector2i, sz: Vector2i) -> bool:
 
 # True if a tree, rock or bush stands on any cell of the footprint.
 func footprint_blocked(origin: Vector2i, sz: Vector2i) -> bool:
-	for c in cells_of(origin, sz):
-		if blocked.has(c):
+	for u in cells_of(origin, sz):
+		if blocked.has(Iso.cell_of_unit(u)):
 			return true
 	return false
 
@@ -118,9 +133,7 @@ func move(origin: Vector2i, new_origin: Vector2i) -> bool:
 		return false
 	var sz: Vector2i = footprints[origin]
 	for c in cells_of(new_origin, sz):
-		if not in_bounds(c) or not is_owned(c) or blocked.has(c):
-			return false
-		if occupied.has(c) and occupied[c] != origin:
+		if not _unit_usable(c) or (occupied.has(c) and occupied[c] != origin):
 			return false
 	var id: String = objects[origin]
 	var st = states.get(origin)
@@ -145,9 +158,7 @@ func turn(origin: Vector2i, new_sz: Vector2i) -> bool:
 	if not objects.has(origin):
 		return false
 	for c in cells_of(origin, new_sz):
-		if not in_bounds(c) or not is_owned(c) or blocked.has(c):
-			return false
-		if occupied.has(c) and occupied[c] != origin:
+		if not _unit_usable(c) or (occupied.has(c) and occupied[c] != origin):
 			return false
 	for c in cells_of(origin, footprints[origin]):
 		occupied.erase(c)
@@ -201,7 +212,7 @@ func to_dict() -> Dictionary:
 	for p in styles:
 		floors.append([p.x, p.y])
 	return {"size": [size.x, size.y], "parcel": PARCEL, "start": start_parcel_count,
-		"parcels": parcels, "objects": obj, "facings": fac, "states": st, "obstacles": obs, "floors": floors}
+		"units": Iso.SUB, "parcels": parcels, "objects": obj, "facings": fac, "states": st, "obstacles": obs, "floors": floors}
 
 # Returns false (leaving the grid untouched) for saves from before parcels existed or of a different map size.
 func load_dict(d: Dictionary) -> bool:
@@ -227,19 +238,21 @@ func load_dict(d: Dictionary) -> bool:
 		if owned_parcels.has(fc):
 			styles[fc] = "floor"
 	start_parcel_count = clampi(int(d.get("start", 1)), 0, owned_parcels.size())
+	# saves from before the finer grid count objects in whole cells: scale them up to units
+	var k := Iso.SUB / maxi(1, int(d.get("units", 1)))
 	for o in d.get("objects", []):
-		var origin := Vector2i(int(o[0]), int(o[1]))
-		place(origin, str(o[2]), Vector2i(int(o[3]), int(o[4])))
+		var origin := Vector2i(int(o[0]), int(o[1])) * k
+		place(origin, str(o[2]), Vector2i(int(o[3]), int(o[4])) * k)
 	for f in d.get("facings", []):
-		var fo := Vector2i(int(f[0]), int(f[1]))
+		var fo := Vector2i(int(f[0]), int(f[1])) * k
 		if objects.has(fo):
 			facings[fo] = clampi(int(f[2]), 1, 3)
 	for s in d.get("states", []):
-		var origin := Vector2i(int(s[0]), int(s[1]))
+		var origin := Vector2i(int(s[0]), int(s[1])) * k
 		if objects.has(origin) and s[2] is Dictionary:
 			states[origin] = s[2]
 	for o in d.get("obstacles", []):
 		var cell := Vector2i(int(o[0]), int(o[1]))
-		if in_bounds(cell) and not occupied.has(cell) and Catalog.OBSTACLES.has(str(o[2])):
+		if in_bounds(cell) and not cell_occupied(cell) and Catalog.OBSTACLES.has(str(o[2])):
 			blocked[cell] = str(o[2])
 	return true

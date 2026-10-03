@@ -28,8 +28,11 @@ func run() -> void:
 	gs.autosave = false
 	gs.clock_override = 1000.0
 	gs.leveled_up.connect(_on_level_up)
-	var plot := Vector2i(12, 12)
-	var plot2 := Vector2i(14, 12)
+	# things sit on the finer unit grid (Iso.SUB per cell): `plot` is a 2x2-cell plot's origin, `plot_c` the unit to tap to place it
+	var plot := Vector2i(24, 24)
+	var plot_c := plot + Vector2i(1, 1)
+	var plot2 := Vector2i(28, 24)
+	var plot2_c := plot2 + Vector2i(1, 1)
 
 	# Levels and XP
 	check(gs.level == 1 and gs.xp == 0 and gs.xp_for_next() == 30, "starts at level 1")
@@ -46,13 +49,13 @@ func run() -> void:
 	gs.reset()
 	gs.autosave = false
 	gs.clock_override = 1000.0
-	check(gs.check_place("farm", Vector2i(16, 16), "farm_coop_01") == "level", "coop locked at level 1")
-	check(gs.place_object("farm", Vector2i(16, 16), "farm_coop_01") == "level" and gs.coins == 500, "locked item is not placed or charged")
-	check(gs.check_place("restaurant", Vector2i(13, 13), "rest_stove_01") == "ok", "the stove is available from the start so the restaurant can open")
-	check(gs.check_place("restaurant", Vector2i(13, 13), "rest_table_small_01") == "ok", "table available at level 1")
-	check(gs.place_object("farm", plot, "farm_plot_01") == "ok" and gs.xp == GameState.PLACE_XP, "placing gives XP")
+	check(gs.check_place("farm", Vector2i(32, 32), "farm_coop_01") == "level", "coop locked at level 1")
+	check(gs.place_object("farm", Vector2i(32, 32), "farm_coop_01") == "level" and gs.coins == 500, "locked item is not placed or charged")
+	check(gs.check_place("restaurant", Vector2i(27, 27), "rest_stove_01") == "ok", "the stove is available from the start so the restaurant can open")
+	check(gs.check_place("restaurant", Vector2i(27, 27), "rest_table_small_01") == "ok", "table available at level 1")
+	check(gs.place_object("farm", plot_c, "farm_plot_01") == "ok" and gs.xp == GameState.PLACE_XP, "placing gives XP")
 	check(gs.interact("farm", plot, "tomato") == "level" and gs.coins == 490, "tomato locked at level 1")
-	check(gs.place_object("farm", Vector2i(16, 16), "farm_coop_01") == "level", "coop locked at level 1")
+	check(gs.place_object("farm", Vector2i(32, 32), "farm_coop_01") == "level", "coop locked at level 1")
 	check(gs.interact("farm", plot, "wheat") == "planted", "wheat available at level 1")
 	gs.clock_override = 1060.0
 	var xp_before: int = gs.xp
@@ -65,7 +68,7 @@ func run() -> void:
 	gs.level = 2
 	gs.xp = 0
 	check(gs.interact("farm", plot, "tomato") == "planted", "tomato unlocks at level 2")
-	check(gs.place_object("farm", Vector2i(16, 16), "farm_coop_01") == "ok", "coop unlocks at level 2")
+	check(gs.place_object("farm", Vector2i(32, 32), "farm_coop_01") == "ok", "coop unlocks at level 2")
 	check(Catalog.unlock_level("farm_plot_01") == 1 and Catalog.unlock_level("farm_coop_01") == 2, "catalog unlock levels")
 
 	# Level and XP persist; old saves default to level 1
@@ -91,23 +94,23 @@ func run() -> void:
 	gs.level = 10
 	gs.autosave = false
 	gs.clock_override = 1000.0
-	gs.place_object("farm", plot, "farm_plot_01")
-	gs.place_object("farm", plot2, "farm_plot_01")
+	gs.place_object("farm", plot_c, "farm_plot_01")
+	gs.place_object("farm", plot2_c, "farm_plot_01")
 	gs.interact("farm", plot, "cabbage")
 	var coins_move: int = gs.coins
-	check(gs.check_move("farm", plot, Vector2i(14, 14)) == "ok", "free spot allows moving")
-	check(gs.check_move("farm", plot, plot2) == "occupied", "cannot move onto another object")
-	check(gs.check_move("farm", plot, Vector2i(0, 0)) == "locked", "cannot move onto unowned land")
-	check(gs.check_move("farm", plot, Vector2i(-5, -5)) == "invalid", "cannot move off the map")
-	check(gs.check_move("farm", Vector2i(17, 17), Vector2i(14, 14)) == "empty", "nothing to move on an empty cell")
-	check(gs.check_move("farm", plot, Vector2i(13, 13)) == "occupied" or gs.check_move("farm", plot, Vector2i(13, 13)) == "ok", "overlapping its own old footprint is judged on other objects only")
-	check(gs.move_object("farm", plot, Vector2i(14, 14)) == "ok" and gs.coins == coins_move, "move is free")
-	var moved := Vector2i(14, 14)
+	check(gs.check_move("farm", plot, Vector2i(29, 29)) == "ok", "free spot allows moving")
+	check(gs.check_move("farm", plot, plot2_c) == "occupied", "cannot move onto another object")
+	check(gs.check_move("farm", plot, Vector2i(8, 8)) == "locked", "cannot move onto unowned land")
+	check(gs.check_move("farm", plot, Vector2i(-10, -10)) == "invalid", "cannot move off the map")
+	check(gs.check_move("farm", Vector2i(34, 34), Vector2i(29, 29)) == "empty", "nothing to move on an empty cell")
+	check(gs.check_move("farm", plot, Vector2i(27, 27)) == "occupied" or gs.check_move("farm", plot, Vector2i(27, 27)) == "ok", "overlapping its own old footprint is judged on other objects only")
+	check(gs.move_object("farm", plot, Vector2i(29, 29)) == "ok" and gs.coins == coins_move, "move is free")
+	var moved := Vector2i(28, 28)
 	check(gs.grid("farm").objects.get(moved) == "farm_plot_01" and not gs.grid("farm").objects.has(plot), "object relocated")
 	check(gs.grid("farm").states.get(moved, {}).get("crop") == "cabbage", "growing crop moves with the plot")
 	gs.clock_override = 1150.0
 	check(is_equal_approx(gs.progress("farm", moved), 0.5), "growth timer is unchanged by moving")
-	check(gs.grid("farm").origin_at(Vector2i(15, 15)) == moved and gs.grid("farm").origin_at(plot) == WorldGrid.NONE, "occupancy map follows the move")
+	check(gs.grid("farm").origin_at(Vector2i(30, 30)) == moved and gs.grid("farm").origin_at(plot) == WorldGrid.NONE, "occupancy map follows the move")
 
 	# World + HUD behaviour
 	gs.reset()
@@ -131,12 +134,12 @@ func run() -> void:
 	world.hud.close_modal()
 	gs.level = 2
 	world.start_placement("farm_coop_01")
-	world.set_ghost(Vector2i(16, 16))
+	world.set_ghost(Vector2i(32, 32))
 	world.confirm_placement()
-	check(gs.grid("farm").objects.get(Vector2i(15, 15)) == "farm_coop_01", "coop placed after unlocking")
+	check(gs.grid("farm").objects.get(Vector2i(30, 30)) == "farm_coop_01", "coop placed after unlocking")
 	world.cancel_placement()
 	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))
-	check(world.hud.context.visible and world.selected_origin == Vector2i(15, 15), "tap on the coop opens its bubble")
+	check(world.hud.context.visible and world.selected_origin == Vector2i(30, 30), "tap on the coop opens its bubble")
 	var has_action := false
 	for b in world.hud.context_body.find_children("*", "Button", true, false):
 		if b.text == Loc_text(loc, "BTN_FEED"):
@@ -145,7 +148,7 @@ func run() -> void:
 	check(has_action, "idle coop bubble offers a feed action")
 	gs.inventory.add("wheat", 1)
 	world._on_action_pressed()
-	check(gs.grid("farm").states.has(Vector2i(15, 15)) and gs.inventory.count("wheat") == 0, "feed action starts egg production")
+	check(gs.grid("farm").states.has(Vector2i(30, 30)) and gs.inventory.count("wheat") == 0, "feed action starts egg production")
 	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))
 	check(world.hud.context.visible and world.hud.context_body.find_children("*", "Label", true, false).size() >= 2, "busy coop bubble shows a status line")
 	world._deselect()

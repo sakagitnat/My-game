@@ -238,6 +238,10 @@ func _draw_grid(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
 			draw_line(p[1], p[2], tint, 1.4)
 			draw_line(p[2], p[3], tint, 1.4)
 			draw_line(p[3], p[0], tint, 1.4)
+			# things snap to half cells: a fainter line through the middle of the cell
+			var half := Color(tint, tint.a * 0.5)
+			draw_line((p[0] + p[3]) * 0.5, (p[1] + p[2]) * 0.5, half, 1.0)
+			draw_line((p[0] + p[1]) * 0.5, (p[3] + p[2]) * 0.5, half, 1.0)
 
 const LAND_TINT := {".": Color(0.5, 0.5, 0.55, 0.28), "B": Color(1.0, 0.85, 0.2, 0.30), "S": Color(0.3, 0.9, 0.4, 0.34)}
 

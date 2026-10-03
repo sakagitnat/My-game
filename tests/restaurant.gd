@@ -39,15 +39,15 @@ func run() -> void:
 
 	# Opening the restaurant needs a table and a stove
 	check(not r.has_service() and r.seats().is_empty(), "empty restaurant is closed")
-	gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01")
-	check(r.tables() == [Vector2i(13, 13)] and r.seats().size() == 2, "a table gives two seats")
-	check(r.seats()[0].cell == Vector2i(12, 13) and r.seats()[1].cell == Vector2i(15, 14), "seat cells are on opposite sides of the table")
+	gs.place_object("restaurant", Vector2i(27, 27), "rest_table_small_01")
+	check(r.tables() == [Vector2i(26, 26)] and r.seats().size() == 2, "a table gives two seats")
+	check(r.seats()[0].cell == Vector2i(24, 26) and r.seats()[1].cell == Vector2i(30, 28), "seat cells are on opposite sides of the table")
 	check(not r.has_service(), "a table alone does not open the restaurant")
 	r.arrival_timer = 0.0
 	r.tick(5.0)
 	check(r.customers.is_empty(), "no customers without a stove")
-	gs.place_object("restaurant", Vector2i(15, 15), "rest_stove_01")
-	check(r.has_service() and r.stoves() == [Vector2i(15, 15)], "table + stove opens the restaurant")
+	gs.place_object("restaurant", Vector2i(31, 31), "rest_stove_01")
+	check(r.has_service() and r.stoves() == [Vector2i(30, 30)], "table + stove opens the restaurant")
 
 	# Recipes follow the level
 	gs.level = 1
@@ -86,16 +86,16 @@ func run() -> void:
 	gs.level = 10
 	check(r.can_cook("omelet") == "ok", "ingredients in the barn allow cooking")
 	check(gs.cook_dish("omelet") == "ok" and gs.inventory.count("egg") == 1, "cooking takes the ingredients")
-	check(r.is_cooking("omelet") and gs.grid("restaurant").states.has(Vector2i(15, 15)), "the dish is on the stove")
-	check(gs.progress("restaurant", Vector2i(15, 15)) == 0.0 and gs.seconds_left("restaurant", Vector2i(15, 15)) == 20, "stove progress and timer")
+	check(r.is_cooking("omelet") and gs.grid("restaurant").states.has(Vector2i(30, 30)), "the dish is on the stove")
+	check(gs.progress("restaurant", Vector2i(30, 30)) == 0.0 and gs.seconds_left("restaurant", Vector2i(30, 30)) == 20, "stove progress and timer")
 	gs.inventory.add("wheat", 4)
 	check(r.can_cook("wheat_porridge") == "busy", "one stove cooks one dish at a time")
 	gs.clock_override = 1010.0
-	check(is_equal_approx(gs.progress("restaurant", Vector2i(15, 15)), 0.5), "stove progress is half way")
+	check(is_equal_approx(gs.progress("restaurant", Vector2i(30, 30)), 0.5), "stove progress is half way")
 	check(not r.tick(0.1) and r.counter.is_empty(), "nothing at the counter before it is done")
 	gs.clock_override = 1020.0
 	check(r.tick(0.1) and r.counter == ["omelet"] and events.has("ready:omelet"), "finished dish goes to the counter")
-	check(not gs.grid("restaurant").states.has(Vector2i(15, 15)) and not r.is_cooking("omelet"), "the stove is free again")
+	check(not gs.grid("restaurant").states.has(Vector2i(30, 30)) and not r.is_cooking("omelet"), "the stove is free again")
 
 	# Serving
 	var coins_before: int = gs.coins
@@ -141,11 +141,11 @@ func run() -> void:
 	tick_until_customer(r)
 	r.arrival_timer = 99999.0
 	events.clear()
-	gs.remove_object("restaurant", Vector2i(13, 13))
+	gs.remove_object("restaurant", Vector2i(27, 27))
 	r.tick(0.1)
 	check(r.customers.is_empty() and r.reputation == 4 and events == ["left"], "no table: customers leave, reputation unchanged")
 	check(not r.has_service(), "without a table the restaurant closes")
-	gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01")
+	gs.place_object("restaurant", Vector2i(27, 27), "rest_table_small_01")
 
 	# Save, load and offline cooking
 	gs.inventory.add("egg", 2)
@@ -160,7 +160,7 @@ func run() -> void:
 	check(r.counter.is_empty() and r.reputation == 0, "reset clears the restaurant")
 	gs.clock_override = 2100.0
 	check(gs.load_game() and r.counter == ["tomato_soup"] and r.reputation == 7, "counter and reputation persist")
-	check(gs.grid("restaurant").states.has(Vector2i(15, 15)), "a dish on the stove persists")
+	check(gs.grid("restaurant").states.has(Vector2i(30, 30)), "a dish on the stove persists")
 	check(r.customers.is_empty() and saved_customers >= 0, "customers are not saved")
 	r.arrival_timer = 99999.0
 	r.tick(0.1)
@@ -186,8 +186,8 @@ func run() -> void:
 	var hud = world.hud
 	check(hud.rest_panel.visible, "the restaurant panel shows in the restaurant")
 	check(hud.rest_body.find_children("*", "Label", true, false).any(func(l: Label) -> bool: return l.text == loc.t("REST_NEEDS_SETUP")), "panel explains how to open the restaurant")
-	gs.place_object("restaurant", Vector2i(13, 13), "rest_table_small_01")
-	gs.place_object("restaurant", Vector2i(15, 15), "rest_stove_01")
+	gs.place_object("restaurant", Vector2i(27, 27), "rest_table_small_01")
+	gs.place_object("restaurant", Vector2i(31, 31), "rest_stove_01")
 	tick_until_customer(r)
 	r.arrival_timer = 99999.0
 	r.customers[0].dish = "omelet"

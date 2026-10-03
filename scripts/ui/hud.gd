@@ -408,6 +408,10 @@ func _on_cook(dish: String) -> void:
 	if GameState.cook_dish(dish) == "ok":
 		show_message("MSG_COOKING", Loc.t(Catalog.RECIPES[dish].name))
 
+# A footprint side given in units, written in cells: 4 -> "2", 3 -> "1.5".
+func _cells_text(units: int) -> String:
+	return str(units / Iso.SUB) if units % Iso.SUB == 0 else "%.1f" % (units / float(Iso.SUB))
+
 # ---------------------------------------------------------------- placement bar
 
 func show_placement(title: String, valid: bool, moving: bool = false, rotatable: bool = false) -> void:
@@ -584,7 +588,7 @@ func _build_shop() -> void:
 		name_l.text = Loc.t(def.name)
 		info.add_child(name_l)
 		var sz_l := Label.new()
-		sz_l.text = "%dx%d   %d" % [def.size.x, def.size.y, def.cost]
+		sz_l.text = "%sx%s   %d" % [_cells_text(def.size.x), _cells_text(def.size.y), def.cost]
 		sz_l.add_theme_font_size_override("font_size", 16)
 		sz_l.add_theme_color_override("font_color", UiTheme.MUTED)
 		info.add_child(sz_l)
