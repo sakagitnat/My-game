@@ -19,12 +19,16 @@ func set_zone(z: String) -> void:
 	_colors.clear()
 	queue_redraw()
 
-# d: whole cells from this corner to the water (0 on the shoreline itself).
-func _color_at(vx: int, vy: int, d: float) -> Color:
+# The grass colour at a cell corner (the ground blend in SceneDecor matches it along its borders).
+static func grass_color(vx: int, vy: int) -> Color:
 	var n := Noise2D.value(vx * 0.15, vy * 0.15, 11)
 	var m := Noise2D.value(vx * 0.65, vy * 0.65, 23)
-	var t := clampf(n * 0.75 + m * 0.25, 0.0, 1.0)
-	var grass := GRASS_DARK.lerp(GRASS_LIGHT, t)
+	return GRASS_DARK.lerp(GRASS_LIGHT, clampf(n * 0.75 + m * 0.25, 0.0, 1.0))
+
+# d: whole cells from this corner to the water (0 on the shoreline itself).
+func _color_at(vx: int, vy: int, d: float) -> Color:
+	var m := Noise2D.value(vx * 0.65, vy * 0.65, 23)
+	var grass := grass_color(vx, vy)
 	var beach := clampf((2.6 - d) / 1.8, 0.0, 1.0)
 	return grass.lerp(SAND_DARK.lerp(SAND_LIGHT, m), beach)
 

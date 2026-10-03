@@ -180,6 +180,27 @@ func run() -> void:
 	world.queue_free()
 	await process_frame
 
+	# Ground blending: grass over dirt over sand, soft edges only on the lower kinds, hard edges for road and floor
+	var decor = load("res://scripts/visuals/scene_decor.gd").new()
+	var G := SceneLayout.Tile.GRASS
+	var D := SceneLayout.Tile.DIRT
+	var S := SceneLayout.Tile.SAND
+	var cells := {Vector2i(5, 5): D, Vector2i(6, 5): D, Vector2i(4, 5): G, Vector2i(5, 4): G, Vector2i(6, 6): S, Vector2i(5, 6): S, Vector2i(7, 4): G, Vector2i(7, 5): SceneLayout.Tile.ROAD}
+	var kind_of := func(c: Vector2i) -> int: return cells.get(c, S if c.y > 5 else G)
+	var west: Array = decor.blend_pieces(Vector2i(5, 5), kind_of)
+	check(west.has([G, "n"]) and west.has([G, "w"]) and not west.has([G, "e"]), "a dirt cell gets a grass edge on the side that meets grass")
+	check(decor.blend_pieces(Vector2i(4, 5), kind_of).is_empty(), "grass is never covered by an edge")
+	check(decor.blend_pieces(Vector2i(6, 5), kind_of).has([G, "n"]) and not decor.blend_pieces(Vector2i(6, 5), kind_of).has([D, "e"]), "road beside dirt has a hard edge: no piece for it")
+	var sand_cell: Array = decor.blend_pieces(Vector2i(5, 6), kind_of)
+	check(sand_cell.has([D, "n"]) and sand_cell.find([D, "n"]) < sand_cell.size(), "dirt lies over the sand cell below it")
+	check(decor.blend_pieces(Vector2i(6, 6), kind_of).has([D, "n"]) and decor.blend_pieces(Vector2i(6, 6), kind_of).has([D, "w"]) == false, "sand gets a dirt edge only where dirt is")
+	var corner_cells := {Vector2i(2, 2): S, Vector2i(3, 1): G}
+	var corner_of := func(c: Vector2i) -> int: return corner_cells.get(c, S)
+	check(decor.blend_pieces(Vector2i(2, 2), corner_of) == [[G, "ne"]], "a neighbour only on the diagonal gives a corner piece")
+	var flat_cells := {Vector2i(2, 2): D, Vector2i(3, 2): G, Vector2i(3, 1): G}
+	check(decor.blend_pieces(Vector2i(2, 2), func(c: Vector2i) -> int: return flat_cells.get(c, D)) == [[G, "e"]], "a side that already covers the corner leaves no corner piece")
+	decor.free()
+
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	if failures == 0:
 		print("PASS: scenes (maps as data, one-sided sea, shop walls, land for sale, floors, farm, saves)")

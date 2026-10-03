@@ -27,6 +27,8 @@ const GRID := Color(1, 1, 1, 0.34)
 # cell. Walls: plain wall 128x256, low wall 128x64, side wall 32x256; windows, doors, lamps and paintings are
 # separate overlays on a plain wall (docs/ART_TOPDOWN.md).
 const TILE_ART := {
+	SceneLayout.Tile.SAND: ["tile_sand_01"],
+	SceneLayout.Tile.DIRT: ["tile_dirt_01"],
 	SceneLayout.Tile.ROAD: ["tile_road_dirt_01", "tile_road_dirt_02", "tile_road_dirt_03"],
 	SceneLayout.Tile.PAVEMENT: ["tile_pavement_01", "tile_pavement_02"],
 	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02"],   # tile_floor_03 is the kitchen floor (no ground kind for it yet)
@@ -34,6 +36,16 @@ const TILE_ART := {
 const WALL_ART := {"wall": "wall_plain_01", "low": "wall_low_01"}
 const WALL_SIDE_ART := "wall_side_01"
 const WALL_OVERLAY := {"window": "wdeco_window_01", "door": "wdeco_door_01"}
+
+# Ground kinds that melt into each other: along a border the higher rank is laid over the lower one with a soft edge.
+# Road, pavement and floor have hard edges. Art (128x128, transparent) is tried first, named edge_<kind>_<side>_01 for a
+# neighbour on that side (n, e, s, w) and corner_<kind>_<corner>_01 for one only on the diagonal (ne, se, sw, nw);
+# without art a soft gradient of the neighbour's colour is drawn.
+const BLEND_RANK := {SceneLayout.Tile.SAND: 1, SceneLayout.Tile.DIRT: 2, SceneLayout.Tile.GRASS: 3}
+const BLEND_NAME := {SceneLayout.Tile.DIRT: "dirt", SceneLayout.Tile.GRASS: "grass"}
+const BLEND_DEPTH := 0.42   # how far into the lower cell the soft edge reaches, in cells
+const SIDES := {"n": Vector2i(0, -1), "e": Vector2i(1, 0), "s": Vector2i(0, 1), "w": Vector2i(-1, 0)}
+const CORNERS := {"ne": Vector2i(1, -1), "se": Vector2i(1, 1), "sw": Vector2i(-1, 1), "nw": Vector2i(-1, -1)}
 
 var zone := "restaurant"
 var view: ViewState
@@ -131,6 +143,93 @@ func _draw_ground(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
 			var col := ground_color(lay, g, c)
 			if col.a > 0.0:
 				draw_colored_polygon(_cell_poly(c), col)
+	_draw_blend(g, lay, vis)
+
+# The ground kind of a cell as far as blending goes: -1 for water and off-map, the floor kind where a floor was built.
+func _blend_kind(g: WorldGrid, lay: SceneLayout, c: Vector2i) -> int:
+	if not lay.in_bounds(c) or not lay.is_solid(c):
+		return -1
+	var t := lay.tile_at(c)
+	if g.has_floor(WorldGrid.parcel_of(c)) and BLEND_RANK.has(t):
+		return SceneLayout.Tile.FLOOR
+	return t
+
+func _draw_blend(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
+	var kind_of := func(c: Vector2i) -> int: return _blend_kind(g, lay, c)
+	for y in range(vis.position.y, vis.end.y):
+		for x in range(vis.position.x, vis.end.x):
+			var c := Vector2i(x, y)
+			for p in blend_pieces(c, kind_of):
+				_draw_blend_piece(c, int(p[0]), str(p[1]))
+
+# The edges and corners laid over cell c, lowest ground kind first: [[kind, "n" | "e" | "s" | "w" | "ne" | "se" | "sw" | "nw"], ...].
+# `kind_of` gives the blend kind of any cell. Only SAND and DIRT cells receive pieces, from a neighbour of higher rank.
+func blend_pieces(c: Vector2i, kind_of: Callable) -> Array:
+	var mine: int = kind_of.call(c)
+	if not BLEND_RANK.has(mine) or mine == SceneLayout.Tile.GRASS:
+		return []   # only the lower kinds receive an edge (grass is the highest and is drawn by Terrain)
+	var rank: int = BLEND_RANK[mine]
+	var kinds := {}   # neighbouring kind -> the sides and corners it touches this cell on
+	for side in SIDES:
+		var k: int = kind_of.call(c + SIDES[side])
+		if BLEND_RANK.get(k, 0) > rank:
+			kinds[k] = kinds.get(k, []) + [side]
+	for corner in CORNERS:
+		var d: Vector2i = CORNERS[corner]
+		var k: int = kind_of.call(c + d)
+		if BLEND_RANK.get(k, 0) <= rank:
+			continue
+		# the two sides next to this corner already cover it when either one meets that kind
+		if int(kind_of.call(c + Vector2i(d.x, 0))) == k or int(kind_of.call(c + Vector2i(0, d.y))) == k:
+			continue
+		kinds[k] = kinds.get(k, []) + [corner]
+	var order: Array = kinds.keys()
+	order.sort_custom(func(a: int, b: int) -> bool: return BLEND_RANK[a] < BLEND_RANK[b])
+	var out: Array = []
+	for k in order:
+		for piece in kinds[k]:
+			out.append([int(k), str(piece)])
+	return out
+
+func _blend_color(kind: int, vx: int, vy: int) -> Color:
+	if kind == SceneLayout.Tile.GRASS:
+		return Terrain.grass_color(vx, vy)
+	return DIRT.lerp(Color("85663f"), Noise2D.hash2(vx, vy, 63) * 0.5)
+
+# One soft edge or corner of `kind` laid over cell c, from art if there is some, else as a gradient.
+func _draw_blend_piece(c: Vector2i, kind: int, piece: String) -> void:
+	var is_side := SIDES.has(piece)
+	var tex := Assets.get_tex("%s_%s_%s_01" % ["edge" if is_side else "corner", BLEND_NAME[kind], piece])
+	var mid := Iso.cell_to_world(c)
+	if tex != null:
+		var size := Vector2.ONE * Iso.TILE_W * 1.04
+		draw_texture_rect(tex, Rect2(mid - size * 0.5, size), false)
+		return
+	# cell corners as vertex coordinates (Terrain colours them): (x, y) is the top-left of cell (x, y)
+	var tl := Vector2i(c.x, c.y)
+	var depth := BLEND_DEPTH * Iso.TILE_W
+	if is_side:
+		var v: Array = {"n": [tl, tl + Vector2i(1, 0)], "e": [tl + Vector2i(1, 0), tl + Vector2i(1, 1)],
+			"s": [tl + Vector2i(1, 1), tl + Vector2i(0, 1)], "w": [tl + Vector2i(0, 1), tl]}[piece]
+		var inward := -Vector2(SIDES[piece]) * depth
+		var a := _vertex_point(v[0])
+		var b := _vertex_point(v[1])
+		var ca := _blend_color(kind, v[0].x, v[0].y)
+		var cb := _blend_color(kind, v[1].x, v[1].y)
+		draw_polygon(PackedVector2Array([a, b, b + inward, a + inward]), PackedColorArray([ca, cb, Color(cb, 0.0), Color(ca, 0.0)]))
+		return
+	var d: Vector2i = CORNERS[piece]
+	var corner_v := tl + Vector2i((d.x + 1) / 2, (d.y + 1) / 2)
+	var p := _vertex_point(corner_v)
+	var col := _blend_color(kind, corner_v.x, corner_v.y)
+	var inward_x := Vector2(-d.x, 0) * depth
+	var inward_y := Vector2(0, -d.y) * depth
+	draw_polygon(PackedVector2Array([p, p + inward_x, p + inward_x + inward_y, p + inward_y]),
+		PackedColorArray([col, Color(col, 0.0), Color(col, 0.0), Color(col, 0.0)]))
+
+# World point of a vertex (a cell's top-left corner): the same corner Terrain colours.
+func _vertex_point(v: Vector2i) -> Vector2:
+	return Iso.cell_to_world_f(Vector2(v) - Vector2(0.5, 0.5))
 
 # Cell-corner point in world space.
 func _pt(x: float, y: float) -> Vector2:

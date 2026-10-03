@@ -54,8 +54,18 @@ ITEMS = [
     ("prop_board", "props", "prop_cutting_board_01", 64, 64, "ของเล็ก", "เขียง", "prop", ""),
     ("prop_vase", "props", "prop_vase_01", 64, 64, "ของเล็ก", "แจกัน", "prop", ""),
     ("prop_bottle", "props", "prop_bottle_01", 64, 64, "ของเล็ก", "ขวด", "prop", ""),
+    # outdoor ground: the base tiles, and the soft edges that join one ground to another (docs/ART_TOPDOWN.md)
+    ("tile_sand", "tiles", "tile_sand_01", 128, 128, "พื้นกลางแจ้ง", "ทราย", "tile", "tile"),
+    ("tile_dirt", "tiles", "tile_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ดิน", "tile", "tile"),
+    ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน", "tile", "tile"),
 ]
-CATEGORIES = ["พื้น", "ผนัง", "ของติดผนัง", "ครัว", "โซนลูกค้า", "ตกแต่ง", "ของเล็ก"]
+for _kind, _label in (("grass", "หญ้า"), ("dirt", "ดิน")):
+    for _side, _where in (("n", "ด้านบน"), ("e", "ด้านขวา"), ("s", "ด้านล่าง"), ("w", "ด้านซ้าย")):
+        ITEMS.append((f"edge_{_kind}_{_side}", "tiles", f"edge_{_kind}_{_side}_01", 128, 128, "พื้นกลางแจ้ง", f"ขอบ{_label} {_where}", f"edge_{_side}", ""))
+    for _corner, _where in (("ne", "บนขวา"), ("se", "ล่างขวา"), ("sw", "ล่างซ้าย"), ("nw", "บนซ้าย")):
+        ITEMS.append((f"corner_{_kind}_{_corner}", "tiles", f"corner_{_kind}_{_corner}_01", 128, 128, "พื้นกลางแจ้ง", f"มุม{_label} {_where}", f"corner_{_corner}", ""))
+
+CATEGORIES = ["พื้น", "พื้นกลางแจ้ง", "ผนัง", "ของติดผนัง", "ครัว", "โซนลูกค้า", "ตกแต่ง", "ของเล็ก"]
 WALL_DECO = ("window", "door", "dooropen", "lamp", "painting", "hood")
 def anchor(w, h, hint=""):
     """Where the piece stands. Things on the floor (furniture, kitchen modules, decoration, small things) stand with the

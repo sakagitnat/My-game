@@ -91,14 +91,22 @@ func _draw() -> void:
 		items.append([float(o.y + fp.y) * 1000.0 + o.x, 0, o])
 	for c in g.blocked:
 		items.append([float((c.y + 1) * Iso.SUB) * 1000.0 + c.x * Iso.SUB, 1, c])
+	for t in g.tops:
+		# drawn right after the table it stands on, so the table never covers it
+		var table: Vector2i = g.occupied.get(t, t)
+		var tfp: Vector2i = g.footprints.get(table, Vector2i.ONE)
+		items.append([float(table.y + tfp.y) * 1000.0 + table.x + 0.1 + float(t.y) * 0.001 + float(t.x) * 0.00001, 2, t])
 	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	for it in items:
 		if it[1] == 0:
 			_draw_object(it[2], g.objects[it[2]])
+		elif it[1] == 2:
+			_draw_top(it[2], g.tops[it[2]])
 		else:
 			_draw_obstacle(it[2], g.blocked[it[2]])
-	if view.selected_origin != NONE and g.objects.has(view.selected_origin):
-		var pts := Iso.unit_corners(view.selected_origin, g.footprints[view.selected_origin])
+	var sel_dict := g.tops if view.selected_top else g.objects
+	if view.selected_origin != NONE and sel_dict.has(view.selected_origin):
+		var pts := Iso.unit_corners(view.selected_origin, (g.top_footprints if view.selected_top else g.footprints)[view.selected_origin])
 		pts.append(pts[0])
 		draw_polyline(pts, Color.WHITE, 3.0)
 	if view.selected_obstacle != NONE:
@@ -150,6 +158,9 @@ func _draw_ghost() -> void:
 	var origin := GameState.footprint_origin(view.ghost_cell, sz)
 	var pts := Iso.unit_corners(origin, sz)
 	var tint := Color(0.4, 0.9, 0.4, 0.45) if ok else Color(0.95, 0.3, 0.25, 0.45)
+	if Catalog.is_top(view.ghost_id):
+		# a thing for a table hovers at table height (over whatever table is under it, else at the usual height)
+		draw_set_transform(Vector2(0, _surface_offset(GameState.grid(view.zone), origin, sz, -ArtCatalog.HOVER)))
 	draw_colored_polygon(pts, tint)
 	var edge := pts.duplicate()
 	edge.append(pts[0])
@@ -160,6 +171,7 @@ func _draw_ghost() -> void:
 	var fa := ArtCatalog.facing_art(view.ghost_id, facing)
 	if not _draw_sprite(fa.art, origin, sz, Color(1, 1, 1, 0.75), fa.flip):
 		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75), facing if Catalog.is_rotatable(view.ghost_id) else -1)
+	draw_set_transform(Vector2.ZERO)
 
 # Floor-style art: the canvas width maps to `width` and the canvas is centred on `center`.
 func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
@@ -202,6 +214,29 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 	_draw_status(origin, sz, _object_height(sz))
 
 # `facing` >= 0 marks the front of the stand-in with a dark band (0 front face, 1 left, 2 back/top, 3 right).
+# How far up the screen, in pixels, a small thing of footprint `sz` at `origin` must be drawn to stand on the table under it:
+# its foot goes on the table's top band, the further back on the table the higher up. `fallback` when there is no table.
+func _surface_offset(g: WorldGrid, origin: Vector2i, sz: Vector2i, fallback: float) -> float:
+	var table: Vector2i = g.occupied.get(origin + Vector2i(0, sz.y - 1), WorldGrid.NONE)
+	if table == WorldGrid.NONE:
+		return fallback
+	var tfp: Vector2i = g.footprints[table]
+	var band := ArtCatalog.surface_band(str(g.objects[table]))
+	var depth := clampf((origin.y + sz.y - table.y) / float(tfp.y), 0.0, 1.0)
+	var foot_y := Iso.unit_corner(table).y + (band.x + depth * (band.y - band.x)) * Iso.unit_height(tfp)
+	return foot_y - (Iso.unit_corner(origin).y + Iso.unit_height(sz))
+
+# A small thing standing on a table: drawn like an upright object, moved up onto the table top.
+func _draw_top(origin: Vector2i, id: String) -> void:
+	var g := GameState.grid(view.zone)
+	var sz: Vector2i = g.top_footprints[origin]
+	draw_set_transform(Vector2(0, _surface_offset(g, origin, sz, 0.0)))
+	_draw_shadow(Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.3), Iso.unit_width(sz) * 0.4)
+	var fa := ArtCatalog.facing_art(id, 0)
+	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
+		_draw_box(origin, sz, ArtCatalog.placeable_color(id))
+	draw_set_transform(Vector2.ZERO)
+
 func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1) -> void:
 	# A stand-in seen from the front and a little from above: a front face under a shorter top face.
 	var k := Iso.unit_corners(origin, sz)

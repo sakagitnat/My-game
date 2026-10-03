@@ -18,6 +18,9 @@ var states: Dictionary = {}
 var blocked: Dictionary = {}
 var sale: Dictionary = {}         # parcels the player may buy; empty means every parcel
 var facings: Dictionary = {}      # origin -> 1..3 for objects turned away from the front (0 is not stored)
+var tops: Dictionary = {}         # origin -> id of small things standing on a surface object (vases, cups), their own layer
+var top_footprints: Dictionary = {}
+var top_occupied: Dictionary = {} # unit -> origin of the top thing on it
 var styles: Dictionary = {}       # parcel -> "floor" for blocks built over as indoor floor (everything else is open ground)
 
 func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = [], sale_parcels: Dictionary = {}) -> void:
@@ -138,16 +141,84 @@ func move(origin: Vector2i, new_origin: Vector2i) -> bool:
 	var id: String = objects[origin]
 	var st = states.get(origin)
 	var facing := facing_at(origin)
+	var carried := tops_over(origin)   # what stands on it goes along
 	for c in cells_of(origin, sz):
 		occupied.erase(c)
 	objects.erase(origin)
 	footprints.erase(origin)
 	states.erase(origin)
 	facings.erase(origin)
+	var delta := new_origin - origin
+	var carried_info: Array = []
+	for t in carried:
+		carried_info.append([t, tops[t], top_footprints[t]])
+		remove_top_at(t)
 	place(new_origin, id, sz, facing)
 	if st != null:
 		states[new_origin] = st
+	for info in carried_info:
+		place_top(info[0] + delta, info[1], info[2])
 	return true
+
+# ---- The top layer: small things on tables
+
+# "ok", "invalid" (off the map or on unusable land), "no_surface" (some unit is not over a table) or "occupied" (another top thing is there).
+# `ignore` is the origin of a top thing being moved, which does not block itself.
+func top_status(origin: Vector2i, sz: Vector2i, ignore: Vector2i = NONE) -> String:
+	if not footprint_in_bounds(origin, sz):
+		return "invalid"
+	for u in cells_of(origin, sz):
+		if not occupied.has(u) or not Catalog.is_surface(str(objects[occupied[u]])):
+			return "no_surface"
+	for u in cells_of(origin, sz):
+		if top_occupied.has(u) and top_occupied[u] != ignore:
+			return "occupied"
+	return "ok"
+
+func place_top(origin: Vector2i, id: String, sz: Vector2i) -> bool:
+	if top_status(origin, sz) != "ok":
+		return false
+	tops[origin] = id
+	top_footprints[origin] = sz
+	for u in cells_of(origin, sz):
+		top_occupied[u] = origin
+	return true
+
+func top_origin_at(u: Vector2i) -> Vector2i:
+	return top_occupied.get(u, NONE)
+
+func remove_top_at(u: Vector2i) -> String:
+	var origin := top_origin_at(u)
+	if origin == NONE:
+		return ""
+	var id: String = tops[origin]
+	for c in cells_of(origin, top_footprints[origin]):
+		top_occupied.erase(c)
+	tops.erase(origin)
+	top_footprints.erase(origin)
+	return id
+
+# Origins of the top things standing on the floor object at `origin`.
+func tops_over(origin: Vector2i) -> Array:
+	var out: Array = []
+	if not objects.has(origin):
+		return out
+	for u in cells_of(origin, footprints[origin]):
+		var t: Vector2i = top_occupied.get(u, NONE)
+		if t != NONE and not out.has(t):
+			out.append(t)
+	return out
+
+# Moves a top thing so its top-left unit is `new_origin`. False, changing nothing, if it does not fit there.
+func move_top(origin: Vector2i, new_origin: Vector2i) -> bool:
+	if not tops.has(origin):
+		return false
+	var sz: Vector2i = top_footprints[origin]
+	if top_status(new_origin, sz, origin) != "ok":
+		return false
+	var id: String = tops[origin]
+	remove_top_at(origin)
+	return place_top(new_origin, id, sz)
 
 func facing_at(origin: Vector2i) -> int:
 	return int(facings.get(origin, 0))
@@ -184,6 +255,8 @@ func remove_at(c: Vector2i) -> String:
 	if origin == NONE:
 		return ""
 	var id: String = objects[origin]
+	for t in tops_over(origin):
+		remove_top_at(t)
 	for cell in cells_of(origin, footprints[origin]):
 		occupied.erase(cell)
 	objects.erase(origin)
@@ -199,6 +272,9 @@ func to_dict() -> Dictionary:
 	var obj: Array = []
 	for o in objects:
 		obj.append([o.x, o.y, objects[o], footprints[o].x, footprints[o].y])
+	var top_list: Array = []
+	for o in tops:
+		top_list.append([o.x, o.y, tops[o], top_footprints[o].x, top_footprints[o].y])
 	var fac: Array = []
 	for o in facings:
 		fac.append([o.x, o.y, facings[o]])
@@ -212,7 +288,7 @@ func to_dict() -> Dictionary:
 	for p in styles:
 		floors.append([p.x, p.y])
 	return {"size": [size.x, size.y], "parcel": PARCEL, "start": start_parcel_count,
-		"units": Iso.SUB, "parcels": parcels, "objects": obj, "facings": fac, "states": st, "obstacles": obs, "floors": floors}
+		"units": Iso.SUB, "parcels": parcels, "objects": obj, "tops": top_list, "facings": fac, "states": st, "obstacles": obs, "floors": floors}
 
 # Returns false (leaving the grid untouched) for saves from before parcels existed or of a different map size.
 func load_dict(d: Dictionary) -> bool:
@@ -227,6 +303,9 @@ func load_dict(d: Dictionary) -> bool:
 	occupied.clear()
 	states.clear()
 	facings.clear()
+	tops.clear()
+	top_footprints.clear()
+	top_occupied.clear()
 	blocked.clear()
 	styles.clear()
 	for p in d.get("parcels", []):
@@ -243,6 +322,8 @@ func load_dict(d: Dictionary) -> bool:
 	for o in d.get("objects", []):
 		var origin := Vector2i(int(o[0]), int(o[1])) * k
 		place(origin, str(o[2]), Vector2i(int(o[3]), int(o[4])) * k)
+	for t in d.get("tops", []):
+		place_top(Vector2i(int(t[0]), int(t[1])), str(t[2]), Vector2i(int(t[3]), int(t[4])))
 	for f in d.get("facings", []):
 		var fo := Vector2i(int(f[0]), int(f[1])) * k
 		if objects.has(fo):
