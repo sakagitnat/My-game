@@ -21,6 +21,7 @@ func run() -> void:
 	loc.set_language("en")
 	gs.restaurant_active = false
 	gs.ask_names = false
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora6.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))

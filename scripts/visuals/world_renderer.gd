@@ -24,6 +24,7 @@ func setup(view_state: ViewState, cam: Camera2D) -> void:
 func set_zone(z: String) -> void:
 	terrain.set_zone(z)
 	signs.set_zone(z)
+	coast.set_zone(z)
 	refresh()
 
 # Called when game state, selection, camera or zoom changed.
@@ -132,12 +133,12 @@ func _draw_obstacle(c: Vector2i, kind: String) -> void:
 	var art := ArtCatalog.obstacle(kind)
 	var p := Iso.cell_to_world(c)
 	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
-	_draw_shadow(p + Vector2(0, 6), Iso.TILE_W * 0.34 * float(art.scale))
-	var tex := Assets.get_tex(art.art)
+	var tex := Assets.get_tex(ArtCatalog.obstacle_sprite(kind, c))
 	if tex != null:
 		var s := tex.get_size() * (Iso.TILE_W * float(art.scale) / tex.get_width())
 		draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false)
 		return
+	_draw_shadow(p + Vector2(0, 6), Iso.TILE_W * 0.34 * float(art.scale))
 	var wob := 0.5 + Noise2D.hash2(c.x, c.y, 31) * 0.5
 	match kind:
 		"tree":

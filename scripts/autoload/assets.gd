@@ -1,6 +1,6 @@
 extends Node
 
-const DIRS: Array[String] = ["tiles", "restaurant", "buildings", "farm", "obstacles", "deco", "chars", "icons", "ui", "app"]
+const DIRS: Array[String] = ["tiles", "restaurant", "buildings", "farm", "obstacles", "walls", "deco", "chars", "icons", "ui", "app"]
 
 var _cache: Dictionary = {}
 

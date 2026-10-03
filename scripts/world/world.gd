@@ -1,7 +1,7 @@
 extends Node2D
 
 const TAP_SLOP := 12.0
-const ZOOM_MIN := 0.35
+const ZOOM_MIN := 0.22
 const ZOOM_MAX := 2.2
 const START_VIEW_WIDTH := 1000.0
 const NONE := WorldGrid.NONE
@@ -11,6 +11,10 @@ var camera: Camera2D
 var hud: Hud
 var view := ViewState.new()
 var renderer: WorldRenderer
+var decor: SceneDecor
+var editor: MapEditor
+var editor_ui: EditorUI
+var painting := false
 
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
@@ -18,6 +22,7 @@ var moving_origin: Vector2i = NONE
 var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
+var selected_land: Vector2i = NONE   # a cell on an owned, empty block of the restaurant (opens the floor/grass bubble)
 var context_timer: float = 0.0
 var view_timer: float = 0.0
 
@@ -34,8 +39,14 @@ func _ready() -> void:
 	renderer = WorldRenderer.new()
 	add_child(renderer)
 	renderer.setup(view, camera)
+	decor = SceneDecor.new()
+	decor.setup(view)
+	add_child(decor)
 	hud = Hud.new()
 	add_child(hud)
+	hud.edit_map_requested.connect(func() -> void:
+		hud.close_modal()
+		hud.ask_confirm(Loc.t("CONFIRM_EDIT_MAP"), open_editor))
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
 	hud.crop_chosen.connect(_on_crop_chosen)
@@ -61,6 +72,9 @@ func _sync_view() -> void:
 	view.moving_origin = moving_origin
 	view.selected_origin = selected_origin
 	view.selected_obstacle = selected_obstacle
+	view.selected_land = selected_land
+	view.edit_mode = editor != null
+	view.edit_tool = editor.tool if editor != null else ""
 	view.customers = GameState.restaurant.snapshot_customers()
 	view.counter = GameState.restaurant.counter.duplicate()
 
@@ -70,6 +84,43 @@ func _redraw_all() -> void:
 		return
 	_sync_view()
 	renderer.refresh()
+	decor.queue_redraw()
+
+# ---------------------------------------------------------------- map editor
+
+func open_editor() -> void:
+	if editor != null:
+		return
+	cancel_placement()
+	_deselect()
+	editor = MapEditor.new()
+	editor.begin(zone)
+	editor.changed.connect(_on_editor_changed)
+	editor_ui = EditorUI.new()
+	editor_ui.setup(editor)
+	editor_ui.leave_requested.connect(close_editor)
+	editor_ui.scene_changed.connect(func(z: String) -> void: set_zone(z))
+	add_child(editor_ui)
+	hud.visible = false
+	_on_editor_changed()
+
+func close_editor(keep: bool) -> void:
+	if editor == null:
+		return
+	painting = false
+	editor.finish(keep)
+	editor_ui.queue_free()
+	editor_ui = null
+	editor = null
+	hud.visible = true
+	set_zone(zone)
+	hud.refresh()
+
+# The map changed: terrain colours, shoreline, decor and objects are all drawn from it.
+func _on_editor_changed() -> void:
+	renderer.set_zone(zone)
+	decor.set_zone(zone)
+	_redraw_all()
 
 # ---------------------------------------------------------------- zones & state
 
@@ -81,7 +132,8 @@ func set_zone(z: String) -> void:
 	hud.set_zone(z)
 	_sync_view()
 	renderer.set_zone(z)
-	camera.position = Iso.cell_to_world(GameState.start_cell())
+	decor.set_zone(z)
+	camera.position = Iso.cell_to_world(GameState.layout_for(z).start_cell())
 	camera.zoom = Vector2.ONE * clampf(get_viewport_rect().size.x / START_VIEW_WIDTH, 0.6, 1.4)
 	hud.show_message("HINT_FARM" if z == "farm" else "HINT_START")
 	_redraw_all()
@@ -93,6 +145,8 @@ func _on_state_changed() -> void:
 			hud.show_context(_context_info(selected_origin))
 		else:
 			_deselect()
+	if selected_land != NONE:
+		hud.show_context(_land_info(selected_land))
 	if selected_obstacle != NONE:
 		if GameState.grid(zone).blocked.has(selected_obstacle):
 			hud.show_context(_obstacle_info(selected_obstacle))
@@ -125,6 +179,7 @@ func _error_text(code: String, item_id: String = "") -> Array:
 		"locked": return ["MSG_LOCKED", null]
 		"occupied": return ["MSG_OCCUPIED", null]
 		"blocked": return ["MSG_BLOCKED", null]
+		"area": return ["MSG_WRONG_AREA", null]
 		"level": return ["MSG_LEVEL", Catalog.unlock_level(item_id) if item_id != "" else null]
 	return ["MSG_INVALID", null]
 
@@ -207,6 +262,7 @@ func cancel_placement() -> void:
 func _deselect() -> void:
 	selected_origin = NONE
 	selected_obstacle = NONE
+	selected_land = NONE
 	if hud != null:
 		hud.hide_context()
 	_redraw_all()
@@ -229,8 +285,15 @@ func _on_tap(world: Vector2) -> void:
 		_select_obstacle(c)
 		return
 	_deselect()
-	if not g.is_owned(c) and g.can_buy_parcel(WorldGrid.parcel_of(c)):
+	var parcel := WorldGrid.parcel_of(c)
+	if g.is_owned(c):
+		if zone == "restaurant":
+			_select_land(c)
+		return
+	if g.can_buy_parcel(parcel):
 		_ask_buy(c)
+	elif GameState.layout_for(zone).in_bounds(c) and GameState.layout_for(zone).tile_at(c) != SceneLayout.Tile.WATER:
+		hud.show_message("MSG_AREA_FAR" if GameState.layout_for(zone).for_sale(parcel) else "MSG_AREA_INFO")
 
 func _ask_buy(c: Vector2i) -> void:
 	var cost := GameState.land_cost(zone)
@@ -254,6 +317,34 @@ func _select(origin: Vector2i) -> void:
 		return
 	hud.show_context(_context_info(origin))
 	_redraw_all()
+
+func _select_land(c: Vector2i) -> void:
+	selected_land = c
+	hud.show_context(_land_info(c))
+	_redraw_all()
+
+func _land_info(c: Vector2i) -> Dictionary:
+	var g := GameState.grid(zone)
+	var parcel := WorldGrid.parcel_of(c)
+	var info := {"title": Loc.t("AREA_SHOP" if GameState.layout_for(zone).is_start_parcel(parcel) else "AREA_PLOT"), "plain": true}
+	if GameState.layout_for(zone).is_start_parcel(parcel):
+		info.status = Loc.t("STATUS_FLOOR_FIXED")
+	elif g.has_floor(parcel):
+		info.status = Loc.t("STATUS_FLOOR")
+		info.action = {"text": Loc.t("BTN_GRASS"), "enabled": true}
+	else:
+		info.status = Loc.t("STATUS_GRASS")
+		info.action = {"text": Loc.t("BTN_FLOOR") % GameState.FLOOR_COST, "enabled": GameState.coins >= GameState.FLOOR_COST}
+	return info
+
+func _toggle_land_floor() -> void:
+	var c := selected_land
+	var want := not GameState.grid(zone).has_floor(WorldGrid.parcel_of(c))
+	match GameState.set_floor(zone, c, want):
+		"ok": hud.show_message("MSG_FLOOR_BUILT" if want else "MSG_FLOOR_REMOVED")
+		"no_coins": hud.show_message("MSG_NO_COINS")
+		_: hud.show_message("MSG_INVALID")
+	_deselect()
 
 func _select_obstacle(c: Vector2i) -> void:
 	_deselect()
@@ -313,6 +404,9 @@ func _on_crop_chosen(crop: String) -> void:
 	_deselect()
 
 func _on_action_pressed() -> void:
+	if selected_land != NONE:
+		_toggle_land_floor()
+		return
 	if selected_obstacle != NONE:
 		_clear_selected_obstacle()
 		return
@@ -387,6 +481,8 @@ func _process(delta: float) -> void:
 	if view_timer >= 0.5:
 		view_timer = 0.0
 		_sync_view()
+	if selected_land != NONE and hud.context.visible:
+		hud.place_context(_screen_of(Iso.cell_to_world(selected_land) + Vector2(0, -30)))
 	if selected_obstacle != NONE and hud.context.visible:
 		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
 	if selected_origin != NONE and hud.context.visible:
@@ -409,6 +505,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			pinch_dist = 0.0
 		if touches.size() >= 2:
 			pinched = true
+			if painting:
+				painting = false
+				editor.end_stroke()
 	elif event is InputEventScreenDrag:
 		touches[event.index] = event.position
 		if touches.size() == 2:
@@ -425,8 +524,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				press_pos = event.position
 				if touches.is_empty():
 					pinched = false
+				if editor != null and editor.tool != "hand" and not pinched and touches.size() < 2:
+					painting = true
+					editor.begin_stroke()
+					editor.apply_at(get_global_mouse_position())
 			else:
-				if pressing and not dragged and not pinched:
+				if painting:
+					painting = false
+					editor.end_stroke()
+				elif pressing and not dragged and not pinched and editor == null:
 					_on_tap(get_global_mouse_position())
 				pressing = false
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -434,11 +540,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_by(1.0 / 1.1)
 	elif event is InputEventMouseMotion and pressing and not pinched:
-		if not dragged and event.position.distance_to(press_pos) > TAP_SLOP:
-			dragged = true
-		if dragged:
-			camera.position -= event.relative / camera.zoom.x
-			_clamp_camera()
+		if painting:
+			editor.apply_at(get_global_mouse_position())
+		else:
+			if not dragged and event.position.distance_to(press_pos) > TAP_SLOP:
+				dragged = true
+			if dragged:
+				camera.position -= event.relative / camera.zoom.x
+				_clamp_camera()
 
 func _zoom_by(f: float) -> void:
 	var z := clampf(camera.zoom.x * f, ZOOM_MIN, ZOOM_MAX)
@@ -446,7 +555,7 @@ func _zoom_by(f: float) -> void:
 	_redraw_all()
 
 func _clamp_camera() -> void:
-	var s := GameState.GRID_SIZE
+	var s := GameState.grid(zone).size
 	var lo := Vector2(Iso.cell_to_world(Vector2i(0, s.y)).x, 0.0)
 	var hi := Vector2(Iso.cell_to_world(Vector2i(s.x, 0)).x, Iso.cell_to_world(s).y)
 	camera.position = camera.position.clamp(lo, hi)

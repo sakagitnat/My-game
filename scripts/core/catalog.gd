@@ -1,18 +1,20 @@
 class_name Catalog
 extends RefCounted
 
+# Scenes the player works in; each has its own map (see SceneLayout).
 const ZONES: Array[String] = ["restaurant", "farm"]
 
 # Game rules only; how things look (colours, sprite sizing) is in scripts/visuals/art_catalog.gd.
 # Placeable keys are also art file names under assets/ (see docs/ASSETS.md).
+# "area" is the kind of land an item may stand on (see Island).
 # "size" is the footprint in cells (owned by game rules: do not change it to fix a picture).
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 const PLACEABLES := {
-	"rest_table_small_01": {"zone": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE"},
-	"rest_stove_01": {"zone": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE"},
-	"farm_plot_01": {"zone": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "flat": true},
-	"farm_fence_01": {"zone": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE"},
-	"farm_coop_01": {"zone": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP"},
+	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE"},
+	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE"},
+	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "flat": true},
+	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE"},
+	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP"},
 }
 
 # time: seconds to grow. seed: coin cost per planting. yield: items per harvest.
@@ -62,10 +64,10 @@ static func unlock_level(id: String) -> int:
 static func size_of(id: String) -> Vector2i:
 	return PLACEABLES[id].size
 
-static func placeables_for(zone: String) -> Array[String]:
+static func placeables_for(area: String) -> Array[String]:
 	var out: Array[String] = []
 	for id in PLACEABLES:
-		if PLACEABLES[id].zone == zone:
+		if PLACEABLES[id].area == area:
 			out.append(id)
 	return out
 

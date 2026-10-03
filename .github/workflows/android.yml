@@ -62,6 +62,8 @@ jobs:
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/view_state.gd
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/restaurant.gd
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/names.gd
+          XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/scenes.gd
+          XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/editor.gd
           XDG_DATA_HOME=/tmp/tavern-tests godot --headless --path . --script tests/assets_check.gd
       - name: Export test APK
         run: |

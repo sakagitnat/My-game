@@ -20,6 +20,7 @@ func run() -> void:
 	gs.autosave = false
 	gs.restaurant_active = false
 	gs.ask_names = false
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = true
 	gs.reset()
 	gs.level = 10
@@ -34,9 +35,9 @@ func run() -> void:
 		var in_clear := false
 		var on_beach := false
 		for c in g.blocked:
-			if gs.CLEAR_AREA.has_point(c):
+			if gs.in_start_clearing(z, c):
 				in_clear = true
-			if gs.edge_distance(c) < 3:
+			if gs.edge_distance(z, c) < 3:
 				on_beach = true
 		check(not in_clear, "%s: middle of the starting block is clear" % z)
 		check(not on_beach, "%s: the beach is clear" % z)

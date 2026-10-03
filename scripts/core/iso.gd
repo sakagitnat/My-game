@@ -18,6 +18,12 @@ static func world_to_cell(p: Vector2) -> Vector2i:
 	var b := p.y / (TILE_H * 0.5)
 	return Vector2i(floori((a + b) * 0.5 + 0.5), floori((b - a) * 0.5 + 0.5))
 
+# Inverse of cell_to_world_f: float cell coordinates under a world point.
+static func world_to_cell_f(p: Vector2) -> Vector2:
+	var a := p.x / (TILE_W * 0.5)
+	var b := p.y / (TILE_H * 0.5)
+	return Vector2((a + b) * 0.5, (b - a) * 0.5)
+
 # Screen width of a footprint of the given cell size (also the width art is scaled to).
 static func footprint_width(sz: Vector2i) -> float:
 	return (sz.x + sz.y) * TILE_W * 0.5

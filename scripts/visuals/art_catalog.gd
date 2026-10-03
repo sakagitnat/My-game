@@ -25,6 +25,16 @@ const OBSTACLE := {
 	"bush": {"art": "obs_bush_01", "scale": 1.6},
 }
 
+const OBSTACLE_VARIANTS := {"tree": 3, "rock": 2, "bush": 2}
+
+# Visual-only selection; independent of the gameplay RNG and stable across reloads.
+static func obstacle_sprite(kind: String, cell: Vector2i) -> String:
+	if not OBSTACLE_VARIANTS.has(kind):
+		return str(obstacle(kind).art)
+	var count: int = OBSTACLE_VARIANTS[kind]
+	var index := posmod(cell.x * 73856093 ^ cell.y * 19349663, count) + 1
+	return "obs_%s_%02d" % [kind, index]
+
 static func placeable_color(id: String) -> Color:
 	return PLACEABLE_COLOR.get(id, FALLBACK_COLOR)
 

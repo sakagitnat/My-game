@@ -16,6 +16,7 @@ func run() -> void:
 	var assets = root.get_node("/root/Assets")
 	gs.restaurant_active = false
 	gs.ask_names = false
+	gs.use_sandbox_layouts()
 	gs.spawn_obstacles = false
 	gs.save_path = "user://test_salvora.json"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
@@ -127,7 +128,7 @@ func run() -> void:
 	# Assets: missing art falls back to null (placeholder), no crash
 	check(assets.get_tex("definitely_not_a_real_asset") == null, "missing asset returns null")
 	for id in Catalog.PLACEABLES:
-		check(Catalog.PLACEABLES[id].zone in Catalog.ZONES, "placeable zone valid %s" % id)
+		check(Catalog.PLACEABLES[id].area in Catalog.ZONES, "placeable zone valid %s" % id)
 
 	# World scene: HUD, confirmation before buying, placement mode, selecting and selling
 	gs.reset()
