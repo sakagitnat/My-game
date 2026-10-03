@@ -58,6 +58,8 @@ func _check_topdown() -> void:
 	if base == null:
 		return
 	for sub in base.get_directories():
+		if sub == "art_workshop":
+			continue   # drawing tool for the owner, not game art
 		var dir := DirAccess.open("res://assets/td/" + sub)
 		for f in dir.get_files():
 			if not f.ends_with(".png"):
