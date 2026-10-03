@@ -1,7 +1,6 @@
 extends Node
 
-# Top-down art only (docs/ART_TOPDOWN.md). The old isometric art in assets/tiles and assets/restaurant stays in the repo
-# but is no longer used: the code-drawn stand-ins show until top-down art arrives.
+# Top-down art only (docs/ART_TOPDOWN.md). No art is shipped yet: the code-drawn stand-ins show until the new set arrives.
 const DIRS: Array[String] = ["td/tiles", "td/walls", "td/modular", "td/furniture", "td/props", "td/deco", "td/obstacles", "td/farm", "td/chars", "td/icons", "ui", "app"]
 
 var _cache: Dictionary = {}

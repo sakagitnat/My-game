@@ -9,9 +9,10 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # "area" is the kind of land an item may stand on (see Island).
 # "size" is the footprint in cells (owned by game rules: do not change it to fix a picture).
 # "flat" objects are drawn like floor tiles instead of upright sprites.
+# "rotatable" objects have a front: the player buys one and turns it (facing 0 front, 1 left, 2 back, 3 right).
 const PLACEABLES := {
 	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(2, 2), "name": "ITEM_TABLE"},
-	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE"},
+	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(2, 2), "name": "ITEM_STOVE", "rotatable": true},
 	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(2, 2), "name": "ITEM_PLOT", "flat": true},
 	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(1, 1), "name": "ITEM_FENCE"},
 	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(3, 3), "name": "ITEM_COOP"},
@@ -63,6 +64,14 @@ static func unlock_level(id: String) -> int:
 
 static func size_of(id: String) -> Vector2i:
 	return PLACEABLES[id].size
+
+static func is_rotatable(id: String) -> bool:
+	return bool(PLACEABLES.get(id, {}).get("rotatable", false))
+
+# Footprint of `id` turned to `facing`: a sideways turn swaps width and height.
+static func size_facing(id: String, facing: int) -> Vector2i:
+	var sz: Vector2i = PLACEABLES[id].size
+	return Vector2i(sz.y, sz.x) if facing % 2 == 1 else sz
 
 static func placeables_for(area: String) -> Array[String]:
 	var out: Array[String] = []

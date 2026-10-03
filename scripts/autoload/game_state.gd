@@ -246,14 +246,14 @@ func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 	return c - Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 
 # Why `id` can or cannot be placed with a footprint centred on `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
-func check_place(zone: String, c: Vector2i, id: String) -> String:
+func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or not (def.area == zone or layout_for(zone).area == "any"):
 		return "invalid"
 	if level < Catalog.unlock_level(id):
 		return "level"
 	var g := grid(zone)
-	var sz: Vector2i = def.size
+	var sz: Vector2i = Catalog.size_facing(id, facing)
 	var origin := footprint_origin(c, sz)
 	if not g.footprint_in_bounds(origin, sz):
 		return "invalid"
@@ -290,13 +290,15 @@ func place_cost(id: String) -> int:
 		return 0
 	return int(Catalog.PLACEABLES[id].cost)
 
-func place_object(zone: String, c: Vector2i, id: String) -> String:
-	var result := check_place(zone, c, id)
+func place_object(zone: String, c: Vector2i, id: String, facing: int = 0) -> String:
+	if facing != 0 and not Catalog.is_rotatable(id):
+		facing = 0
+	var result := check_place(zone, c, id, facing)
 	if result != "ok":
 		return result
-	var sz: Vector2i = Catalog.size_of(id)
+	var sz: Vector2i = Catalog.size_facing(id, facing)
 	coins -= place_cost(id)
-	grid(zone).place(footprint_origin(c, sz), id, sz)
+	grid(zone).place(footprint_origin(c, sz), id, sz, facing)
 	add_xp(PLACE_XP)
 	_commit()
 	return "ok"
@@ -332,6 +334,40 @@ func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String
 	var g := grid(zone)
 	var origin := g.origin_at(from_cell)
 	g.move(origin, footprint_origin(to_cell, g.footprints[origin]))
+	_commit()
+	return "ok"
+
+# Whether the object at `origin` can turn a quarter turn: "ok", "empty", "fixed" (nothing to turn) or the reason it does not fit there.
+func check_rotate(zone: String, origin: Vector2i) -> String:
+	var g := grid(zone)
+	if not g.objects.has(origin):
+		return "empty"
+	var id: String = g.objects[origin]
+	if not Catalog.is_rotatable(id):
+		return "fixed"
+	var sz := Catalog.size_facing(id, (g.facing_at(origin) + 1) % 4)
+	if not g.footprint_in_bounds(origin, sz):
+		return "invalid"
+	if not _footprint_solid(zone, origin, sz):
+		return "invalid"
+	if not _footprint_in_area(zone, origin, sz, str(Catalog.PLACEABLES[id].area)):
+		return "area"
+	if not g.footprint_owned(origin, sz):
+		return "locked"
+	if g.footprint_blocked(origin, sz):
+		return "blocked"
+	for cell in g.cells_of(origin, sz):
+		if g.occupied.has(cell) and g.occupied[cell] != origin:
+			return "occupied"
+	return "ok"
+
+# Turns the object at `origin` a quarter turn. Free of charge.
+func rotate_object(zone: String, origin: Vector2i) -> String:
+	var result := check_rotate(zone, origin)
+	if result != "ok":
+		return result
+	var g := grid(zone)
+	g.turn(origin, Catalog.size_facing(g.objects[origin], (g.facing_at(origin) + 1) % 4))
 	_commit()
 	return "ok"
 

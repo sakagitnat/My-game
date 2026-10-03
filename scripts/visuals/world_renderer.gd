@@ -145,7 +145,8 @@ func _draw_obstacle(c: Vector2i, kind: String) -> void:
 
 func _draw_ghost() -> void:
 	var ok := view.ghost_status == "ok"
-	var sz: Vector2i = Catalog.size_of(view.ghost_id)
+	var facing := view.ghost_facing
+	var sz: Vector2i = Catalog.size_facing(view.ghost_id, facing)
 	var origin := GameState.footprint_origin(view.ghost_cell, sz)
 	var pts := Iso.footprint_corners(origin, sz)
 	var tint := Color(0.4, 0.9, 0.4, 0.45) if ok else Color(0.95, 0.3, 0.25, 0.45)
@@ -156,8 +157,9 @@ func _draw_ghost() -> void:
 	var def: Dictionary = Catalog.PLACEABLES[view.ghost_id]
 	if def.get("flat", false):
 		return
-	if not _draw_sprite(view.ghost_id, origin, sz, Color(1, 1, 1, 0.75)):
-		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75))
+	var fa := ArtCatalog.facing_art(view.ghost_id, facing)
+	if not _draw_sprite(fa.art, origin, sz, Color(1, 1, 1, 0.75), fa.flip):
+		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75), facing if Catalog.is_rotatable(view.ghost_id) else -1)
 
 # Floor-style art: the canvas width maps to `width` and the canvas is centred on `center`.
 func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Color.WHITE) -> bool:
@@ -169,14 +171,17 @@ func _draw_flat_art(id: String, center: Vector2, width: float, tint: Color = Col
 	return true
 
 # Upright art: the canvas width maps to the footprint width and its bottom edge sits on the footprint's bottom edge.
-func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE) -> bool:
+func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Color.WHITE, flip: bool = false) -> bool:
 	var tex := Assets.get_tex(id)
 	if tex == null:
 		return false
 	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
 	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
 	# art anchor: the bottom edge of the canvas is the bottom edge of the cells the thing stands on
-	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false, tint)
+	var rect := Rect2(foot - Vector2(s.x * 0.5, s.y), s)
+	if flip:
+		rect = Rect2(rect.position + Vector2(s.x, 0.0), Vector2(-s.x, s.y))
+	draw_texture_rect(tex, rect, false, tint)
 	return true
 
 func _object_height(sz: Vector2i) -> float:
@@ -184,16 +189,20 @@ func _object_height(sz: Vector2i) -> float:
 
 func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
-	var sz: Vector2i = def.size
+	var g := GameState.grid(view.zone)
+	var sz: Vector2i = g.footprints.get(origin, def.size)
+	var facing := g.facing_at(origin)
 	if def.get("flat", false):
 		_draw_plot(origin, sz)
 		return
 	_draw_shadow(Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.32), Iso.footprint_width(sz) * 0.42)
-	if not _draw_sprite(id, origin, sz):
-		_draw_box(origin, sz, ArtCatalog.placeable_color(id))
+	var fa := ArtCatalog.facing_art(id, facing)
+	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
+		_draw_box(origin, sz, ArtCatalog.placeable_color(id), facing if Catalog.is_rotatable(id) else -1)
 	_draw_status(origin, sz, _object_height(sz))
 
-func _draw_box(origin: Vector2i, sz: Vector2i, col: Color) -> void:
+# `facing` >= 0 marks the front of the stand-in with a dark band (0 front face, 1 left, 2 back/top, 3 right).
+func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1) -> void:
 	# A stand-in seen from the front and a little from above: a front face under a shorter top face.
 	var k := Iso.footprint_corners(origin, sz)
 	var h := _object_height(sz)
@@ -204,6 +213,16 @@ func _draw_box(origin: Vector2i, sz: Vector2i, col: Color) -> void:
 	draw_colored_polygon(front, col.darkened(0.25))
 	var top := PackedVector2Array([bl + Vector2(0, -h - depth), br + Vector2(0, -h - depth), br + Vector2(0, -h), bl + Vector2(0, -h)])
 	draw_colored_polygon(top, col)
+	var mark := col.darkened(0.55)
+	match facing:
+		0:
+			draw_colored_polygon(PackedVector2Array([bl + Vector2(0, -h * 0.3), br + Vector2(0, -h * 0.3), br, bl]), mark)
+		1:
+			draw_colored_polygon(PackedVector2Array([bl + Vector2(0, -h), bl + Vector2(8, -h), bl + Vector2(8, 0), bl]), mark)
+		2:
+			draw_colored_polygon(PackedVector2Array([bl + Vector2(0, -h - depth), br + Vector2(0, -h - depth), br + Vector2(0, -h - depth + 8), bl + Vector2(0, -h - depth + 8)]), mark)
+		3:
+			draw_colored_polygon(PackedVector2Array([br + Vector2(-8, -h), br + Vector2(0, -h), br, br + Vector2(-8, 0)]), mark)
 	top.append(top[0])
 	draw_polyline(top, col.darkened(0.35), 1.5)
 

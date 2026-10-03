@@ -53,6 +53,20 @@ func run() -> void:
 	var g3 := WorldGrid.new(Vector2i(12, 12), [Vector2i(0, 0)])
 	check(not g3.load_dict({"size": [12, 12], "owned": [[1, 1]], "objects": []}) and g3.owned_parcels.size() == 1, "old-format grid rejected, untouched")
 
+	# Turning: a quarter turn swaps a non-square footprint, needs the room, and is saved
+	var gt := WorldGrid.new(Vector2i(12, 12), [Vector2i(0, 0)])
+	check(gt.place(Vector2i(2, 2), "bar", Vector2i(2, 1)) and gt.facing_at(Vector2i(2, 2)) == 0, "a new object faces front")
+	check(gt.place(Vector2i(2, 3), "box", Vector2i.ONE) and not gt.turn(Vector2i(2, 2), Vector2i(1, 2)), "a turn needs free cells")
+	check(gt.footprints[Vector2i(2, 2)] == Vector2i(2, 1) and gt.facing_at(Vector2i(2, 2)) == 0, "a refused turn changes nothing")
+	gt.remove_at(Vector2i(2, 3))
+	check(gt.turn(Vector2i(2, 2), Vector2i(1, 2)) and gt.facing_at(Vector2i(2, 2)) == 1 and gt.origin_at(Vector2i(2, 3)) == Vector2i(2, 2) and gt.origin_at(Vector2i(3, 2)) == WorldGrid.NONE, "a turn swaps the footprint and facing")
+	check(gt.move(Vector2i(2, 2), Vector2i(4, 4)) and gt.facing_at(Vector2i(4, 4)) == 1 and gt.footprints[Vector2i(4, 4)] == Vector2i(1, 2), "moving keeps the turn")
+	var gt2 := WorldGrid.new(Vector2i(12, 12))
+	check(gt2.load_dict(JSON.parse_string(JSON.stringify(gt.to_dict()))) and gt2.facing_at(Vector2i(4, 4)) == 1, "the turn is saved")
+	check(gt.turn(Vector2i(4, 4), Vector2i(2, 1)) and gt.turn(Vector2i(4, 4), Vector2i(1, 2)) and gt.turn(Vector2i(4, 4), Vector2i(2, 1)) and gt.facing_at(Vector2i(4, 4)) == 0 and not gt.facings.has(Vector2i(4, 4)), "four turns face front again")
+	check(gt.remove_at(Vector2i(4, 4)) == "bar" and gt.facing_at(Vector2i(4, 4)) == 0, "removing forgets the turn")
+	check(Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 2) and ArtCatalog.facing_art("rest_chair_01", 3) == {"art": "rest_chair_side_01", "flip": true} and ArtCatalog.facing_art("rest_table_small_01", 2) == {"art": "rest_table_small_01", "flip": false}, "facing art and sizes")
+
 	# Inventory
 	var inv := Inventory.new(5)
 	check(inv.add("egg", 3) == 3 and inv.add("milk", 4) == 2, "inventory capacity cap")
@@ -73,6 +87,12 @@ func run() -> void:
 	check(gs.place_object("restaurant", Vector2i(0, 0), "rest_stove_01") == "locked", "locked")
 	check(gs.place_object("restaurant", Vector2i(17, 13), "rest_stove_01") == "ok" and gs.coins == 240, "footprint may span two owned blocks")
 	check(gs.place_object("restaurant", Vector2i(10, 52), "farm_fence_01") == "invalid", "an item does not stand on the sea")
+	var stove_at: Vector2i = gs.grid("restaurant").origin_at(Vector2i(17, 13))
+	check(gs.rotate_object("restaurant", stove_at) == "ok" and gs.grid("restaurant").facing_at(stove_at) == 1 and gs.coins == 240, "turning is free")
+	check(gs.rotate_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(13, 13))) == "fixed", "a table has no front to turn")
+	check(gs.place_object("restaurant", Vector2i(20, 13), "rest_stove_01", 2) == "ok" and gs.grid("restaurant").facing_at(gs.grid("restaurant").origin_at(Vector2i(20, 13))) == 2, "a bought item can be placed turned")
+	gs.remove_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(20, 13)))
+	gs.coins = 240
 	check(gs.remove_object("restaurant", Vector2i(14, 14)) == "ok" and gs.coins == 240 + 15, "remove from any covered cell refunds half")
 	gs.remove_object("restaurant", Vector2i(18, 14))
 	gs.coins = 5

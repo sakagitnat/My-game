@@ -29,8 +29,7 @@
 | โซนลูกค้า | โต๊ะยาว | `furniture` | `rest_table_long_01.png` | 256x128 |  |
 | โซนลูกค้า | เก้าอี้หันขึ้น (ใต้โต๊ะ) | `furniture` | `rest_chair_up_01.png` | 128x160 |  |
 | โซนลูกค้า | เก้าอี้หันลง (เหนือโต๊ะ) | `furniture` | `rest_chair_down_01.png` | 128x160 |  |
-| โซนลูกค้า | เก้าอี้หันซ้าย | `furniture` | `rest_chair_left_01.png` | 128x160 |  |
-| โซนลูกค้า | เก้าอี้หันขวา | `furniture` | `rest_chair_right_01.png` | 128x160 |  |
+| โซนลูกค้า | เก้าอี้หันข้าง (วาดหันซ้าย เกมกลับให้เป็นหันขวาเอง) | `furniture` | `rest_chair_side_01.png` | 128x160 |  |
 | โซนลูกค้า | สตูล | `furniture` | `rest_stool_01.png` | 128x128 |  |
 | โซนลูกค้า | ม้านั่งยาว | `furniture` | `rest_bench_01.png` | 256x128 |  |
 | โซนลูกค้า | เครื่องคิดเงิน | `furniture` | `rest_register_01.png` | 128x128 |  |
