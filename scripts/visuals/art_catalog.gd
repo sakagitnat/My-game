@@ -25,6 +25,16 @@ const OBSTACLE := {
 	"bush": {"art": "obs_bush_01", "scale": 1.6},
 }
 
+const OBSTACLE_VARIANTS := {"tree": 3, "rock": 2, "bush": 2}
+
+# Visual-only selection; independent of the gameplay RNG and stable across reloads.
+static func obstacle_sprite(kind: String, cell: Vector2i) -> String:
+	if not OBSTACLE_VARIANTS.has(kind):
+		return str(obstacle(kind).art)
+	var count: int = OBSTACLE_VARIANTS[kind]
+	var index := posmod(cell.x * 73856093 ^ cell.y * 19349663, count) + 1
+	return "obs_%s_%02d" % [kind, index]
+
 static func placeable_color(id: String) -> Color:
 	return PLACEABLE_COLOR.get(id, FALLBACK_COLOR)
 
@@ -33,3 +43,14 @@ static func crop_color(crop: String) -> Color:
 
 static func obstacle(kind: String) -> Dictionary:
 	return OBSTACLE.get(kind, {"art": "", "scale": 1.0})
+
+
+const DISH_ART := {
+	"wheat_porridge": "dish_wheat_porridge",
+	"omelet": "dish_omelet",
+	"tomato_soup": "dish_soup",
+	"cabbage_salad": "dish_salad",
+}
+
+static func dish_art(dish: String) -> String:
+	return DISH_ART.get(dish, "")
