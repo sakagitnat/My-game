@@ -141,7 +141,7 @@ func run() -> void:
 	tick_until_customer(r)
 	r.arrival_timer = 99999.0
 	events.clear()
-	gs.remove_object("restaurant", Vector2i(27, 27))
+	gs.store_object("restaurant", Vector2i(27, 27))
 	r.tick(0.1)
 	check(r.customers.is_empty() and r.reputation == 4 and events == ["left"], "no table: customers leave, reputation unchanged")
 	check(not r.has_service(), "without a table the restaurant closes")

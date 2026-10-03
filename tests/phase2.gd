@@ -98,7 +98,7 @@ func run() -> void:
 	# Removing a growing plot discards the crop and clears state
 	gs.interact("farm", plot, "cabbage")
 	check(gs.grid("farm").states.has(plot), "state exists while growing")
-	check(gs.remove_object("farm", plot) == "ok" and not gs.grid("farm").states.has(plot), "remove clears state")
+	check(gs.store_loses_state("farm", plot) and gs.store_object("farm", plot) == "ok" and not gs.grid("farm").states.has(plot), "storing clears what grew on it")
 	check(gs.place_object("farm", plot_c, "farm_plot_01") == "ok" and gs.progress("farm", plot) == -1.0, "re-placed plot is empty")
 
 	# Persistence including offline growth
