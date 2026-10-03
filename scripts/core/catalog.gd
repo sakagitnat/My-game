@@ -10,10 +10,14 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # "size" is the footprint in UNITS: finer than a cell, Iso.SUB x Iso.SUB units per cell, so (4, 4) is a 2x2-cell table
 # (owned by game rules: do not change it to fix a picture).
 # "flat" objects are drawn like floor tiles instead of upright sprites.
+# "surface" objects (tables) carry small things; "on": "surface" things (vases, cups) stand on a surface instead of the floor:
+# they take no floor room and live in their own layer (WorldGrid.tops), still sized in units.
 # "rotatable" objects have a front: the player buys one and turns it (facing 0 front, 1 left, 2 back, 3 right).
 const PLACEABLES := {
-	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 4), "name": "ITEM_TABLE"},
+	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 4), "name": "ITEM_TABLE", "surface": true},
 	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(4, 4), "name": "ITEM_STOVE", "rotatable": true},
+	"rest_vase_small_01": {"area": "restaurant", "cost": 10, "size": Vector2i(1, 1), "name": "ITEM_VASE_SMALL", "on": "surface"},
+	"rest_vase_large_01": {"area": "restaurant", "cost": 25, "size": Vector2i(2, 2), "name": "ITEM_VASE_LARGE", "on": "surface"},
 	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(4, 4), "name": "ITEM_PLOT", "flat": true},
 	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(2, 2), "name": "ITEM_FENCE"},
 	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(6, 6), "name": "ITEM_COOP"},
@@ -65,6 +69,13 @@ static func unlock_level(id: String) -> int:
 
 static func size_of(id: String) -> Vector2i:
 	return PLACEABLES[id].size
+
+static func is_surface(id: String) -> bool:
+	return bool(PLACEABLES.get(id, {}).get("surface", false))
+
+# A thing that stands on a table, not on the floor.
+static func is_top(id: String) -> bool:
+	return PLACEABLES.get(id, {}).get("on", "") == "surface"
 
 static func is_rotatable(id: String) -> bool:
 	return bool(PLACEABLES.get(id, {}).get("rotatable", false))

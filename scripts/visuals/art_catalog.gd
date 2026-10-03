@@ -7,6 +7,8 @@ const FALLBACK_COLOR := Color("b8793f")
 const PLACEABLE_COLOR := {
 	"rest_table_small_01": Color("b8793f"),
 	"rest_stove_01": Color("6b6f78"),
+	"rest_vase_small_01": Color("5b8fb0"),
+	"rest_vase_large_01": Color("4f7aa0"),
 	"farm_plot_01": Color("6b4a2f"),
 	"farm_fence_01": Color("d9c7a0"),
 	"farm_coop_01": Color("b5503c"),
@@ -40,6 +42,15 @@ static func facing_art(id: String, facing: int) -> Dictionary:
 	if name.ends_with("|flip"):
 		return {"art": name.trim_suffix("|flip"), "flip": true}
 	return {"art": name, "flip": false}
+
+# Where the top surface of a surface object (a table) lies on its picture, as fractions of the footprint's height from the back:
+# things standing on it are drawn on that band, further back on the table = higher on the screen (art spec: table top at y 8..68 of 128).
+const SURFACE_BAND := {"rest_table_small_01": Vector2(0.06, 0.55)}
+const DEFAULT_SURFACE_BAND := Vector2(0.06, 0.55)
+const HOVER := 36.0   # a ghost that is not over any table hovers this high, in game pixels
+
+static func surface_band(surface_id: String) -> Vector2:
+	return SURFACE_BAND.get(surface_id, DEFAULT_SURFACE_BAND)
 
 static func placeable_color(id: String) -> Color:
 	return PLACEABLE_COLOR.get(id, FALLBACK_COLOR)

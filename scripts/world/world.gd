@@ -19,9 +19,11 @@ var painting := false
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
 var moving_origin: Vector2i = NONE
+var moving_top: bool = false         # the thing being moved is one standing on a table
 var placing_facing: int = 0          # turn of the item being placed or moved (0 front, 1 left, 2 back, 3 right)
 var ghost_cell: Vector2i = Vector2i.ZERO   # in units (Iso.SUB per cell)
 var selected_origin: Vector2i = NONE
+var selected_top: bool = false       # the selected thing stands on a table (WorldGrid.tops), not on the floor
 var selected_obstacle: Vector2i = NONE
 var selected_land: Vector2i = NONE   # a cell on an owned, empty block of the restaurant (opens the floor/grass bubble)
 var context_timer: float = 0.0
@@ -75,6 +77,7 @@ func _sync_view() -> void:
 	view.ghost_status = placement_status()
 	view.moving_origin = moving_origin
 	view.selected_origin = selected_origin
+	view.selected_top = selected_top
 	view.selected_obstacle = selected_obstacle
 	view.selected_land = selected_land
 	view.edit_mode = editor != null
@@ -145,7 +148,7 @@ func set_zone(z: String) -> void:
 func _on_state_changed() -> void:
 	hud.refresh()
 	if selected_origin != NONE:
-		if GameState.grid(zone).objects.has(selected_origin):
+		if _selected_exists():
 			hud.show_context(_context_info(selected_origin))
 		else:
 			_deselect()
@@ -184,6 +187,7 @@ func _error_text(code: String, item_id: String = "") -> Array:
 		"occupied": return ["MSG_OCCUPIED", null]
 		"blocked": return ["MSG_BLOCKED", null]
 		"area": return ["MSG_WRONG_AREA", null]
+		"no_surface": return ["MSG_NEED_TABLE", null]
 		"level": return ["MSG_LEVEL", Catalog.unlock_level(item_id) if item_id != "" else null]
 	return ["MSG_INVALID", null]
 
@@ -193,20 +197,22 @@ func start_placement(id: String) -> void:
 	_deselect()
 	placing_id = id
 	moving_origin = NONE
+	moving_top = false
 	placing_facing = 0
 	ghost_cell = Iso.world_to_unit(camera.position)
 	_update_placement_ui()
 	_redraw_all()
 
-func start_move(origin: Vector2i) -> void:
+func start_move(origin: Vector2i, top: bool = false) -> void:
 	var g := GameState.grid(zone)
-	if not g.objects.has(origin):
+	if not (g.tops if top else g.objects).has(origin):
 		return
 	_deselect()
-	placing_id = g.objects[origin]
+	placing_id = g.tops[origin] if top else g.objects[origin]
 	moving_origin = origin
-	placing_facing = g.facing_at(origin)
-	var sz: Vector2i = g.footprints[origin]
+	moving_top = top
+	placing_facing = 0 if top else g.facing_at(origin)
+	var sz: Vector2i = g.top_footprints[origin] if top else g.footprints[origin]
 	ghost_cell = origin + Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 	_update_placement_ui()
 	_redraw_all()
@@ -228,7 +234,7 @@ func placement_status() -> String:
 	if placing_id == "":
 		return ""
 	if moving_origin != NONE:
-		return GameState.check_move(zone, moving_origin, ghost_cell)
+		return GameState.check_move(zone, moving_origin, ghost_cell, moving_top)
 	return GameState.check_place(zone, ghost_cell, placing_id, placing_facing)
 
 func _update_placement_ui() -> void:
@@ -252,7 +258,7 @@ func confirm_placement() -> void:
 		hud.show_message(e[0], e[1])
 		return
 	if moving_origin != NONE:
-		GameState.move_object(zone, moving_origin, ghost_cell)
+		GameState.move_object(zone, moving_origin, ghost_cell, moving_top)
 		cancel_placement()
 		hud.show_message("MSG_MOVED")
 		return
@@ -267,6 +273,7 @@ func confirm_placement() -> void:
 func cancel_placement() -> void:
 	placing_id = ""
 	moving_origin = NONE
+	moving_top = false
 	placing_facing = 0
 	if hud != null:
 		hud.hide_placement()
@@ -276,6 +283,7 @@ func cancel_placement() -> void:
 
 func _deselect() -> void:
 	selected_origin = NONE
+	selected_top = false
 	selected_obstacle = NONE
 	selected_land = NONE
 	if hud != null:
@@ -292,6 +300,10 @@ func _on_tap(world: Vector2) -> void:
 		return
 	if not g.in_bounds(c):
 		_deselect()
+		return
+	var on_table := g.top_origin_at(u)   # a vase on a table is tapped before the table under it
+	if on_table != NONE:
+		_select(on_table, true)
 		return
 	var origin := g.origin_at(u)
 	if origin != NONE:
@@ -324,8 +336,13 @@ func _buy_land(c: Vector2i, cost: int) -> void:
 	else:
 		hud.show_message("MSG_INVALID")
 
-func _select(origin: Vector2i) -> void:
+func _select(origin: Vector2i, top: bool = false) -> void:
 	selected_origin = origin
+	selected_top = top
+	if top:
+		hud.show_context(_context_info(origin))
+		_redraw_all()
+		return
 	var id: String = GameState.grid(zone).objects[origin]
 	if (id == "farm_plot_01" or id == "farm_coop_01") and GameState.progress(zone, origin) >= 1.0:
 		_do_interact(origin, "")
@@ -379,6 +396,9 @@ func _obstacle_info(c: Vector2i) -> Dictionary:
 
 func _context_info(origin: Vector2i) -> Dictionary:
 	var g := GameState.grid(zone)
+	if selected_top:
+		var tid: String = g.tops[origin]
+		return {"title": Loc.t(Catalog.PLACEABLES[tid].name), "status": "", "sell": GameState.refund_for(zone, origin, true), "can_rotate": false}
 	var id: String = g.objects[origin]
 	var def: Dictionary = Catalog.PLACEABLES[id]
 	var info := {"title": Loc.t(def.name), "status": "", "sell": GameState.refund_for(zone, origin), "can_rotate": Catalog.is_rotatable(id)}
@@ -476,7 +496,7 @@ func _do_interact(origin: Vector2i, seed_id: String) -> void:
 
 func _on_move_requested() -> void:
 	if selected_origin != NONE:
-		start_move(selected_origin)
+		start_move(selected_origin, selected_top)
 
 # Turns the selected object a quarter turn.
 func _on_rotate_requested() -> void:
@@ -494,12 +514,13 @@ func _on_sell_requested() -> void:
 	if selected_origin == NONE:
 		return
 	var origin := selected_origin
+	var top := selected_top
 	var g := GameState.grid(zone)
-	var refund := GameState.refund_for(zone, origin)
-	var has_crop: bool = g.states.has(origin) and g.objects[origin] == "farm_plot_01"
+	var refund := GameState.refund_for(zone, origin, top)
+	var has_crop: bool = not top and g.states.has(origin) and g.objects[origin] == "farm_plot_01"
 	var text := Loc.t("CONFIRM_SELL_CROP" if has_crop else "CONFIRM_SELL") % refund
 	hud.ask_confirm(text, func() -> void:
-		if GameState.remove_object(zone, origin) == "ok":
+		if GameState.remove_object(zone, origin, top) == "ok":
 			hud.show_message("MSG_REMOVED", refund))
 
 # ---------------------------------------------------------------- frame & input
@@ -515,14 +536,19 @@ func _process(delta: float) -> void:
 		hud.place_context(_screen_of(Iso.cell_to_world(selected_obstacle) + Vector2(0, -50)))
 	if selected_origin != NONE and hud.context.visible:
 		var g := GameState.grid(zone)
-		if g.objects.has(selected_origin):
-			var top := Iso.unit_corners(selected_origin, g.footprints[selected_origin])
-			hud.place_context(_screen_of((top[0] + top[1]) * 0.5 + Vector2(0, -24)))
+		if _selected_exists():
+			var sc := Iso.unit_corners(selected_origin, (g.top_footprints if selected_top else g.footprints)[selected_origin])
+			hud.place_context(_screen_of((sc[0] + sc[1]) * 0.5 + Vector2(0, -24)))
 		context_timer += delta
 		if context_timer >= 1.0:
 			context_timer = 0.0
-			if g.objects.has(selected_origin):
+			if _selected_exists():
 				hud.show_context(_context_info(selected_origin))
+
+# Whether the selected thing is still there (it may have been sold or carried off).
+func _selected_exists() -> bool:
+	var g := GameState.grid(zone)
+	return (g.tops if selected_top else g.objects).has(selected_origin)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:

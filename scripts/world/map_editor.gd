@@ -180,7 +180,7 @@ func _place_prop(cell: Vector2i, unit: Vector2i) -> bool:
 			return false
 		l.obstacles.append([cell.x, cell.y, prop_id])
 		return true
-	if not Catalog.PLACEABLES.has(prop_id):
+	if not Catalog.PLACEABLES.has(prop_id) or Catalog.is_top(prop_id):
 		return false
 	var sz: Vector2i = Catalog.size_of(prop_id)
 	var origin := GameState.footprint_origin(unit, sz)

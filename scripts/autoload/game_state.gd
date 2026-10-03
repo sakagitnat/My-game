@@ -263,10 +263,16 @@ func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> Stri
 		return "area"
 	if not g.footprint_owned(origin, sz):
 		return "locked"
-	if g.footprint_blocked(origin, sz):
-		return "blocked"
-	if not g.footprint_free(origin, sz):
-		return "occupied"
+	if Catalog.is_top(id):
+		# stands on a table: the floor under it is not its business, only the surface and other things on it
+		var ts := g.top_status(origin, sz)
+		if ts != "ok":
+			return ts
+	else:
+		if g.footprint_blocked(origin, sz):
+			return "blocked"
+		if not g.footprint_free(origin, sz):
+			return "occupied"
 	if coins < place_cost(id):
 		return "no_coins"
 	return "ok"
@@ -298,14 +304,19 @@ func place_object(zone: String, c: Vector2i, id: String, facing: int = 0) -> Str
 		return result
 	var sz: Vector2i = Catalog.size_facing(id, facing)
 	coins -= place_cost(id)
-	grid(zone).place(footprint_origin(c, sz), id, sz, facing)
+	if Catalog.is_top(id):
+		grid(zone).place_top(footprint_origin(c, sz), id, sz)
+	else:
+		grid(zone).place(footprint_origin(c, sz), id, sz, facing)
 	add_xp(PLACE_XP)
 	_commit()
 	return "ok"
 
 # Whether the object covering `from_cell` fits with a footprint centred on `to_cell`: "ok", "empty", "invalid", "locked" or "occupied".
-func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
+func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i, top: bool = false) -> String:
 	var g := grid(zone)
+	if top:
+		return _check_move_top(zone, from_cell, to_cell)
 	var origin := g.origin_at(from_cell)
 	if origin == WorldGrid.NONE:
 		return "empty"
@@ -326,12 +337,32 @@ func check_move(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
 			return "occupied"
 	return "ok"
 
+# A thing on a table (`top` moves): "ok", "empty", "invalid", "locked", "no_surface" or "occupied".
+func _check_move_top(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
+	var g := grid(zone)
+	var origin := g.top_origin_at(from_cell)
+	if origin == WorldGrid.NONE:
+		return "empty"
+	var sz: Vector2i = g.top_footprints[origin]
+	var new_origin := footprint_origin(to_cell, sz)
+	if not g.footprint_in_bounds(new_origin, sz):
+		return "invalid"
+	if not g.footprint_owned(new_origin, sz):
+		return "locked"
+	return g.top_status(new_origin, sz, origin)
+
 # Moves the object covering `from_cell` so a footprint centred on `to_cell` holds it. Free of charge.
-func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i) -> String:
-	var result := check_move(zone, from_cell, to_cell)
+# With `top` it is the thing standing on a table there that moves (to another table, or elsewhere on the same one).
+func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i, top: bool = false) -> String:
+	var result := check_move(zone, from_cell, to_cell, top)
 	if result != "ok":
 		return result
 	var g := grid(zone)
+	if top:
+		var t_origin := g.top_origin_at(from_cell)
+		g.move_top(t_origin, footprint_origin(to_cell, g.top_footprints[t_origin]))
+		_commit()
+		return "ok"
 	var origin := g.origin_at(from_cell)
 	g.move(origin, footprint_origin(to_cell, g.footprints[origin]))
 	_commit()
@@ -390,17 +421,31 @@ func clear_obstacle(zone: String, c: Vector2i) -> String:
 	_commit()
 	return "ok"
 
-func remove_object(zone: String, c: Vector2i) -> String:
-	var id := grid(zone).remove_at(c)
-	if id == "":
+# Sells the object covering `c`, or with `top` the thing standing on a table there. Everything standing on a sold table is sold too.
+func remove_object(zone: String, c: Vector2i, top: bool = false) -> String:
+	var g := grid(zone)
+	var refund := refund_for(zone, c, top)
+	if top:
+		if g.remove_top_at(c) == "":
+			return "empty"
+	elif g.remove_at(c) == "":
 		return "empty"
-	coins += int(Catalog.PLACEABLES[id].cost) / 2
+	coins += refund
 	_commit()
 	return "ok"
 
-func refund_for(zone: String, c: Vector2i) -> int:
-	var id: String = grid(zone).id_at(c)
-	return int(Catalog.PLACEABLES[id].cost) / 2 if id != "" else 0
+func refund_for(zone: String, c: Vector2i, top: bool = false) -> int:
+	var g := grid(zone)
+	if top:
+		var t: Vector2i = g.top_origin_at(c)
+		return int(Catalog.PLACEABLES[g.tops[t]].cost) / 2 if t != WorldGrid.NONE else 0
+	var origin := g.origin_at(c)
+	if origin == WorldGrid.NONE:
+		return 0
+	var total := int(Catalog.PLACEABLES[g.objects[origin]].cost) / 2
+	for t in g.tops_over(origin):
+		total += int(Catalog.PLACEABLES[g.tops[t]].cost) / 2
+	return total
 
 func now() -> float:
 	return clock_override if clock_override >= 0.0 else Time.get_unix_time_from_system()

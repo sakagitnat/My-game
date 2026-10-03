@@ -36,7 +36,7 @@ label.field{display:flex;gap:8px;align-items:center}
 .b-ok{background:var(--ok)}.b-warn{background:var(--warn)}.b-bad{background:var(--bad)}.b-empty{background:#8a9a93}
 .warnlist{margin:4px 0 0;padding-left:16px;color:var(--bad);font-size:12px}
 #sceneWrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#dfe8d6}
-#sceneCanvas{display:block;width:100%;height:auto;image-rendering:auto}
+#sceneCanvas,#groundCanvas{display:block;width:100%;height:auto;image-rendering:auto}
 .sw{display:inline-block;width:22px;height:22px;border-radius:4px;border:1px solid #0002;margin:2px;vertical-align:middle}
 .drop{border:2px dashed #9bb7ab;border-radius:14px;padding:22px;text-align:center;background:#fafcfb}
 .drop.over{background:#e3efe9}
@@ -60,7 +60,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
 <main>
 
 <section id="tpl" class="page active">
-  <h1>แม่แบบทั้งชุด (45 ชิ้นในภาพเดียว)</h1>
+  <h1>แม่แบบทั้งชุด (64 ชิ้นในภาพเดียว)</h1>
   <div class="panel">
     <ol class="steps">
       <li>ดาวน์โหลดแม่แบบ แล้วเปิดในแอปวาดรูปบน iPad (Procreate, Ibis Paint ฯลฯ) ใช้เป็นเลเยอร์ล่างสุด</li>
@@ -125,6 +125,8 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
     <p class="muted" id="sceneInfo"></p>
   </div>
   <div id="sceneWrap"><canvas id="sceneCanvas"></canvas></div>
+  <div class="panel"><h2>พื้นกลางแจ้ง: ดูว่าขอบพื้นต่อกันสวยไหม</h2><p class="muted">หญ้า ดิน และทราย วางติดกัน ชิ้นขอบ/มุมของหญ้าและดินซ้อนทับช่องที่ต่ำกว่า (หญ้าทับดิน ดินทับทราย) ถ้ายังไม่มีชิ้นขอบ จะแสดงเป็นไล่สีนุ่ม ๆ เหมือนที่เกมวาดให้เอง</p></div>
+  <div id="groundWrap"><canvas id="groundCanvas"></canvas></div>
   <div class="panel"><h2>สีเฉลี่ยของแต่ละชิ้น (ดูว่าโทนเข้ากันไหม)</h2><div id="palette" class="muted">ยังไม่มีภาพ</div></div>
   <div class="panel"><h2>จุดที่ควรแก้</h2><div id="issues" class="report muted">ยังไม่มีภาพ</div></div>
 </section>
@@ -346,7 +348,7 @@ function renderScene(){
   if($('lWall').checked){for(let q=0;q<SW;q++){if(q===3||q===4)continue;const t=piece('wall_low'),x=OFFX+q*CELL,y=OFFY+SH*CELL-64;if(t)c.drawImage(t,x,y,CELL,64);else{missing.add('wall_low');c.fillStyle='#e3d0a8';c.fillRect(x,y,CELL,64);}}}
   const miss=[...missing];
   $('sceneInfo').textContent=hasAny()?`แสดงชิ้นที่ตัดจากภาพของคุณ ชิ้นที่ยังไม่มีเป็นกรอบประสีชมพู (${miss.length} รายการ)`:'ยังไม่ได้อัปโหลดภาพ: แสดงเฉพาะผังตำแหน่งและกรอบชิ้นที่ต้องวาด ไปแท็บ "ตัดภาพ" เพื่ออัปโหลด';
-  palette();issues();
+  renderGround();palette();issues();
 }
 ['lFloor','lWall','lKitchen','lDining','lDecor','lProps','lGrid','lMissing','lShadow'].forEach(i=>$(i).onchange=renderScene);
 function avgColor(cv){const d=data(cv).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4){if(d[i+3]>200){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}}return n?[r/n,g/n,b/n]:null;}
@@ -364,6 +366,28 @@ function issues(){
   const lum=[];ITEMS.forEach(it=>{if(getP(it.id)&&it.category!=='ของเล็ก'){const c=avgColor(getP(it.id));if(c)lum.push([it,(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])]);}});
   if(lum.length>3){const m=lum.reduce((a,b)=>a+b[1],0)/lum.length;lum.forEach(([it,l])=>{if(Math.abs(l-m)>70)out.push(`${it.label}: ความสว่างต่างจากชิ้นอื่นในชุดมาก (${Math.round(l)} เทียบเฉลี่ย ${Math.round(m)}) ตรวจว่าโทนเข้ากันไหม`);});}
   box.textContent=out.length?out.join('\n'):'ไม่พบจุดที่ต้องแก้ตามที่เว็บตรวจได้ (ลองดูภาพจริงด้วยตาอีกครั้ง)';
+}
+// Outdoor ground: grass, dirt and sand side by side with the soft edges, laid out the way the game does it.
+const GMAP=['gggggggggggg','ggddddgggggg','gdddddgggssg','gggdddgggsss','gggggggggsss','ggssgggggggg','gsssggddgggg','gggggggddggg'];
+const GRANK={s:1,d:2,g:3},GNAME={d:'dirt',g:'grass'},GCOL={g:'#7fb857',d:'#9a7a52',s:'#ecd9a4'},GBASE={s:'tile_sand',d:'tile_dirt'};
+const GSIDES={n:[0,-1],e:[1,0],s:[0,1],w:[-1,0]},GCORN={ne:[1,-1],se:[1,1],sw:[-1,1],nw:[-1,-1]};
+function renderGround(){
+  const cv=$('groundCanvas'),N=GMAP[0].length,R=GMAP.length,S=128;cv.width=N*S;cv.height=R*S;const c=cv.getContext('2d');
+  const kind=(x,y)=>x<0||y<0||x>=N||y>=R?null:GMAP[y][x];
+  for(let y=0;y<R;y++)for(let x=0;x<N;x++){const k=kind(x,y),t=GBASE[k]?getP(GBASE[k]):null;if(t)c.drawImage(t,x*S,y*S,S,S);else{c.fillStyle=GCOL[k];c.fillRect(x*S,y*S,S,S);}}
+  const fallback=(x,y,k,piece)=>{const d=S*0.42,col=GCOL[k];let g,rx=x*S,ry=y*S,rw=S,rh=S;
+    const rgba=a=>{const n=parseInt(col.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;};
+    if(GSIDES[piece]){const [dx,dy]=GSIDES[piece];
+      if(dy<0){g=c.createLinearGradient(0,ry,0,ry+d);rh=d;}else if(dy>0){g=c.createLinearGradient(0,ry+S,0,ry+S-d);ry+=S-d;rh=d;}
+      else if(dx<0){g=c.createLinearGradient(rx,0,rx+d,0);rw=d;}else{g=c.createLinearGradient(rx+S,0,rx+S-d,0);rx+=S-d;rw=d;}
+      g.addColorStop(0,rgba(0.95));g.addColorStop(1,rgba(0));c.fillStyle=g;c.fillRect(rx,ry,rw,rh);return;}
+    const [dx,dy]=GCORN[piece],cx=dx>0?x*S+S:x*S,cy=dy>0?y*S+S:y*S;g=c.createRadialGradient(cx,cy,0,cx,cy,d);g.addColorStop(0,rgba(0.95));g.addColorStop(1,rgba(0));c.fillStyle=g;c.fillRect(x*S,y*S,S,S);};
+  for(let y=0;y<R;y++)for(let x=0;x<N;x++){
+    const mine=kind(x,y);if(mine==='g')continue;const rank=GRANK[mine],kinds={};
+    for(const s in GSIDES){const [dx,dy]=GSIDES[s],k=kind(x+dx,y+dy);if(k&&GRANK[k]>rank)(kinds[k]=kinds[k]||[]).push(s);}
+    for(const co in GCORN){const [dx,dy]=GCORN[co],k=kind(x+dx,y+dy);if(!k||GRANK[k]<=rank)continue;if(kind(x+dx,y)===k||kind(x,y+dy)===k)continue;(kinds[k]=kinds[k]||[]).push(co);}
+    Object.keys(kinds).sort((a,b)=>GRANK[a]-GRANK[b]).forEach(k=>kinds[k].forEach(piece=>{const id=(GSIDES[piece]?'edge_':'corner_')+GNAME[k]+'_'+piece,p=getP(id);if(p)c.drawImage(p,x*S,y*S,S,S);else fallback(x,y,k,piece);}));
+  }
 }
 const mix=$('mix');
 LAYOUT.categories.forEach(cat=>{const l=document.createElement('label');l.className='field';l.append(cat+' ');const sel=document.createElement('select');sel.dataset.cat=cat;sel.innerHTML='<option value="A">A</option><option value="B">B</option>';sel.onchange=renderScene;l.append(sel);mix.append(l);});

@@ -180,6 +180,8 @@ func refresh() -> void:
 			for k in Catalog.OBSTACLES:
 				_item(Loc.t(Catalog.OBSTACLES[k].name), editor.prop_id == k, func() -> void: editor.prop_id = k)
 			for k in GameState.placeables_in(editor.zone):
+				if Catalog.is_top(k):
+					continue   # things for tables are placed in the game, not painted into a map
 				_item(Loc.t(Catalog.PLACEABLES[k].name), editor.prop_id == k, func() -> void: editor.prop_id = k)
 		"land":
 			for k in LAND_KEYS:

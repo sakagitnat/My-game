@@ -31,7 +31,13 @@ def layout():
         y += row_h; x = M; row_h = 0
     return out, heads, y + M
 
+# soft ground edges: the band (or corner) of the neighbouring ground that reaches into the cell; paint it fading out inwards
+EDGE = 50
 SHAPES = {
+    'edge_n': [('r', 0, 0, 127, EDGE)], 'edge_s': [('r', 0, 127 - EDGE, 127, 127)],
+    'edge_w': [('r', 0, 0, EDGE, 127)], 'edge_e': [('r', 127 - EDGE, 0, 127, 127)],
+    'corner_nw': [('r', 0, 0, EDGE, EDGE)], 'corner_ne': [('r', 127 - EDGE, 0, 127, EDGE)],
+    'corner_sw': [('r', 0, 127 - EDGE, EDGE, 127)], 'corner_se': [('r', 127 - EDGE, 127 - EDGE, 127, 127)],
     'wallplain': [('r', 0, 0, 127, 24), ('r', 0, 24, 127, 200), ('r', 0, 200, 127, 255)],
     'walllow': [('r', 0, 8, 127, 56)],
     'wallside': [('r', 3, 3, 28, 252)],
@@ -122,7 +128,7 @@ if __name__ == '__main__':
     open(f'{OUT}/index.html', 'w', encoding='utf-8').write(html)
     g1.convert('RGB').save(f'{OUT}/set_template_guide.png'); g2.convert('RGB').save(f'{OUT}/set_template_guide_2x.png')
     blank.save(f'{OUT}/set_template_blank.png'); json.dump(lay, open(f'{OUT}/set_template_layout.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    rows = ['# ชุดเซ็ต (Set v1): 45 ชิ้นที่ชุดหนึ่งต้องมี', '', 'สร้างอัตโนมัติจาก `tools/workshop/items.py` ด้วย `python3 tools/workshop/build.py` อย่าแก้มือ เว็บ Art Workshop (`/art-workshop/`) ใช้รายการนี้ ชื่อไฟล์ตรงกับที่เกมโหลด (`assets/td/<โฟลเดอร์>/<ชื่อ>.png`)', '', '| หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |', '|---|---|---|---|---|---|']
+    rows = [f'# ชุดเซ็ต (Set v1): {len(items)} ชิ้นที่ชุดหนึ่งต้องมี', '', 'สร้างอัตโนมัติจาก `tools/workshop/items.py` ด้วย `python3 tools/workshop/build.py` อย่าแก้มือ เว็บ Art Workshop (`/art-workshop/`) ใช้รายการนี้ ชื่อไฟล์ตรงกับที่เกมโหลด (`assets/td/<โฟลเดอร์>/<ชื่อ>.png`)', '', '| หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |', '|---|---|---|---|---|---|']
     note = {'tile': 'ทึบ ต่อกันทุกทิศ', 'flush': 'ปลายซ้ายขวาชนขอบภาพ', 'flushr': 'ปลายซ้ายชนขอบ', 'flushl': 'ปลายขวาชนขอบ', 'flat': 'ภาพแบนบนพื้น', '': ''}
     for it in items:
         rows.append(f"| {it['category']} | {it['label']} | `{it['folder']}` | `{it['file']}.png` | {it['w']}x{it['h']} | {note.get(it['flags'], '')} |")
