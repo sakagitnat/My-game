@@ -1,0 +1,53 @@
+# ชุดเซ็ต (Set v1): 45 ชิ้นที่ชุดหนึ่งต้องมี
+
+สร้างอัตโนมัติจาก `tools/workshop/items.py` ด้วย `python3 tools/workshop/build.py` อย่าแก้มือ เว็บ Art Workshop (`/art-workshop/`) ใช้รายการนี้ ชื่อไฟล์ตรงกับที่เกมโหลด (`assets/td/<โฟลเดอร์>/<ชื่อ>.png`)
+
+| หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |
+|---|---|---|---|---|---|
+| พื้น | พื้นร้านหลัก A | `tiles` | `tile_floor_01.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
+| พื้น | พื้นร้าน B (สลับ A) | `tiles` | `tile_floor_02.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
+| พื้น | พื้นครัว | `tiles` | `tile_floor_03.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
+| พื้น | ลานหน้าร้าน | `tiles` | `tile_pavement_01.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
+| ผนัง | ผนังหลัง (สูง 2 ช่อง) | `walls` | `wall_plain_01.png` | 128x256 | ปลายซ้ายขวาชนขอบภาพ |
+| ผนัง | ผนังเตี้ย / ราว | `walls` | `wall_low_01.png` | 128x64 | ปลายซ้ายขวาชนขอบภาพ |
+| ผนัง | ผนังข้าง (แถบบาง) | `walls` | `wall_side_01.png` | 32x256 |  |
+| ของติดผนัง | หน้าต่าง | `walls` | `wdeco_window_01.png` | 128x128 |  |
+| ของติดผนัง | ประตู | `walls` | `wdeco_door_01.png` | 128x256 |  |
+| ของติดผนัง | โคมไฟติดผนัง | `walls` | `wdeco_lamp_01.png` | 128x128 |  |
+| ของติดผนัง | ภาพวาด | `walls` | `wdeco_painting_01.png` | 128x128 |  |
+| ของติดผนัง | ฮู้ดเหนือเตา | `walls` | `wdeco_hood_01.png` | 128x128 |  |
+| ครัว | เคาน์เตอร์ตรง | `modular` | `mod_modern_counter_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | อ่างล้างจาน | `modular` | `mod_modern_sink_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | เตา | `modular` | `mod_modern_stove_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | เตาอบ | `modular` | `mod_modern_oven_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | ปิดปลายแถวด้านซ้าย | `modular` | `mod_modern_cap_left_01.png` | 128x128 | ปลายซ้ายชนขอบ |
+| ครัว | ปิดปลายแถวด้านขวา | `modular` | `mod_modern_cap_right_01.png` | 128x128 | ปลายขวาชนขอบ |
+| ครัว | ตู้เย็น | `modular` | `mod_modern_fridge_01.png` | 128x256 |  |
+| ครัว | โต๊ะเตรียม (เกาะกลาง) | `modular` | `mod_modern_prep_table_01.png` | 256x128 | ปลายซ้ายขวาชนขอบภาพ |
+| โซนลูกค้า | โต๊ะเล็ก | `furniture` | `rest_table_small_01.png` | 128x128 |  |
+| โซนลูกค้า | โต๊ะยาว | `furniture` | `rest_table_long_01.png` | 256x128 |  |
+| โซนลูกค้า | เก้าอี้หันขึ้น (ใต้โต๊ะ) | `furniture` | `rest_chair_up_01.png` | 128x128 |  |
+| โซนลูกค้า | เก้าอี้หันลง (เหนือโต๊ะ) | `furniture` | `rest_chair_down_01.png` | 128x128 |  |
+| โซนลูกค้า | เก้าอี้หันซ้าย | `furniture` | `rest_chair_left_01.png` | 128x128 |  |
+| โซนลูกค้า | เก้าอี้หันขวา | `furniture` | `rest_chair_right_01.png` | 128x128 |  |
+| โซนลูกค้า | สตูล | `furniture` | `rest_stool_01.png` | 128x128 |  |
+| โซนลูกค้า | ม้านั่งยาว | `furniture` | `rest_bench_01.png` | 256x128 |  |
+| โซนลูกค้า | เครื่องคิดเงิน | `furniture` | `rest_register_01.png` | 128x128 |  |
+| โซนลูกค้า | ชั้นวางของ | `furniture` | `rest_shelf_01.png` | 128x256 |  |
+| โซนลูกค้า | ป้ายเมนูตั้งพื้น | `furniture` | `rest_menu_sign_01.png` | 128x128 |  |
+| ตกแต่ง | กระถางต้นไม้ | `deco` | `deco_plant_pot_01.png` | 128x128 |  |
+| ตกแต่ง | พรม (ภาพแบนบนพื้น) | `deco` | `deco_rug_01.png` | 256x256 | ภาพแบนบนพื้น |
+| ตกแต่ง | โคมไฟตั้งพื้น | `deco` | `deco_lamp_floor_01.png` | 128x256 |  |
+| ตกแต่ง | ถังขยะ | `deco` | `deco_trash_bin_01.png` | 128x128 |  |
+| ตกแต่ง | ลังไม้ | `deco` | `deco_crate_01.png` | 128x128 |  |
+| ของเล็ก | จาน | `props` | `prop_plate_01.png` | 64x64 |  |
+| ของเล็ก | ชาม | `props` | `prop_bowl_01.png` | 64x64 |  |
+| ของเล็ก | ถ้วย | `props` | `prop_cup_01.png` | 64x64 |  |
+| ของเล็ก | หม้อ | `props` | `prop_pot_01.png` | 64x64 |  |
+| ของเล็ก | กระทะ | `props` | `prop_pan_01.png` | 64x64 |  |
+| ของเล็ก | มีด | `props` | `prop_knife_01.png` | 64x64 |  |
+| ของเล็ก | เขียง | `props` | `prop_cutting_board_01.png` | 64x64 |  |
+| ของเล็ก | แจกัน | `props` | `prop_vase_01.png` | 64x64 |  |
+| ของเล็ก | ขวด | `props` | `prop_bottle_01.png` | 64x64 |  |
+
+ฐาน (anchor): สูงจากขอบล่าง 24 px สำหรับภาพ 128 px (12 px สำหรับของเล็ก 64 px) กึ่งกลางแนวนอน หน้าต่างติดสูงจากพื้นผนัง 70 px (ในเกม) ประตูอยู่บนพื้น
