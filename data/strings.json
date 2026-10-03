@@ -31,6 +31,7 @@
 	"LOCKED_LV": {"en": "Lv %d needed", "th": "ต้องระดับ %d"},
 	"BTN_PLACE": {"en": "Place", "th": "วาง"},
 	"BTN_MOVE": {"en": "Move", "th": "ย้าย"},
+	"BTN_ROTATE": {"en": "Turn", "th": "หมุน"},
 	"BTN_SELL_OBJ": {"en": "Sell +%d", "th": "ขายคืน +%d"},
 	"BTN_DONE": {"en": "Done", "th": "เสร็จ"},
 	"BTN_CANCEL": {"en": "Cancel", "th": "ยกเลิก"},

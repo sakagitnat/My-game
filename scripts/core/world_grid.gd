@@ -16,6 +16,7 @@ var occupied: Dictionary = {}
 var states: Dictionary = {}
 var blocked: Dictionary = {}
 var sale: Dictionary = {}         # parcels the player may buy; empty means every parcel
+var facings: Dictionary = {}      # origin -> 1..3 for objects turned away from the front (0 is not stored)
 var styles: Dictionary = {}       # parcel -> "floor" for blocks built over as indoor floor (everything else is open ground)
 
 func _init(grid_size: Vector2i = Vector2i(30, 30), start_parcels: Array = [], sale_parcels: Dictionary = {}) -> void:
@@ -100,11 +101,13 @@ func footprint_blocked(origin: Vector2i, sz: Vector2i) -> bool:
 func can_place(origin: Vector2i, sz: Vector2i) -> bool:
 	return footprint_in_bounds(origin, sz) and footprint_owned(origin, sz) and footprint_free(origin, sz) and not footprint_blocked(origin, sz)
 
-func place(origin: Vector2i, id: String, sz: Vector2i) -> bool:
+func place(origin: Vector2i, id: String, sz: Vector2i, facing: int = 0) -> bool:
 	if not can_place(origin, sz):
 		return false
 	objects[origin] = id
 	footprints[origin] = sz
+	if facing != 0:
+		facings[origin] = facing
 	for c in cells_of(origin, sz):
 		occupied[c] = origin
 	return true
@@ -121,14 +124,41 @@ func move(origin: Vector2i, new_origin: Vector2i) -> bool:
 			return false
 	var id: String = objects[origin]
 	var st = states.get(origin)
+	var facing := facing_at(origin)
 	for c in cells_of(origin, sz):
 		occupied.erase(c)
 	objects.erase(origin)
 	footprints.erase(origin)
 	states.erase(origin)
-	place(new_origin, id, sz)
+	facings.erase(origin)
+	place(new_origin, id, sz, facing)
 	if st != null:
 		states[new_origin] = st
+	return true
+
+func facing_at(origin: Vector2i) -> int:
+	return int(facings.get(origin, 0))
+
+# Turns the object at `origin` a quarter turn (0 front, 1 left, 2 back, 3 right) keeping its top-left cell and its state.
+# `new_sz` is the footprint after the turn. False, changing nothing, if it does not fit.
+func turn(origin: Vector2i, new_sz: Vector2i) -> bool:
+	if not objects.has(origin):
+		return false
+	for c in cells_of(origin, new_sz):
+		if not in_bounds(c) or not is_owned(c) or blocked.has(c):
+			return false
+		if occupied.has(c) and occupied[c] != origin:
+			return false
+	for c in cells_of(origin, footprints[origin]):
+		occupied.erase(c)
+	footprints[origin] = new_sz
+	for c in cells_of(origin, new_sz):
+		occupied[c] = origin
+	var f := (facing_at(origin) + 1) % 4
+	if f == 0:
+		facings.erase(origin)
+	else:
+		facings[origin] = f
 	return true
 
 # Origin of the object covering cell `c`, or NONE.
@@ -148,6 +178,7 @@ func remove_at(c: Vector2i) -> String:
 	objects.erase(origin)
 	footprints.erase(origin)
 	states.erase(origin)
+	facings.erase(origin)
 	return id
 
 func to_dict() -> Dictionary:
@@ -157,6 +188,9 @@ func to_dict() -> Dictionary:
 	var obj: Array = []
 	for o in objects:
 		obj.append([o.x, o.y, objects[o], footprints[o].x, footprints[o].y])
+	var fac: Array = []
+	for o in facings:
+		fac.append([o.x, o.y, facings[o]])
 	var st: Array = []
 	for o in states:
 		st.append([o.x, o.y, states[o]])
@@ -167,7 +201,7 @@ func to_dict() -> Dictionary:
 	for p in styles:
 		floors.append([p.x, p.y])
 	return {"size": [size.x, size.y], "parcel": PARCEL, "start": start_parcel_count,
-		"parcels": parcels, "objects": obj, "states": st, "obstacles": obs, "floors": floors}
+		"parcels": parcels, "objects": obj, "facings": fac, "states": st, "obstacles": obs, "floors": floors}
 
 # Returns false (leaving the grid untouched) for saves from before parcels existed or of a different map size.
 func load_dict(d: Dictionary) -> bool:
@@ -181,6 +215,7 @@ func load_dict(d: Dictionary) -> bool:
 	footprints.clear()
 	occupied.clear()
 	states.clear()
+	facings.clear()
 	blocked.clear()
 	styles.clear()
 	for p in d.get("parcels", []):
@@ -195,6 +230,10 @@ func load_dict(d: Dictionary) -> bool:
 	for o in d.get("objects", []):
 		var origin := Vector2i(int(o[0]), int(o[1]))
 		place(origin, str(o[2]), Vector2i(int(o[3]), int(o[4])))
+	for f in d.get("facings", []):
+		var fo := Vector2i(int(f[0]), int(f[1]))
+		if objects.has(fo):
+			facings[fo] = clampi(int(f[2]), 1, 3)
 	for s in d.get("states", []):
 		var origin := Vector2i(int(s[0]), int(s[1]))
 		if objects.has(origin) and s[2] is Dictionary:

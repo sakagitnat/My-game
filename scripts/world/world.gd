@@ -19,6 +19,7 @@ var painting := false
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
 var moving_origin: Vector2i = NONE
+var placing_facing: int = 0          # turn of the item being placed or moved (0 front, 1 left, 2 back, 3 right)
 var ghost_cell: Vector2i = Vector2i.ZERO
 var selected_origin: Vector2i = NONE
 var selected_obstacle: Vector2i = NONE
@@ -52,6 +53,8 @@ func _ready() -> void:
 	hud.crop_chosen.connect(_on_crop_chosen)
 	hud.action_pressed.connect(_on_action_pressed)
 	hud.move_requested.connect(_on_move_requested)
+	hud.rotate_requested.connect(_on_rotate_requested)
+	hud.placement_rotated.connect(rotate_ghost)
 	hud.sell_requested.connect(_on_sell_requested)
 	hud.placement_confirmed.connect(confirm_placement)
 	hud.placement_cancelled.connect(cancel_placement)
@@ -68,6 +71,7 @@ func _sync_view() -> void:
 	view.zone = zone
 	view.ghost_id = placing_id
 	view.ghost_cell = ghost_cell
+	view.ghost_facing = placing_facing
 	view.ghost_status = placement_status()
 	view.moving_origin = moving_origin
 	view.selected_origin = selected_origin
@@ -189,6 +193,7 @@ func start_placement(id: String) -> void:
 	_deselect()
 	placing_id = id
 	moving_origin = NONE
+	placing_facing = 0
 	ghost_cell = Iso.world_to_cell(camera.position)
 	_update_placement_ui()
 	_redraw_all()
@@ -200,6 +205,7 @@ func start_move(origin: Vector2i) -> void:
 	_deselect()
 	placing_id = g.objects[origin]
 	moving_origin = origin
+	placing_facing = g.facing_at(origin)
 	var sz: Vector2i = g.footprints[origin]
 	ghost_cell = origin + Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 	_update_placement_ui()
@@ -210,12 +216,20 @@ func set_ghost(c: Vector2i) -> void:
 	_update_placement_ui()
 	_redraw_all()
 
+# Turns the item being placed a quarter turn (the bar's turn button).
+func rotate_ghost() -> void:
+	if placing_id == "" or moving_origin != NONE or not Catalog.is_rotatable(placing_id):
+		return
+	placing_facing = (placing_facing + 1) % 4
+	_update_placement_ui()
+	_redraw_all()
+
 func placement_status() -> String:
 	if placing_id == "":
 		return ""
 	if moving_origin != NONE:
 		return GameState.check_move(zone, moving_origin, ghost_cell)
-	return GameState.check_place(zone, ghost_cell, placing_id)
+	return GameState.check_place(zone, ghost_cell, placing_id, placing_facing)
 
 func _update_placement_ui() -> void:
 	var st := placement_status()
@@ -227,7 +241,7 @@ func _update_placement_ui() -> void:
 	else:
 		var e := _error_text(st, placing_id)
 		detail = Loc.t(e[0]) % e[1] if e[1] != null else Loc.t(e[0])
-	hud.show_placement("%s\n%s" % [Loc.t(def.name), detail], st == "ok", moving_origin != NONE)
+	hud.show_placement("%s\n%s" % [Loc.t(def.name), detail], st == "ok", moving_origin != NONE, Catalog.is_rotatable(placing_id) and moving_origin == NONE)
 
 func confirm_placement() -> void:
 	if placing_id == "":
@@ -244,15 +258,16 @@ func confirm_placement() -> void:
 		return
 	var cost := GameState.place_cost(placing_id)
 	var at := Iso.cell_to_world(ghost_cell)
-	GameState.place_object(zone, ghost_cell, placing_id)
+	GameState.place_object(zone, ghost_cell, placing_id, placing_facing)
 	hud.float_text("-%d" % cost, _screen_of(at), UiTheme.BAD)
 	hud.show_message("MSG_PLACED")
 	# Step the ghost along so rows of plots or fences go down quickly.
-	set_ghost(ghost_cell + Vector2i(Catalog.size_of(placing_id).x, 0))
+	set_ghost(ghost_cell + Vector2i(Catalog.size_facing(placing_id, placing_facing).x, 0))
 
 func cancel_placement() -> void:
 	placing_id = ""
 	moving_origin = NONE
+	placing_facing = 0
 	if hud != null:
 		hud.hide_placement()
 	_redraw_all()
@@ -365,7 +380,7 @@ func _context_info(origin: Vector2i) -> Dictionary:
 	var g := GameState.grid(zone)
 	var id: String = g.objects[origin]
 	var def: Dictionary = Catalog.PLACEABLES[id]
-	var info := {"title": Loc.t(def.name), "status": "", "sell": GameState.refund_for(zone, origin)}
+	var info := {"title": Loc.t(def.name), "status": "", "sell": GameState.refund_for(zone, origin), "can_rotate": Catalog.is_rotatable(id)}
 	var prog := GameState.progress(zone, origin)
 	if id == "farm_plot_01":
 		if prog < 0.0:
@@ -461,6 +476,18 @@ func _do_interact(origin: Vector2i, seed_id: String) -> void:
 func _on_move_requested() -> void:
 	if selected_origin != NONE:
 		start_move(selected_origin)
+
+# Turns the selected object a quarter turn.
+func _on_rotate_requested() -> void:
+	if selected_origin == NONE:
+		return
+	var st := GameState.rotate_object(zone, selected_origin)
+	if st != "ok":
+		var e := _error_text(st)
+		hud.show_message(e[0], e[1])
+		return
+	hud.show_context(_context_info(selected_origin))
+	_redraw_all()
 
 func _on_sell_requested() -> void:
 	if selected_origin == NONE:

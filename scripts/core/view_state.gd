@@ -6,6 +6,7 @@ extends RefCounted
 var zone: String = "restaurant"
 var ghost_id: String = ""                       # "" when not placing or moving
 var ghost_cell: Vector2i = Vector2i.ZERO
+var ghost_facing: int = 0                       # turn of the ghost: 0 front, 1 left, 2 back, 3 right
 var ghost_status: String = ""                   # "ok" | "blocked" | "occupied" | "locked" | "no_coins" | "level" | "invalid" | "area"
 var moving_origin: Vector2i = WorldGrid.NONE    # NONE unless an existing object is being moved
 var selected_origin: Vector2i = WorldGrid.NONE  # NONE when no object is selected

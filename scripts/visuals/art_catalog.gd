@@ -25,6 +25,22 @@ const OBSTACLE := {
 	"bush": {"art": "obs_bush_01", "scale": 1.0},
 }
 
+# Art for things that look different from each side: [front, left, back, right]; a name ending "|flip" is the same picture mirrored.
+# Items without an entry use their own art for every turn. (The chair needs only front, back and one side: the right side is the left one mirrored.)
+const FACING_ART := {
+	"rest_chair_01": ["rest_chair_down_01", "rest_chair_side_01", "rest_chair_up_01", "rest_chair_side_01|flip"],
+}
+
+# {art: sprite id, flip: bool} to draw `id` turned to `facing`.
+static func facing_art(id: String, facing: int) -> Dictionary:
+	var list: Array = FACING_ART.get(id, [])
+	if list.size() != 4:
+		return {"art": id, "flip": false}
+	var name: String = list[facing % 4]
+	if name.ends_with("|flip"):
+		return {"art": name.trim_suffix("|flip"), "flip": true}
+	return {"art": name, "flip": false}
+
 static func placeable_color(id: String) -> Color:
 	return PLACEABLE_COLOR.get(id, FALLBACK_COLOR)
 

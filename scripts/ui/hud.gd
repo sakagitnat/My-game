@@ -6,6 +6,8 @@ signal edit_map_requested
 signal item_picked(id: String)
 signal crop_chosen(crop: String)
 signal move_requested
+signal rotate_requested
+signal placement_rotated
 signal sell_requested
 signal action_pressed
 signal placement_confirmed
@@ -30,6 +32,7 @@ var message_time := 0.0
 var placement_bar: PanelContainer
 var placement_title: Label
 var placement_ok: Button
+var placement_rotate: Button
 var modal: Control
 var modal_panel: PanelContainer
 var modal_body: VBoxContainer
@@ -166,6 +169,11 @@ func _build() -> void:
 	cancel.custom_minimum_size = Vector2(120, 64)
 	cancel.pressed.connect(func() -> void: placement_cancelled.emit())
 	pb.add_child(cancel)
+	placement_rotate = Button.new()
+	placement_rotate.custom_minimum_size = Vector2(110, 64)
+	placement_rotate.visible = false
+	placement_rotate.pressed.connect(func() -> void: placement_rotated.emit())
+	pb.add_child(placement_rotate)
 	placement_title = Label.new()
 	placement_title.custom_minimum_size = Vector2(190, 0)
 	placement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -242,6 +250,7 @@ func refresh() -> void:
 	zone_button.text = Loc.t("GO_FARM") if zone == "restaurant" else Loc.t("GO_RESTAURANT")
 	zone_button.visible = GameState.has_farm_zone()
 	placement_ok.text = Loc.t("BTN_PLACE")
+	placement_rotate.text = Loc.t("BTN_ROTATE")
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
 	_refresh_restaurant(true)
@@ -401,8 +410,9 @@ func _on_cook(dish: String) -> void:
 
 # ---------------------------------------------------------------- placement bar
 
-func show_placement(title: String, valid: bool, moving: bool = false) -> void:
+func show_placement(title: String, valid: bool, moving: bool = false, rotatable: bool = false) -> void:
 	placement_bar.visible = true
+	placement_rotate.visible = rotatable
 	var cancel: Button = placement_bar.find_child("Cancel", true, false)
 	cancel.text = Loc.t("BTN_CANCEL" if moving else "BTN_DONE")
 	message_label.visible = false
@@ -465,6 +475,12 @@ func show_context(info: Dictionary) -> void:
 		mv.custom_minimum_size = Vector2(110, 56)
 		mv.pressed.connect(func() -> void: move_requested.emit())
 		actions.add_child(mv)
+		if info.get("can_rotate", false):
+			var rot := Button.new()
+			rot.text = Loc.t("BTN_ROTATE")
+			rot.custom_minimum_size = Vector2(110, 56)
+			rot.pressed.connect(func() -> void: rotate_requested.emit())
+			actions.add_child(rot)
 		var sell := Button.new()
 		sell.text = Loc.t("BTN_SELL_OBJ") % int(info.get("sell", 0))
 		sell.custom_minimum_size = Vector2(150, 56)
