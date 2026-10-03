@@ -26,6 +26,8 @@ var restaurant_name: String = ""
 var ask_names: bool = true  # tests turn this off so the naming screen stays out of the way
 var grids: Dictionary = {}
 var inventory: Inventory = Inventory.new(60)
+# Furniture the player took off the floor and may place again for free (id -> count). Selling is a separate choice made from here.
+var stash: Dictionary = {}
 var save_path: String = SAVE_PATH
 var autosave: bool = true
 var clock_override: float = -1.0
@@ -52,6 +54,7 @@ func reset() -> void:
 	for z in Catalog.ZONES:
 		build_zone(z)
 	inventory = Inventory.new(60)
+	stash.clear()
 	player_name = ""
 	restaurant_name = ""
 
@@ -246,12 +249,14 @@ func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 	return c - Vector2i(floori((sz.x - 1) / 2.0), floori((sz.y - 1) / 2.0))
 
 # Why `id` can or cannot be placed with a footprint centred on unit `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
-func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> String:
+func check_place(zone: String, c: Vector2i, id: String, facing: int = 0, from_stash: bool = false) -> String:
 	var def = Catalog.PLACEABLES.get(id)
 	if def == null or not (def.area == zone or layout_for(zone).area == "any"):
 		return "invalid"
 	if level < Catalog.unlock_level(id):
 		return "level"
+	if from_stash and stash_count(id) <= 0:
+		return "no_stock"
 	var g := grid(zone)
 	var sz: Vector2i = Catalog.size_facing(id, facing)
 	var origin := footprint_origin(c, sz)
@@ -273,7 +278,7 @@ func check_place(zone: String, c: Vector2i, id: String, facing: int = 0) -> Stri
 			return "blocked"
 		if not g.footprint_free(origin, sz):
 			return "occupied"
-	if coins < place_cost(id):
+	if not from_stash and coins < place_cost(id):
 		return "no_coins"
 	return "ok"
 
@@ -296,19 +301,24 @@ func place_cost(id: String) -> int:
 		return 0
 	return int(Catalog.PLACEABLES[id].cost)
 
-func place_object(zone: String, c: Vector2i, id: String, facing: int = 0) -> String:
+# `from_stash` places a piece out of the storage: free, and no XP (so storing and placing again earns nothing).
+func place_object(zone: String, c: Vector2i, id: String, facing: int = 0, from_stash: bool = false) -> String:
 	if facing != 0 and not Catalog.is_rotatable(id):
 		facing = 0
-	var result := check_place(zone, c, id, facing)
+	var result := check_place(zone, c, id, facing, from_stash)
 	if result != "ok":
 		return result
 	var sz: Vector2i = Catalog.size_facing(id, facing)
-	coins -= place_cost(id)
+	if from_stash:
+		_take_from_stash(id)
+	else:
+		coins -= place_cost(id)
 	if Catalog.is_top(id):
 		grid(zone).place_top(footprint_origin(c, sz), id, sz)
 	else:
 		grid(zone).place(footprint_origin(c, sz), id, sz, facing)
-	add_xp(PLACE_XP)
+	if not from_stash:
+		add_xp(PLACE_XP)
 	_commit()
 	return "ok"
 
@@ -421,31 +431,59 @@ func clear_obstacle(zone: String, c: Vector2i) -> String:
 	_commit()
 	return "ok"
 
-# Sells the object covering `c`, or with `top` the thing standing on a table there. Everything standing on a sold table is sold too.
-func remove_object(zone: String, c: Vector2i, top: bool = false) -> String:
+# Takes the object covering `c` (or with `top` the thing standing on a table there) off the floor into the storage.
+# Whatever stands on a stored table goes into the storage too. What the object was making (a crop, a dish) is lost.
+func store_object(zone: String, c: Vector2i, top: bool = false) -> String:
 	var g := grid(zone)
-	var refund := refund_for(zone, c, top)
 	if top:
-		if g.remove_top_at(c) == "":
+		var id := g.remove_top_at(c)
+		if id == "":
 			return "empty"
-	elif g.remove_at(c) == "":
-		return "empty"
-	coins += refund
+		_add_to_stash(id)
+	else:
+		var origin := g.origin_at(c)
+		if origin == WorldGrid.NONE:
+			return "empty"
+		for t in g.tops_over(origin):
+			_add_to_stash(str(g.tops[t]))
+		_add_to_stash(g.remove_at(c))
 	_commit()
 	return "ok"
 
-func refund_for(zone: String, c: Vector2i, top: bool = false) -> int:
+# Whether storing the object covering `c` throws something away (a growing crop, a dish being cooked).
+func store_loses_state(zone: String, c: Vector2i, top: bool = false) -> bool:
 	var g := grid(zone)
-	if top:
-		var t: Vector2i = g.top_origin_at(c)
-		return int(Catalog.PLACEABLES[g.tops[t]].cost) / 2 if t != WorldGrid.NONE else 0
-	var origin := g.origin_at(c)
-	if origin == WorldGrid.NONE:
+	return not top and g.states.has(g.origin_at(c))
+
+func _add_to_stash(id: String) -> void:
+	stash[id] = int(stash.get(id, 0)) + 1
+
+func _take_from_stash(id: String) -> void:
+	stash[id] = int(stash.get(id, 0)) - 1
+	if stash[id] <= 0:
+		stash.erase(id)
+
+func stash_count(id: String) -> int:
+	return int(stash.get(id, 0))
+
+func stash_total() -> int:
+	var n := 0
+	for id in stash:
+		n += int(stash[id])
+	return n
+
+# What one stored piece sells for: half its price. Only the player's own choice in the storage sells it.
+func stash_sell_value(id: String) -> int:
+	return int(Catalog.PLACEABLES[id].cost) / 2
+
+func sell_stashed(id: String) -> int:
+	if stash_count(id) <= 0:
 		return 0
-	var total := int(Catalog.PLACEABLES[g.objects[origin]].cost) / 2
-	for t in g.tops_over(origin):
-		total += int(Catalog.PLACEABLES[g.tops[t]].cost) / 2
-	return total
+	_take_from_stash(id)
+	var earned := stash_sell_value(id)
+	coins += earned
+	_commit()
+	return earned
 
 func now() -> float:
 	return clock_override if clock_override >= 0.0 else Time.get_unix_time_from_system()
@@ -610,7 +648,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "restaurant": restaurant.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "restaurant": restaurant.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -632,6 +670,12 @@ func load_game() -> bool:
 	var inv = d.get("inventory", {})
 	if inv is Dictionary:
 		inventory.load_dict(inv)
+	stash.clear()
+	var st = d.get("stash", {})
+	if st is Dictionary:
+		for id in st:
+			if Catalog.PLACEABLES.has(str(id)) and int(st[id]) > 0:
+				stash[str(id)] = int(st[id])
 	var rest = d.get("restaurant", {})
 	if rest is Dictionary:
 		restaurant.load_dict(rest)

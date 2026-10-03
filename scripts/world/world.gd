@@ -19,6 +19,7 @@ var painting := false
 # Placement mode: choosing a spot for a new item (placing_id) or for an existing one (moving_origin).
 var placing_id: String = ""
 var moving_origin: Vector2i = NONE
+var placing_from_stash: bool = false   # placing a piece out of the storage: free
 var moving_top: bool = false         # the thing being moved is one standing on a table
 var placing_facing: int = 0          # turn of the item being placed or moved (0 front, 1 left, 2 back, 3 right)
 var ghost_cell: Vector2i = Vector2i.ZERO   # in units (Iso.SUB per cell)
@@ -57,7 +58,8 @@ func _ready() -> void:
 	hud.move_requested.connect(_on_move_requested)
 	hud.rotate_requested.connect(_on_rotate_requested)
 	hud.placement_rotated.connect(rotate_ghost)
-	hud.sell_requested.connect(_on_sell_requested)
+	hud.store_requested.connect(_on_store_requested)
+	hud.stash_item_picked.connect(start_placement.bind(true))
 	hud.placement_confirmed.connect(confirm_placement)
 	hud.placement_cancelled.connect(cancel_placement)
 	hud.reset_confirmed.connect(_on_reset)
@@ -193,9 +195,10 @@ func _error_text(code: String, item_id: String = "") -> Array:
 
 # ---------------------------------------------------------------- placement mode
 
-func start_placement(id: String) -> void:
+func start_placement(id: String, from_stash: bool = false) -> void:
 	_deselect()
 	placing_id = id
+	placing_from_stash = from_stash
 	moving_origin = NONE
 	moving_top = false
 	placing_facing = 0
@@ -208,6 +211,7 @@ func start_move(origin: Vector2i, top: bool = false) -> void:
 	if not (g.tops if top else g.objects).has(origin):
 		return
 	_deselect()
+	placing_from_stash = false
 	placing_id = g.tops[origin] if top else g.objects[origin]
 	moving_origin = origin
 	moving_top = top
@@ -235,7 +239,7 @@ func placement_status() -> String:
 		return ""
 	if moving_origin != NONE:
 		return GameState.check_move(zone, moving_origin, ghost_cell, moving_top)
-	return GameState.check_place(zone, ghost_cell, placing_id, placing_facing)
+	return GameState.check_place(zone, ghost_cell, placing_id, placing_facing, placing_from_stash)
 
 func _update_placement_ui() -> void:
 	var st := placement_status()
@@ -243,7 +247,7 @@ func _update_placement_ui() -> void:
 	var detail := Loc.t("PLACE_HINT")
 	if st == "ok":
 		if moving_origin == NONE:
-			detail = str(GameState.place_cost(placing_id))
+			detail = Loc.t("FROM_STORAGE") % GameState.stash_count(placing_id) if placing_from_stash else str(GameState.place_cost(placing_id))
 	else:
 		var e := _error_text(st, placing_id)
 		detail = Loc.t(e[0]) % e[1] if e[1] != null else Loc.t(e[0])
@@ -264,9 +268,13 @@ func confirm_placement() -> void:
 		return
 	var cost := GameState.place_cost(placing_id)
 	var at := Iso.unit_to_world(ghost_cell)
-	GameState.place_object(zone, ghost_cell, placing_id, placing_facing)
-	hud.float_text("-%d" % cost, _screen_of(at), UiTheme.BAD)
+	GameState.place_object(zone, ghost_cell, placing_id, placing_facing, placing_from_stash)
+	if not placing_from_stash:
+		hud.float_text("-%d" % cost, _screen_of(at), UiTheme.BAD)
 	hud.show_message("MSG_PLACED")
+	if placing_from_stash and GameState.stash_count(placing_id) <= 0:
+		cancel_placement()   # the last one out of the storage
+		return
 	# Step the ghost along so rows of plots or fences go down quickly.
 	set_ghost(ghost_cell + Vector2i(Catalog.size_facing(placing_id, placing_facing).x, 0))
 
@@ -274,6 +282,7 @@ func cancel_placement() -> void:
 	placing_id = ""
 	moving_origin = NONE
 	moving_top = false
+	placing_from_stash = false
 	placing_facing = 0
 	if hud != null:
 		hud.hide_placement()
@@ -398,10 +407,10 @@ func _context_info(origin: Vector2i) -> Dictionary:
 	var g := GameState.grid(zone)
 	if selected_top:
 		var tid: String = g.tops[origin]
-		return {"title": Loc.t(Catalog.PLACEABLES[tid].name), "status": "", "sell": GameState.refund_for(zone, origin, true), "can_rotate": false}
+		return {"title": Loc.t(Catalog.PLACEABLES[tid].name), "status": "", "can_rotate": false}
 	var id: String = g.objects[origin]
 	var def: Dictionary = Catalog.PLACEABLES[id]
-	var info := {"title": Loc.t(def.name), "status": "", "sell": GameState.refund_for(zone, origin), "can_rotate": Catalog.is_rotatable(id)}
+	var info := {"title": Loc.t(def.name), "status": "", "can_rotate": Catalog.is_rotatable(id)}
 	var prog := GameState.progress(zone, origin)
 	if id == "farm_plot_01":
 		if prog < 0.0:
@@ -510,18 +519,21 @@ func _on_rotate_requested() -> void:
 	hud.show_context(_context_info(selected_origin))
 	_redraw_all()
 
-func _on_sell_requested() -> void:
+# Takes the selected thing off the floor into the storage (selling is done from the storage, by choice).
+func _on_store_requested() -> void:
 	if selected_origin == NONE:
 		return
 	var origin := selected_origin
 	var top := selected_top
-	var g := GameState.grid(zone)
-	var refund := GameState.refund_for(zone, origin, top)
-	var has_crop: bool = not top and g.states.has(origin) and g.objects[origin] == "farm_plot_01"
-	var text := Loc.t("CONFIRM_SELL_CROP" if has_crop else "CONFIRM_SELL") % refund
-	hud.ask_confirm(text, func() -> void:
-		if GameState.remove_object(zone, origin, top) == "ok":
-			hud.show_message("MSG_REMOVED", refund))
+	if GameState.store_loses_state(zone, origin, top):
+		hud.ask_confirm(Loc.t("CONFIRM_STORE_STATE"), _store.bind(origin, top))
+		return
+	_store(origin, top)
+
+func _store(origin: Vector2i, top: bool) -> void:
+	if GameState.store_object(zone, origin, top) == "ok":
+		hud.show_message("MSG_STORED")
+	_deselect()
 
 # ---------------------------------------------------------------- frame & input
 

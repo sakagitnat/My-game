@@ -62,19 +62,16 @@ func run() -> void:
 	no_tops.erase("tops")
 	check(WorldGrid.new(g.size).load_dict(no_tops), "a save without the layer still loads")
 
-	# Selling
+	# Storing: a vase leaves the table for the storage; a table takes what stands on it along
 	var tops_now := g.tops.size()
 	var vase_at: Vector2i = g.tops.keys()[0]
-	var refund_one: int = gs.refund_for("restaurant", vase_at, true)
+	var vase_id: String = g.tops[vase_at]
 	var coins_a: int = gs.coins
-	check(refund_one > 0 and gs.remove_object("restaurant", vase_at, true) == "ok" and gs.coins == coins_a + refund_one and g.tops.size() == tops_now - 1 and g.objects.size() == 2, "selling a vase leaves the table")
-	var table_refund: int = gs.refund_for("restaurant", Vector2i(29, 31))
-	var expected := 15
-	for t in g.tops:
-		expected += int(Catalog.PLACEABLES[g.tops[t]].cost) / 2
-	check(table_refund == expected and expected > 15, "a table's refund counts what stands on it")
+	check(gs.store_object("restaurant", vase_at, true) == "ok" and gs.coins == coins_a and g.tops.size() == tops_now - 1 and g.objects.size() == 2 and gs.stash_count(vase_id) == 1, "storing a vase leaves the table and pays nothing")
+	var remaining: Array = g.tops.values().duplicate()
 	var coins_b: int = gs.coins
-	check(gs.remove_object("restaurant", Vector2i(29, 31)) == "ok" and gs.coins == coins_b + table_refund and g.tops.is_empty() and g.top_occupied.is_empty(), "selling the table sells what stands on it")
+	check(gs.store_object("restaurant", Vector2i(29, 31)) == "ok" and gs.coins == coins_b and g.tops.is_empty() and g.top_occupied.is_empty(), "storing the table stores what stands on it")
+	check(gs.stash_count("rest_table_small_01") == 1 and gs.stash_total() == tops_now + 1, "all of it is in the storage")
 
 	# On screen
 	gs.reset()
@@ -106,9 +103,8 @@ func run() -> void:
 	world.confirm_placement()
 	check(gs.grid("restaurant").tops.has(Vector2i(28, 28)) and gs.grid("restaurant").tops.size() == 1, "the vase moved")
 	world._on_tap(Iso.unit_corner(Vector2i(28, 28)) + Vector2(8, 8))
-	world._on_sell_requested()
-	world.hud.confirm_yes.call()
-	check(gs.grid("restaurant").tops.is_empty() and not gs.grid("restaurant").objects.is_empty(), "selling the vase leaves the table")
+	world._on_store_requested()
+	check(gs.grid("restaurant").tops.is_empty() and not gs.grid("restaurant").objects.is_empty() and gs.stash_count(small) == 1, "storing the vase leaves the table")
 	world._on_tap(Iso.unit_corner(Vector2i(27, 27)) + Vector2(8, 8))
 	check(not world.selected_top and world.selected_origin == Vector2i(26, 26), "with no vase, the same tap selects the table")
 	world.queue_redraw()
@@ -116,7 +112,7 @@ func run() -> void:
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	if failures == 0:
-		print("PASS: tabletop (layer, moving with the table, saving, selling, taps)")
+		print("PASS: tabletop (layer, moving with the table, saving, storing, taps)")
 	else:
 		print("%d check(s) failed" % failures)
 	quit(1 if failures > 0 else 0)

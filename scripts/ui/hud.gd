@@ -8,7 +8,8 @@ signal crop_chosen(crop: String)
 signal move_requested
 signal rotate_requested
 signal placement_rotated
-signal sell_requested
+signal store_requested
+signal stash_item_picked(id: String)
 signal action_pressed
 signal placement_confirmed
 signal placement_cancelled
@@ -25,6 +26,7 @@ var coins_label: Label
 var menu_button: Button
 var shop_button: Button
 var barn_button: Button
+var storage_button: Button
 var message_label: Label
 var message_key := "HINT_START"
 var message_arg = null
@@ -135,6 +137,10 @@ func _build() -> void:
 	barn_button.custom_minimum_size = Vector2(170, 72)
 	barn_button.pressed.connect(open_modal.bind("barn"))
 	right.add_child(barn_button)
+	storage_button = Button.new()
+	storage_button.custom_minimum_size = Vector2(150, 72)
+	storage_button.pressed.connect(open_modal.bind("storage"))
+	right.add_child(storage_button)
 
 	message_label = Label.new()
 	message_label.anchor_left = 0.0
@@ -246,6 +252,7 @@ func refresh() -> void:
 	xp_label.text = "%d / %d" % [GameState.xp, GameState.xp_for_next()]
 	menu_button.text = Loc.t("BTN_MENU")
 	shop_button.text = Loc.t("BTN_SHOP")
+	storage_button.text = Loc.t("BTN_STORAGE") % GameState.stash_total()
 	barn_button.text = Loc.t("BTN_BARN") % [GameState.inventory.total(), GameState.inventory.capacity]
 	zone_button.text = Loc.t("GO_FARM") if zone == "restaurant" else Loc.t("GO_RESTAURANT")
 	zone_button.visible = GameState.has_farm_zone()
@@ -485,11 +492,11 @@ func show_context(info: Dictionary) -> void:
 			rot.custom_minimum_size = Vector2(110, 56)
 			rot.pressed.connect(func() -> void: rotate_requested.emit())
 			actions.add_child(rot)
-		var sell := Button.new()
-		sell.text = Loc.t("BTN_SELL_OBJ") % int(info.get("sell", 0))
-		sell.custom_minimum_size = Vector2(150, 56)
-		sell.pressed.connect(func() -> void: sell_requested.emit())
-		actions.add_child(sell)
+		var store := Button.new()
+		store.text = Loc.t("BTN_STORE")
+		store.custom_minimum_size = Vector2(150, 56)
+		store.pressed.connect(func() -> void: store_requested.emit())
+		actions.add_child(store)
 	var close := Button.new()
 	close.text = "X"
 	close.custom_minimum_size = Vector2(56, 56)
@@ -570,6 +577,7 @@ func _build_modal() -> void:
 	match modal_kind:
 		"shop": _build_shop()
 		"barn": _build_barn()
+		"storage": _build_storage()
 		"settings": _build_settings()
 		"confirm": _build_confirm()
 		"names": _build_names()
@@ -606,6 +614,42 @@ func _build_shop() -> void:
 				close_modal()
 				item_picked.emit(id))
 		row.add_child(b)
+		list.add_child(row)
+
+# The storage: furniture taken off the floor. Place it again for free, or sell it (only here, and only by choice).
+func _build_storage() -> void:
+	_modal_header(Loc.t("STORAGE_TITLE"))
+	var ids: Array = GameState.stash.keys()
+	var list := _scroll_area(ids.size())
+	if ids.is_empty():
+		var empty := Label.new()
+		empty.text = Loc.t("STORAGE_EMPTY")
+		list.add_child(empty)
+	for id in ids:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var label := Label.new()
+		label.text = "%s  x%d" % [Loc.t(Catalog.PLACEABLES[id].name), GameState.stash_count(id)]
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		var place := Button.new()
+		place.text = Loc.t("BTN_PLACE")
+		place.custom_minimum_size = Vector2(130, 60)
+		place.pressed.connect(func() -> void:
+			close_modal()
+			stash_item_picked.emit(id))
+		row.add_child(place)
+		var value := GameState.stash_sell_value(id)
+		var sell := Button.new()
+		sell.text = Loc.t("BTN_SELL_OBJ") % value
+		sell.custom_minimum_size = Vector2(150, 60)
+		sell.pressed.connect(func() -> void:
+			ask_confirm(Loc.t("CONFIRM_SELL_STORED") % value, func() -> void:
+				var earned := GameState.sell_stashed(id)
+				if earned > 0:
+					show_message("MSG_SOLD", earned)
+				open_modal("storage")))
+		row.add_child(sell)
 		list.add_child(row)
 
 func _build_barn() -> void:

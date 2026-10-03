@@ -107,10 +107,10 @@ func run() -> void:
 	check(gs.rotate_object("restaurant", stove_at) == "ok" and gs.grid("restaurant").facing_at(stove_at) == 1 and gs.coins == 240, "turning is free")
 	check(gs.rotate_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(26, 26))) == "fixed", "a table has no front to turn")
 	check(gs.place_object("restaurant", Vector2i(40, 26), "rest_stove_01", 2) == "ok" and gs.grid("restaurant").facing_at(gs.grid("restaurant").origin_at(Vector2i(40, 26))) == 2, "a bought item can be placed turned")
-	gs.remove_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(40, 26)))
+	gs.store_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(40, 26)))
 	gs.coins = 240
-	check(gs.remove_object("restaurant", Vector2i(28, 28)) == "ok" and gs.coins == 240 + 15, "remove from any covered cell refunds half")
-	gs.remove_object("restaurant", Vector2i(36, 28))
+	check(gs.store_object("restaurant", Vector2i(28, 28)) == "ok" and gs.coins == 240 and gs.stash_count("rest_table_small_01") == 1 and gs.stash_total() == 2, "storing from any covered cell keeps the piece and pays nothing")
+	gs.store_object("restaurant", Vector2i(36, 28))
 	gs.coins = 5
 	check(gs.place_object("restaurant", Vector2i(26, 26), "rest_stove_01") == "no_coins" and gs.coins == 5, "no coins")
 	gs.coins = 321
@@ -203,10 +203,8 @@ func run() -> void:
 	check(gs.grid("restaurant").objects.has(Vector2i(31, 31)) and not gs.grid("restaurant").objects.has(Vector2i(27, 27)) and gs.coins == 320, "moving is free and relocates the object")
 	check(world.placing_id == "", "move ends placement mode")
 	world._on_tap(Iso.cell_to_world(Vector2i(16, 16)))
-	world._on_sell_requested()
-	check(world.hud.modal.visible and world.hud.modal_kind == "confirm", "selling asks for confirmation")
-	world.hud.confirm_yes.call()
-	check(gs.grid("restaurant").objects.is_empty() and gs.coins == 335, "confirmed sale removes it and refunds half")
+	world._on_store_requested()
+	check(gs.grid("restaurant").objects.is_empty() and gs.coins == 320 and gs.stash_count("rest_table_small_01") == 1, "storing takes it off the floor into the storage, no coins")
 	world.hud.open_modal("shop")
 	check(world.hud.modal_kind == "shop" and world.hud.modal_body.get_child_count() >= 2, "shop lists items")
 	world.hud.close_modal()
