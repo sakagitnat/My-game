@@ -131,7 +131,7 @@ func run() -> void:
 	world._on_tap(Iso.cell_to_world(Vector2i(20, 14)))
 	check(world.hud.modal.visible and world.hud.modal_kind == "confirm" and world.selected_obstacle == WorldGrid.NONE, "tapping an obstacle on unowned land offers to buy the block instead")
 	world.hud.close_modal()
-	check(assets.DIRS.has("obstacles"), "asset loader searches the obstacles folder")
+	check(assets.DIRS.has("td/obstacles"), "asset loader searches the top-down obstacles folder")
 	world.queue_free()
 	await process_frame
 

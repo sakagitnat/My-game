@@ -4,8 +4,9 @@ extends Node2D
 # Drawn from a scene's SceneLayout and the player's land (GameState): the ground kinds the owner painted
 # (road, pavement, floor, sand, dirt), floor built over bought land, the walls on cell edges, and the build grid
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
-const WALL_H := 118.0
-const LOW_H := 15.0
+const WALL_H := 128.0      # a wall is two cells tall (art: 128x256 for one cell wide)
+const LOW_H := 32.0
+const SIDE_W := 16.0       # thickness of a wall seen from the side (art: 32x256)
 const FLOOR_A := Color("ead3a8")
 const FLOOR_B := Color("d9bb8b")
 const ROAD := Color("b79a6a")
@@ -21,17 +22,18 @@ const GLASS := Color("bfe3f2")
 const WHITE_FRAME := Color("fffaf0")
 const GRID := Color(1, 1, 1, 0.34)
 
-# Art ids tried first; when no such file is in assets/, the code-drawn colours below are used instead.
-# Ground tiles are 1024x1024 canvases with the diamond centred (like every tile_*); each ground kind can have
-# several variants (_01, _02 ...) that are picked per cell. Wall modules are flat front views, see wall_art().
+# Art ids tried first; when no such file is in assets/td, the code-drawn colours below are used instead.
+# Ground tiles are 128x128 (drawn at 64 px), each ground kind can have several variants (_01, _02 ...) picked per
+# cell. Walls: plain wall 128x256, low wall 128x64, side wall 32x256; windows, doors, lamps and paintings are
+# separate overlays on a plain wall (docs/ART_TOPDOWN.md).
 const TILE_ART := {
 	SceneLayout.Tile.ROAD: ["tile_road_dirt_01", "tile_road_dirt_02", "tile_road_dirt_03"],
 	SceneLayout.Tile.PAVEMENT: ["tile_pavement_01", "tile_pavement_02"],
 	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02", "tile_floor_03"],
 }
-const WALL_ART := {"wall": "wall_plain_01", "door": "wall_door_01", "low": "wall_low_01"}
-# A window is its own picture on top of a plain wall (so the owner can later hang lamps and paintings the same way).
-const WALL_OVERLAY := {"window": "wdeco_window_01"}
+const WALL_ART := {"wall": "wall_plain_01", "low": "wall_low_01"}
+const WALL_SIDE_ART := "wall_side_01"
+const WALL_OVERLAY := {"window": "wdeco_window_01", "door": "wdeco_door_01"}
 
 var zone := "restaurant"
 var view: ViewState
@@ -127,118 +129,86 @@ func _draw_ground(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:
 			if col.a > 0.0:
 				draw_colored_polygon(_cell_poly(c), col)
 
-# Cell-corner point in world space, lifted by `up` pixels.
-func _pt(x: float, y: float, up: float = 0.0) -> Vector2:
-	return Iso.cell_to_world_f(Vector2(x, y)) + Vector2(0, -up)
-
-func _quad(a: Vector2, b: Vector2, up_a: float, up_b: float, col: Color) -> void:
-	draw_colored_polygon(PackedVector2Array([a, b, b + Vector2(0, -up_b), a + Vector2(0, -up_a)]), col)
-
-# A rectangle on a wall between fractions t0..t1 along it and h0..h1 of its height.
-func _wall_rect(a: Vector2, b: Vector2, t0: float, t1: float, h0: float, h1: float, col: Color) -> void:
-	var p0 := a.lerp(b, t0)
-	var p1 := a.lerp(b, t1)
-	draw_colored_polygon(PackedVector2Array([p0 + Vector2(0, -WALL_H * h0), p1 + Vector2(0, -WALL_H * h0), p1 + Vector2(0, -WALL_H * h1), p0 + Vector2(0, -WALL_H * h1)]), col)
+# Cell-corner point in world space.
+func _pt(x: float, y: float) -> Vector2:
+	return Iso.cell_to_world_f(Vector2(x, y))
 
 func _draw_walls(lay: SceneLayout) -> void:
 	var keys: Array = lay.walls.keys()
-	# far ones first so nearer walls overlap them
+	# further up the screen first so nearer walls overlap them
 	keys.sort_custom(func(a: String, b: String) -> bool:
 		var pa: PackedStringArray = a.split(",")
 		var pb: PackedStringArray = b.split(",")
-		return int(pa[0]) + int(pa[1]) < int(pb[0]) + int(pb[1]))
+		if int(pa[1]) != int(pb[1]):
+			return int(pa[1]) < int(pb[1])
+		return int(pa[0]) < int(pb[0]))
 	for key in keys:
 		var p: PackedStringArray = str(key).split(",")
 		var x := int(p[0])
 		var y := int(p[1])
-		var a: Vector2
-		var b: Vector2
-		var side: bool = p[2] == "w"
-		if side:
-			a = _pt(x - 0.5, y - 0.5)
-			b = _pt(x - 0.5, y + 0.5)
-		else:
-			a = _pt(x - 0.5, y - 0.5)
-			b = _pt(x + 0.5, y - 0.5)
 		var kind := str(lay.walls[key])
-		var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
-		if overlay != null:
-			if not _draw_wall_art(lay, x, y, side, "wall", a, b):
-				_draw_wall_piece(a, b, "wall", side)
-			_draw_wall_overlay(overlay, side, a, b)
-		elif not _draw_wall_art(lay, x, y, side, kind, a, b):
-			_draw_wall_piece(a, b, kind, side)
+		if p[2] == "w":
+			_draw_side_wall(lay, x, y, kind)
+		else:
+			_draw_front_wall(x, y, kind)
 		if kind == "door":
-			_draw_mat(x, y, side)
+			_draw_mat(x, y, p[2] == "w")
 
-# Wall art is a flat front view, two cells wide (so a window or a door can be wider than one cell), sheared onto
-# the wall. Consecutive pieces of the same kind use the left and right half in turn, counted in reading order on
-# screen (left to right), so the picture runs on unbroken. Canvas: 512x840 (wall_low: 512x112).
-func _draw_wall_art(lay: SceneLayout, x: int, y: int, side: bool, kind: String, a: Vector2, b: Vector2) -> bool:
-	var tex := Assets.get_tex(WALL_ART.get(kind, ""))
-	if tex == null:
-		return false
-	var edge := "w" if side else "n"
-	var prev := Vector2i(x, y + 1) if side else Vector2i(x - 1, y)   # the piece before this one in reading order
-	var pos := 0
-	while lay.wall_at(prev, edge) == kind and pos < 64:
-		pos += 1
-		prev = Vector2i(prev.x, prev.y + 1) if side else Vector2i(prev.x - 1, prev.y)
-	var u0 := 0.5 * float(pos % 2)
+# A wall along the top edge of cell (x, y), seen from the front: its face rises from the edge line.
+func _draw_front_wall(x: int, y: int, kind: String) -> void:
+	var a := _pt(x - 0.5, y - 0.5)
 	var h := LOW_H if kind == "low" else WALL_H
-	var left := b if side else a
-	var right := a if side else b
-	var shade := Color(0.86, 0.86, 0.9) if side else Color.WHITE
-	draw_polygon(PackedVector2Array([left, right, right + Vector2(0, -h), left + Vector2(0, -h)]),
-		PackedColorArray([shade, shade, shade, shade]),
-		PackedVector2Array([Vector2(u0, 1), Vector2(u0 + 0.5, 1), Vector2(u0 + 0.5, 0), Vector2(u0, 0)]), tex)
-	return true
+	var rect := Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, h))
+	var base_tex := Assets.get_tex(WALL_ART["low" if kind == "low" else "wall"])
+	if base_tex != null:
+		draw_texture_rect(base_tex, rect, false)
+	else:
+		draw_rect(rect, WALL)
+		if kind != "low":
+			draw_rect(Rect2(a + Vector2(0, -18), Vector2(Iso.TILE_W, 18)), BASEBOARD)
+		draw_rect(Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, 7 if kind != "low" else 5)), TRIM)
+	var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
+	if overlay != null:
+		# art anchor: the base line of a 128 px canvas is 24 px above its bottom (12 px at the drawn size)
+		var size := overlay.get_size() * (Iso.TILE_W / overlay.get_width())
+		var base_y := a.y - (36.0 if kind == "window" else -6.0)
+		draw_texture_rect(overlay, Rect2(Vector2(a.x, base_y + size.y * 0.1875 - size.y), size), false)
+	elif kind == "window":
+		draw_rect(Rect2(a + Vector2(10, -96), Vector2(44, 52)), WHITE_FRAME)
+		draw_rect(Rect2(a + Vector2(14, -92), Vector2(36, 44)), GLASS)
+		draw_rect(Rect2(a + Vector2(31, -92), Vector2(2, 44)), WHITE_FRAME)
+		draw_rect(Rect2(a + Vector2(14, -71), Vector2(36, 2)), WHITE_FRAME)
+	elif kind == "door":
+		draw_rect(Rect2(a + Vector2(8, -104), Vector2(48, 106)), TRIM)
+		draw_rect(Rect2(a + Vector2(13, -98), Vector2(38, 100)), Color("5b3a22"))
+		draw_circle(a + Vector2(44, -48), 2.5, Color("e8c98a"))
 
-# One-cell overlay (256x840, same height as the wall) laid over a wall piece: window, lamp, painting.
-func _draw_wall_overlay(tex: Texture2D, side: bool, a: Vector2, b: Vector2) -> void:
-	var left := b if side else a
-	var right := a if side else b
-	var shade := Color(0.86, 0.86, 0.9) if side else Color.WHITE
-	draw_polygon(PackedVector2Array([left, right, right + Vector2(0, -WALL_H), left + Vector2(0, -WALL_H)]),
-		PackedColorArray([shade, shade, shade, shade]),
-		PackedVector2Array([Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]), tex)
+# A wall along the left edge of cell (x, y). Seen from the front it is a thin band; its cap sits a wall height up.
+func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
+	if kind == "door":
+		return   # an opening in a side wall: nothing to see but the mat
+	var a := _pt(x - 0.5, y - 0.5)
+	var b := _pt(x - 0.5, y + 0.5)
+	var h := LOW_H if kind == "low" else WALL_H
+	var rect := Rect2(Vector2(a.x - SIDE_W * 0.5, a.y - h), Vector2(SIDE_W, b.y - a.y + h))
+	var tex := Assets.get_tex(WALL_SIDE_ART)
+	if tex != null and kind != "low":
+		draw_texture_rect(tex, Rect2(Vector2(a.x - SIDE_W * 0.5, b.y - WALL_H), Vector2(SIDE_W, WALL_H)), false)
+	else:
+		draw_rect(rect, WALL_SIDE)
+		draw_rect(Rect2(rect.position + Vector2(0, rect.size.y - 8), Vector2(SIDE_W, 8)), BASEBOARD)
+		draw_rect(Rect2(rect.position, Vector2(SIDE_W, 6)), TRIM)
 
-func _draw_wall_piece(a: Vector2, b: Vector2, kind: String, side: bool) -> void:
-	var body := WALL_SIDE if side else WALL
-	match kind:
-		"low":
-			_quad(a, b, LOW_H, LOW_H, body)
-			draw_line(a + Vector2(0, -LOW_H), b + Vector2(0, -LOW_H), TRIM, 2.0)
-		"door":
-			# an opening: frame posts and a lintel
-			_wall_rect(a, b, 0.0, 0.1, 0.0, 0.8, TRIM)
-			_wall_rect(a, b, 0.9, 1.0, 0.0, 0.8, TRIM)
-			_wall_rect(a, b, 0.0, 1.0, 0.8, 1.0, body)
-			draw_line(a + Vector2(0, -WALL_H * 0.8), b + Vector2(0, -WALL_H * 0.8), TRIM, 3.0)
-		_:
-			_quad(a, b, WALL_H, WALL_H, body)
-			_quad(a, b, 18.0, 18.0, BASEBOARD)
-			if kind == "window":
-				_wall_rect(a, b, 0.08, 0.92, 0.3, 0.84, WHITE_FRAME)
-				_wall_rect(a, b, 0.14, 0.86, 0.34, 0.8, GLASS)
-				_wall_rect(a, b, 0.49, 0.51, 0.34, 0.8, WHITE_FRAME)
-			draw_line(a + Vector2(0, -WALL_H), b + Vector2(0, -WALL_H), TRIM, 4.0)
-	if kind == "low" or kind == "door":
-		var h := LOW_H if kind == "low" else WALL_H
-		draw_line(a, a + Vector2(0, -h), TRIM, 3.0)
-		draw_line(b, b + Vector2(0, -h), TRIM, 3.0)
-
-# Door mat laid across the doorway, half on each side of the wall.
+# Door mat laid on the floor next to the doorway.
 func _draw_mat(x: int, y: int, side: bool) -> void:
 	var o := Vector2(x - 0.5, y - 0.5)
-	var pts := PackedVector2Array()
+	var r: Rect2
 	if side:
-		pts = PackedVector2Array([_pt(o.x - 0.45, o.y + 0.15), _pt(o.x + 0.45, o.y + 0.15), _pt(o.x + 0.45, o.y + 0.85), _pt(o.x - 0.45, o.y + 0.85)])
+		r = Rect2(_pt(o.x + 0.05, o.y + 0.2), Vector2(Iso.TILE_W * 0.55, Iso.TILE_H * 0.6))
 	else:
-		pts = PackedVector2Array([_pt(o.x + 0.15, o.y - 0.45), _pt(o.x + 0.85, o.y - 0.45), _pt(o.x + 0.85, o.y + 0.45), _pt(o.x + 0.15, o.y + 0.45)])
-	draw_colored_polygon(pts, Color("b5483c"))
-	pts.append(pts[0])
-	draw_polyline(pts, Color("7c2d26"), 2.0)
+		r = Rect2(_pt(o.x + 0.2, o.y + 0.05), Vector2(Iso.TILE_W * 0.6, Iso.TILE_H * 0.5))
+	draw_rect(r, Color("b5483c"))
+	draw_rect(r, Color("7c2d26"), false, 2.0)
 
 # Cell lines over the player's land so spots are easy to pick while placing or moving.
 func _draw_grid(g: WorldGrid, lay: SceneLayout, vis: Rect2i) -> void:

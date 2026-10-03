@@ -20,8 +20,8 @@ float vnoise(vec2 p) {
 
 void fragment() {
 	vec2 w = (UV * view_size - view_size * 0.5) / zoom + cam_pos;
-	// The sea lies on the ground plane, so squash it like the isometric view.
-	vec2 q = vec2(w.x, w.y * 2.0) * 0.010;
+	// Top-down view: no squashing.
+	vec2 q = vec2(w.x, w.y) * 0.010;
 	float t = TIME * 0.30;
 	float n = vnoise(q + vec2(t, t * 0.6)) * 0.55
 			+ vnoise(q * 2.3 - vec2(t * 0.8, t)) * 0.30
