@@ -81,6 +81,24 @@ for n in ('tpl_wall_512x840.png', 'tpl_wall_low_512x112.png'):
     d.text((14, im.height - 40 if im.height > 200 else 60), 'เส้นชมพูกลางภาพ = รอยต่อระหว่างช่อง', font=font(24), fill=MG)
     im.save(f'{OUT}/{n}')
 
+# 4b. furniture set module: 1x1 box, run direction NW -> SE, top surface raised by HEIGHT px
+HEIGHT = 300
+im = canvas(); d = ImageDraw.Draw(im)
+diamond(d, 512, 768, 1024, 512, CY, 8)
+diamond(d, 512, 768 - HEIGHT, 1024, 512, YL, 6)
+for x, y in ((0, 768), (512, 1024), (1024, 768)):
+    d.line([(x, y), (x, y - HEIGHT)], fill=YL, width=6)
+d.line([(0, 768), (512, 512)], fill=MG, width=10)
+d.line([(0, 768 - HEIGHT), (512, 512 - HEIGHT)], fill=MG, width=10)
+d.line([(512, 1024), (1024, 768)], fill=GR, width=4)
+d.rectangle([0, 0, 1023, 1023], outline=GR, width=2)
+label(d, (30, 30), "แม่แบบโมดูลเฟอร์นิเจอร์ 1x1 (ชุดต่อกันได้)")
+label(d, (30, 90), "ฟ้า = ฐาน 1 ช่อง  เหลือง = กล่องความสูง 300 px", 28)
+label(d, (30, 135), "ชมพู = ขอบปลายซ้าย (NW) ที่ต่อกับชิ้นถัดไป ภาพต้องชนเส้นนี้พอดี", 28)
+label(d, (30, 180), "ห้ามมีเส้นขอบ เงา หรือเสาที่ปลายต่อ ท็อปสูงเท่ากันทุกชิ้นในชุด", 28)
+label(d, (30, 950), "ซ่อนเลเยอร์นี้ก่อนส่งออก PNG พื้นหลังโปร่งใส", 28, (255, 220, 100, 255))
+im.save(f'{OUT}/tpl_module_1x1.png')
+
 # 5. icon
 im = canvas(256, 256); d = ImageDraw.Draw(im)
 d.rectangle([0, 0, 255, 255], outline=GR, width=3); d.rectangle([16, 16, 239, 239], outline=CY, width=3)
