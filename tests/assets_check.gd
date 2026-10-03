@@ -35,9 +35,9 @@ func _initialize() -> void:
 					problems.append("%s: artwork is almost empty or tiny" % path)
 			elif sub == "walls":
 				var low := f.begins_with("wall_low")
-				var want := Vector2i(512, 112 if low else 840)
+				var want := Vector2i(256, 840) if f.begins_with("wdeco_") else Vector2i(512, 112 if low else 840)
 				if img.get_size() != want:
-					problems.append("%s: wall modules must be %dx%d, are %dx%d" % [path, want.x, want.y, img.get_width(), img.get_height()])
+					problems.append("%s: wall pieces must be %dx%d, are %dx%d" % [path, want.x, want.y, img.get_width(), img.get_height()])
 			elif sub == "icons":
 				if img.get_width() != 256 or img.get_height() != 256:
 					problems.append("%s: icons must be 256x256, are %dx%d" % [path, img.get_width(), img.get_height()])

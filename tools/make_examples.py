@@ -132,4 +132,12 @@ poly(d, [(140, 560), (372, 560), (372, 590), (140, 590)], (150, 100, 70, 255), O
 g = Image.new('RGBA', (512, 840), (0, 0, 0, 0)); gd = ImageDraw.Draw(g)
 gd.line([(0, 0), (0, 840)], fill=(255, 60, 150, 255), width=4); gd.line([(511, 0), (511, 840)], fill=(255, 60, 150, 255), width=4)
 done(im, 'example_wall_window.png', 'ผนังหน้าต่าง: ซ้ายขวาไม่มีเส้นขอบ ต่อกันได้', g)
+# wall overlay 256 x 840: window on its own, laid over a plain wall
+im = new(256, 840); d = ImageDraw.Draw(im)
+poly(d, [(40, 240), (216, 240), (216, 560), (40, 560)], (150, 210, 235, 255), OL, 8)
+d.line(P([(128, 240), (128, 560)]), fill=OL, width=6 * S); d.line(P([(40, 400), (216, 400)]), fill=OL, width=6 * S)
+poly(d, [(24, 560), (232, 560), (232, 590), (24, 590)], (150, 100, 70, 255), OL, 6)
+g = Image.new('RGBA', (256, 840), (0, 0, 0, 0)); gd = ImageDraw.Draw(g)
+gd.rectangle([0, 0, 255, 839], outline=GUIDE, width=3)
+done(im, 'example_wall_overlay_window.png', 'หน้าต่างแยกชิ้น 256x840 (โปร่งใสรอบๆ)', g)
 print('ok')

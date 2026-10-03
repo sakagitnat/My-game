@@ -99,6 +99,18 @@ label(d, (30, 180), "ห้ามมีเส้นขอบ เงา หรื
 label(d, (30, 950), "ซ่อนเลเยอร์นี้ก่อนส่งออก PNG พื้นหลังโปร่งใส", 28, (255, 220, 100, 255))
 im.save(f'{OUT}/tpl_module_1x1.png')
 
+# 4c. wall overlay: one cell wide, same height as the wall; window / lamp / painting
+im = Image.new('RGBA', (256, 840), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+d.rectangle([0, 0, 255, 839], outline=GR, width=3)
+d.line([(128, 0), (128, 840)], fill=GR, width=1)
+for (y0, y1, txt, col) in [(0, 40, 'ขอบบน', YL), (200, 560, 'หน้าต่าง/ภาพวาด', CY), (250, 330, 'โคมไฟ', MG), (750, 840, 'บัวผนังล่าง', YL)]:
+    d.rectangle([4, y0, 251, y1], outline=col, width=2)
+    d.text((10, y0 + 4), txt, font=font(18), fill=col)
+d.text((10, 8), 'ซ้อนบนผนังเรียบ 256x840', font=font(18), fill=(255, 255, 255, 255))
+d.text((10, 600), 'วาดเฉพาะของที่ติดผนัง', font=font(18), fill=(255, 255, 255, 255))
+d.text((10, 628), 'นอกนั้นโปร่งใส', font=font(18), fill=(255, 255, 255, 255))
+im.save(f'{OUT}/tpl_wall_overlay_256x840.png')
+
 # 5. icon
 im = canvas(256, 256); d = ImageDraw.Draw(im)
 d.rectangle([0, 0, 255, 255], outline=GR, width=3); d.rectangle([16, 16, 239, 239], outline=CY, width=3)
