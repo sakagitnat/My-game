@@ -29,7 +29,9 @@ const TILE_ART := {
 	SceneLayout.Tile.PAVEMENT: ["tile_pavement_01", "tile_pavement_02"],
 	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02", "tile_floor_03"],
 }
-const WALL_ART := {"wall": "wall_plain_01", "window": "wall_window_01", "door": "wall_door_01", "low": "wall_low_01"}
+const WALL_ART := {"wall": "wall_plain_01", "door": "wall_door_01", "low": "wall_low_01"}
+# A window is its own picture on top of a plain wall (so the owner can later hang lamps and paintings the same way).
+const WALL_OVERLAY := {"window": "wdeco_window_01"}
 
 var zone := "restaurant"
 var view: ViewState
@@ -159,7 +161,12 @@ func _draw_walls(lay: SceneLayout) -> void:
 			a = _pt(x - 0.5, y - 0.5)
 			b = _pt(x + 0.5, y - 0.5)
 		var kind := str(lay.walls[key])
-		if not _draw_wall_art(lay, x, y, side, kind, a, b):
+		var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
+		if overlay != null:
+			if not _draw_wall_art(lay, x, y, side, "wall", a, b):
+				_draw_wall_piece(a, b, "wall", side)
+			_draw_wall_overlay(overlay, side, a, b)
+		elif not _draw_wall_art(lay, x, y, side, kind, a, b):
 			_draw_wall_piece(a, b, kind, side)
 		if kind == "door":
 			_draw_mat(x, y, side)
@@ -186,6 +193,15 @@ func _draw_wall_art(lay: SceneLayout, x: int, y: int, side: bool, kind: String, 
 		PackedColorArray([shade, shade, shade, shade]),
 		PackedVector2Array([Vector2(u0, 1), Vector2(u0 + 0.5, 1), Vector2(u0 + 0.5, 0), Vector2(u0, 0)]), tex)
 	return true
+
+# One-cell overlay (256x840, same height as the wall) laid over a wall piece: window, lamp, painting.
+func _draw_wall_overlay(tex: Texture2D, side: bool, a: Vector2, b: Vector2) -> void:
+	var left := b if side else a
+	var right := a if side else b
+	var shade := Color(0.86, 0.86, 0.9) if side else Color.WHITE
+	draw_polygon(PackedVector2Array([left, right, right + Vector2(0, -WALL_H), left + Vector2(0, -WALL_H)]),
+		PackedColorArray([shade, shade, shade, shade]),
+		PackedVector2Array([Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]), tex)
 
 func _draw_wall_piece(a: Vector2, b: Vector2, kind: String, side: bool) -> void:
 	var body := WALL_SIDE if side else WALL
