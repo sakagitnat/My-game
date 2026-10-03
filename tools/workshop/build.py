@@ -26,7 +26,7 @@ def layout():
             cw = max(w, 184)
             if x + cw > SHEET_W - M:
                 y += row_h; x = M; row_h = 0
-            out.append(dict(id=id_, folder=folder, file=file, w=w, h=h, x=x + (cw - w) // 2, y=y + LABEL_H, category=c, label=label, hint=hint, flags=flags, anchor=list(anchor(w, h))))
+            out.append(dict(id=id_, folder=folder, file=file, w=w, h=h, x=x + (cw - w) // 2, y=y + LABEL_H, category=c, label=label, hint=hint, flags=flags, anchor=list(anchor(w, h, hint))))
             x += cw + GUT; row_h = max(row_h, LABEL_H + h + GUT)
         y += row_h; x = M; row_h = 0
     return out, heads, y + M
@@ -41,21 +41,23 @@ SHAPES = {
     'lamp': [('r', 48, 44, 80, 100), ('l', 64, 30, 64, 44)],
     'painting': [('r', 20, 36, 108, 100), ('r', 28, 44, 100, 92)],
     'hood': [('r', 20, 30, 108, 96), ('r', 40, 50, 88, 96)],
-    'module': [('r', 0, 30, 'W', 58), ('r', 0, 58, 'W', 104)],
-    'fridge': [('r', 14, 24, 114, 232), ('l', 14, 100, 114, 100)],
-    'table': [('r', 10, 30, 'W-10', 104), ('r', 10, 84, 'W-10', 104)],
-    'chair': [('r', 36, 34, 92, 100), ('r', 36, 34, 92, 54)],
-    'stool': [('e', 64, 70, 30, 22)],
-    'register': [('r', 24, 40, 104, 104), ('r', 36, 48, 92, 70)],
-    'shelf': [('r', 12, 24, 116, 232), ('l', 12, 90, 116, 90), ('l', 12, 160, 116, 160)],
-    'sign': [('r', 30, 20, 98, 104)],
-    'plant': [('e', 64, 52, 32, 28), ('r', 46, 80, 82, 104)],
-    'rug': [('r', 16, 90, 'W-16', 'H-30')],
-    'floorlamp': [('r', 52, 20, 76, 232), ('e', 64, 36, 24, 18)],
-    'bin': [('r', 34, 36, 94, 104)],
-    'crate': [('r', 20, 34, 108, 104), ('l', 20, 34, 108, 104)],
+    # things on the floor fill the cell they stand in: the top surface at the back, the front face down to the floor
+    'module': [('r', 0, 2, 'W', 60), ('r', 0, 60, 'W', 122)],
+    'fridge': [('r', 10, 20, 118, 92), ('r', 10, 92, 118, 250), ('l', 10, 160, 118, 160)],
+    'table': [('r', 4, 8, 'W-4', 68), ('r', 8, 68, 'W-8', 122)],
+    'chair': [('r', 34, 18, 94, 82), ('r', 30, 82, 98, 124), ('r', 34, 124, 94, 156)],
+    'stool': [('e', 64, 62, 34, 18), ('l', 40, 76, 34, 122), ('l', 88, 76, 94, 122)],
+    'register': [('r', 10, 50, 118, 122), ('r', 30, 18, 98, 52)],
+    'shelf': [('r', 8, 10, 120, 250), ('l', 8, 90, 120, 90), ('l', 8, 170, 120, 170)],
+    'sign': [('r', 26, 18, 102, 150)],
+    'plant': [('e', 64, 66, 46, 52), ('r', 38, 128, 90, 186)],
+    'rug': [('r', 6, 6, 'W-6', 'H-6'), ('r', 18, 18, 'W-18', 'H-18')],
+    'floorlamp': [('r', 44, 8, 84, 60), ('r', 60, 60, 68, 238), ('e', 64, 244, 30, 8)],
+    'bin': [('r', 34, 40, 94, 122)],
+    'crate': [('r', 14, 34, 114, 122), ('l', 14, 34, 114, 122)],
     'prop': [('e', 'W/2', 'H/2', 18, 12)],
 }
+FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop')
 def ev(v, w, h):
     return int(eval(str(v), {}, {'W': w - 1, 'H': h})) if isinstance(v, str) else v
 
@@ -63,7 +65,7 @@ def draw_guide(items, heads, H, S, background=True):
     im = Image.new('RGBA', (SHEET_W * S, H * S), (240, 244, 241, 255) if background else (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     f1 = ImageFont.truetype(FONT, 15 * S); f2 = ImageFont.truetype(FONT, 11 * S); fh = ImageFont.truetype(FONT, 26 * S); ft = ImageFont.truetype(FONT, 18 * S)
     d.text((M * S, 18 * S), 'ชุดเซ็ต Salvora — วาดทับแม่แบบนี้ แล้ว "ซ่อนเลเยอร์แม่แบบ" ก่อนส่งออก PNG', font=fh, fill=(23, 60, 54, 255))
-    d.text((M * S, 52 * S), 'เส้นฟ้า = กรอบภาพ (1 ช่อง = 128 px)  เส้นชมพู = ฐานวัตถุ  กากบาทเขียว = จุดวาง  เส้นแดงที่ขอบ = ต้องชนขอบพอดี', font=ft, fill=(99, 117, 110, 255))
+    d.text((M * S, 52 * S), 'เส้นฟ้า = กรอบภาพ (1 ช่อง = 128 px)  เส้นประเขียว = ช่องที่ของกิน (ตัวของต้องเต็มช่องนี้ ชิดขอบล่างและขอบหลัง)  เส้นแดงที่ขอบ = ต้องชนขอบพอดี', font=ft, fill=(99, 117, 110, 255))
     for cat, y in heads:
         d.rectangle([M * S, y * S, (SHEET_W - M) * S, (y + 40) * S], fill=(210, 228, 222, 255))
         d.text(((M + 10) * S, (y + 6) * S), cat, font=fh, fill=(23, 60, 54, 255))
@@ -84,6 +86,16 @@ def draw_guide(items, heads, H, S, background=True):
             if k == 'r': d.rectangle([x + a[0] * S, y + a[1] * S, x + a[2] * S, y + a[3] * S], outline=BL, width=2 * S)
             elif k == 'e': d.ellipse([x + (a[0] - a[2]) * S, y + (a[1] - a[3]) * S, x + (a[0] + a[2]) * S, y + (a[1] + a[3]) * S], outline=BL, width=2 * S)
             else: d.line([x + a[0] * S, y + a[1] * S, x + a[2] * S, y + a[3] * S], fill=BL, width=2 * S)
+        if it['hint'] in FLOOR_HINTS:
+            fd = it['h'] if it['hint'] in ('rug', 'prop') else 128
+            fx0, fy0, fx1, fy1 = x, y + it['h'] * S - fd * S, x + w, y + h
+            seg = 10 * S
+            for t in range(0, int(fx1 - fx0), 2 * seg):
+                d.line([(fx0 + t, fy0), (min(fx0 + t + seg, fx1), fy0)], fill=GN, width=S)
+                d.line([(fx0 + t, fy1 - 1), (min(fx0 + t + seg, fx1), fy1 - 1)], fill=GN, width=S)
+            for t in range(0, int(fy1 - fy0), 2 * seg):
+                d.line([(fx0, fy0 + t), (fx0, min(fy0 + t + seg, fy1))], fill=GN, width=S)
+                d.line([(fx1 - 1, fy0 + t), (fx1 - 1, min(fy0 + t + seg, fy1))], fill=GN, width=S)
         fl = it['flags']
         if 'flush' in fl or 'flushl' in fl:
             d.line([(x, y + 30 * S), (x, y + h)], fill=MG, width=3 * S) if it['hint'] in ('module',) else None
@@ -114,6 +126,6 @@ if __name__ == '__main__':
     note = {'tile': 'ทึบ ต่อกันทุกทิศ', 'flush': 'ปลายซ้ายขวาชนขอบภาพ', 'flushr': 'ปลายซ้ายชนขอบ', 'flushl': 'ปลายขวาชนขอบ', 'flat': 'ภาพแบนบนพื้น', '': ''}
     for it in items:
         rows.append(f"| {it['category']} | {it['label']} | `{it['folder']}` | `{it['file']}.png` | {it['w']}x{it['h']} | {note.get(it['flags'], '')} |")
-    rows += ['', 'ฐาน (anchor): สูงจากขอบล่าง 24 px สำหรับภาพ 128 px (12 px สำหรับของเล็ก 64 px) กึ่งกลางแนวนอน หน้าต่างติดสูงจากพื้นผนัง 70 px (ในเกม) ประตูอยู่บนพื้น']
+    rows += ['', 'ของบนพื้น (เฟอร์นิเจอร์ ครัว ตกแต่ง ของเล็ก): ขอบล่างของภาพคือขอบล่างของช่องที่ของกิน ตัวของต้องเต็มช่อง (ท็อปเคาน์เตอร์ต่อถึงผนังด้านหลัง) ภาพสูงกว่าช่องได้เพื่อทำของสูง ของติดผนัง (หน้าต่าง ประตู โคมไฟ ภาพวาด ฮู้ด): เส้นฐานสูงจากขอบล่างของภาพ 24 px หน้าต่างติดสูงจากพื้นผนัง 70 px (ในเกม) ประตูอยู่บนพื้น เกมวาดเงาแนบพื้นใต้ของให้เอง']
     open('docs/ART_SET.md', 'w', encoding='utf-8').write('\n'.join(rows) + '\n')
     print('items', len(items), 'sheet', SHEET_W, H, 'html', len(html))

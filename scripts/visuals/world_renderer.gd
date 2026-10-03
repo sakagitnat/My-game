@@ -175,9 +175,8 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 		return false
 	var s := tex.get_size() * (Iso.footprint_width(sz) / tex.get_width())
 	var foot := Iso.footprint_center(origin, sz) + Vector2(0, Iso.footprint_height(sz) * 0.5)
-	# art anchor: the base line sits 24 px (source) above the canvas bottom, so the image hangs a little below the footprint
-	var drop := 24.0 * s.x / tex.get_width()
-	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y - drop), s), false, tint)
+	# art anchor: the bottom edge of the canvas is the bottom edge of the cells the thing stands on
+	draw_texture_rect(tex, Rect2(foot - Vector2(s.x * 0.5, s.y), s), false, tint)
 	return true
 
 func _object_height(sz: Vector2i) -> float:

@@ -91,7 +91,7 @@ func _check_topdown() -> void:
 			if want != Vector2i.ZERO:
 				if img.get_size() != want:
 					problems.append("%s: must be %dx%d, is %dx%d" % [path, want.x, want.y, img.get_width(), img.get_height()])
-			elif img.get_width() % 128 != 0 or img.get_height() % 128 != 0:
-				problems.append("%s: size must be a multiple of 128 (one cell), is %dx%d" % [path, img.get_width(), img.get_height()])
+			elif img.get_width() % 128 != 0 or img.get_height() % 32 != 0:
+				problems.append("%s: width must be whole cells (multiple of 128) and height a multiple of 32, is %dx%d" % [path, img.get_width(), img.get_height()])
 			if sub != "tiles" and img.get_used_rect().size.x < 16:
 				problems.append("%s: artwork is almost empty" % path)

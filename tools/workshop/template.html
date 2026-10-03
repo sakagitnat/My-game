@@ -119,6 +119,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
       <label class="field"><input type="checkbox" id="lGrid"> เส้นกริด</label>
       <label class="field"><input type="checkbox" id="lMissing" checked> แสดงกรอบชิ้นที่ยังไม่มี</label>
       <label class="field"><input type="checkbox" id="doorOpen"> เปิดประตู</label>
+      <label class="field"><input type="checkbox" id="lShadow" checked> เงาแนบพื้น</label>
     </div>
     <div class="row flags" id="mix"><b>ใช้ภาพจากชุด:</b></div>
     <p class="muted" id="sceneInfo"></p>
@@ -288,15 +289,16 @@ $('zip').onclick=()=>exportZip(false);$('zipReady').onclick=()=>exportZip(true);
 const CELL=128, SW=8, SH=6, OFFX=192, OFFY=380, CW=OFFX*2+SW*CELL, CH=OFFY+SH*CELL+240;
 const WALL_H=256;
 const SCENE=[
-  // [id, col, row, cols, rows, layer]
+  // [id, col, row, cols, rows, layer, dx, dy]  (dx, dy nudge a piece in pixels so chairs tuck under the table edge)
   ['mod_fridge',0,0,1,2,'kitchen'],['mod_cap_left',1,0,1,1,'kitchen'],['mod_counter',2,0,1,1,'kitchen'],['mod_sink',3,0,1,1,'kitchen'],['mod_stove',4,0,1,1,'kitchen'],['mod_oven',5,0,1,1,'kitchen'],['mod_cap_right',6,0,1,1,'kitchen'],['mod_prep',3,2,2,1,'kitchen'],
-  ['rest_bench',0,2,2,1,'dining'],['rest_table_small',1,4,1,1,'dining'],['rest_chair_down',1,3,1,1,'dining'],['rest_chair_right',0,4,1,1,'dining'],['rest_chair_left',2,4,1,1,'dining'],['rest_chair_up',1,5,1,1,'dining'],
-  ['rest_table_long',5,4,2,1,'dining'],['rest_chair_down',5,3,1,1,'dining'],['rest_chair_down',6,3,1,1,'dining'],['rest_chair_up',5,5,1,1,'dining'],['rest_chair_up',6,5,1,1,'dining'],
+  ['rest_bench',0,2,2,1,'dining'],
+  ['rest_table_small',2,3,1,1,'dining'],['rest_chair_down',2,2,1,1,'dining',0,20],['rest_chair_right',1,3,1,1,'dining',26,0],['rest_chair_left',3,3,1,1,'dining',-26,0],['rest_chair_up',2,4,1,1,'dining',0,-22],
+  ['rest_table_long',5,3,2,1,'dining'],['rest_chair_down',5,2,1,1,'dining',0,20],['rest_chair_down',6,2,1,1,'dining',0,20],['rest_chair_up',5,4,1,1,'dining',0,-22],['rest_chair_up',6,4,1,1,'dining',0,-22],
   ['rest_stool',7,3,1,1,'dining'],['rest_register',7,2,1,1,'dining'],['rest_shelf',7,4,1,2,'dining'],['rest_menu_sign',2,5,1,1,'dining'],
-  ['deco_plant',0,5,1,1,'decor'],['deco_lamp_floor',0,3,1,1,'decor'],['deco_bin',6,2,1,1,'decor'],['deco_crate',5,2,1,1,'decor'],
+  ['deco_plant',0,5,1,1,'decor'],['deco_lamp_floor',0,3,1,1,'decor'],['deco_bin',7,1,1,1,'decor'],['deco_crate',6,1,1,1,'decor'],
 ];
-const PROPS=[['prop_board',2,0,0.5],['prop_pot',4,0,0.5],['prop_pan',5,0,0.5],['prop_bowl',3.0,2,0.3],['prop_knife',4.0,2,0.7],['prop_plate',1,4,0.5],['prop_cup',5,4,0.3],['prop_vase',6,4,0.6],['prop_bottle',7,2,0.5]];
-const WALLDECO=[['wdeco_painting',2,70],['wdeco_window',3,70],['wdeco_hood',4,60],['wdeco_lamp',5,70],['wdeco_window',6,70]]; // [id, column, base height above the wall foot in px at 128/cell... see below]
+const PROPS=[['prop_board',2,0,0.5,46],['prop_pot',4,0,0.5,46],['prop_pan',5,0,0.5,46],['prop_bowl',3.0,2,0.3,46],['prop_knife',4.0,2,0.7,46],['prop_plate',2,3,0.5,58],['prop_cup',5,3,0.3,58],['prop_vase',6,3,0.6,58],['prop_bottle',7,2,0.5,44]];
+const WALLDECO=[['wdeco_painting',2,70],['wdeco_window',3,70],['wdeco_hood',4,60],['wdeco_lamp',5,70],['wdeco_window',6,70]]; // [id, column, height of the base line above the wall foot, in game px]
 function renderScene(){
   const cv=$('sceneCanvas');cv.width=CW;cv.height=CH;const c=cv.getContext('2d');
   c.fillStyle='#8fbf6a';c.fillRect(0,0,CW,CH);
@@ -304,9 +306,12 @@ function renderScene(){
   ground(0,OFFY-WALL_H-80,CW,80,'#b79a6a');       // country road along the top
   const used=new Set(),missing=new Set();
   const piece=id=>{used.add(id);return getP(id);};
+  const FLOORHINT=['module','fridge','table','chair','stool','register','shelf','sign','plant','floorlamp','bin','crate','prop'];
   const place=(id,bx,by)=>{ // draw piece so its anchor (base point) lands on (bx,by)
     const it=byId[id],cv2=piece(id);
-    if(cv2){c.drawImage(cv2,bx-it.anchor[0],by-it.anchor[1],it.w,it.h);return true;}
+    if(cv2){
+      if($('lShadow').checked&&FLOORHINT.includes(it.hint)){const fw=Math.min(it.w,256)*(it.hint==='prop'?0.8:0.46);c.save();c.fillStyle='rgba(35,25,15,0.30)';c.beginPath();c.ellipse(bx,by-(it.hint==='prop'?3:8),fw,it.hint==='prop'?6:13,0,0,Math.PI*2);c.fill();c.restore();}
+      c.drawImage(cv2,bx-it.anchor[0],by-it.anchor[1],it.w,it.h);return true;}
     missing.add(id);
     if($('lMissing').checked){c.save();c.strokeStyle='#e0527a';c.setLineDash([8,6]);c.lineWidth=3;c.strokeRect(bx-it.w/2+3,by-it.anchor[1]+3,it.w-6,it.h-6);c.fillStyle='#e0527a';c.font='14px sans-serif';c.textAlign='center';c.fillText(it.label,bx,by-it.anchor[1]+it.h/2);c.restore();}
     return false;};
@@ -335,15 +340,15 @@ function renderScene(){
   const objs=SCENE.filter(o=>$(rowKinds[o[5]]).checked).sort((a,b)=>(a[2]+a[4])-(b[2]+b[4])||a[1]-b[1]);
   // rug first (flat on the floor)
   if($('lDecor').checked)place('deco_rug',OFFX+4*CELL,OFFY+5*CELL-0+0);
-  objs.forEach(o=>place(o[0],OFFX+(o[1]+o[3]/2)*CELL,OFFY+(o[2]+o[4])*CELL));
-  if($('lProps').checked)PROPS.forEach(([id,col,row,fx])=>place(id,OFFX+(col+fx)*CELL,OFFY+(row+1)*CELL-58));
+  objs.forEach(o=>place(o[0],OFFX+(o[1]+o[3]/2)*CELL+(o[6]||0),OFFY+(o[2]+o[4])*CELL+(o[7]||0)));
+  if($('lProps').checked)PROPS.forEach(([id,col,row,fx,dy])=>place(id,OFFX+(col+fx)*CELL,OFFY+row*CELL+dy));
   // low wall in front, gap at the entrance
   if($('lWall').checked){for(let q=0;q<SW;q++){if(q===3||q===4)continue;const t=piece('wall_low'),x=OFFX+q*CELL,y=OFFY+SH*CELL-64;if(t)c.drawImage(t,x,y,CELL,64);else{missing.add('wall_low');c.fillStyle='#e3d0a8';c.fillRect(x,y,CELL,64);}}}
   const miss=[...missing];
   $('sceneInfo').textContent=hasAny()?`แสดงชิ้นที่ตัดจากภาพของคุณ ชิ้นที่ยังไม่มีเป็นกรอบประสีชมพู (${miss.length} รายการ)`:'ยังไม่ได้อัปโหลดภาพ: แสดงเฉพาะผังตำแหน่งและกรอบชิ้นที่ต้องวาด ไปแท็บ "ตัดภาพ" เพื่ออัปโหลด';
   palette();issues();
 }
-['lFloor','lWall','lKitchen','lDining','lDecor','lProps','lGrid','lMissing'].forEach(i=>$(i).onchange=renderScene);
+['lFloor','lWall','lKitchen','lDining','lDecor','lProps','lGrid','lMissing','lShadow'].forEach(i=>$(i).onchange=renderScene);
 function avgColor(cv){const d=data(cv).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4){if(d[i+3]>200){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}}return n?[r/n,g/n,b/n]:null;}
 function palette(){
   const box=$('palette');if(!hasAny()){box.textContent='ยังไม่มีภาพ';return;}
