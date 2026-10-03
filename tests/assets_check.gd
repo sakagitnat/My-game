@@ -75,9 +75,13 @@ func _check_topdown() -> void:
 			var want := Vector2i.ZERO
 			if sub == "tiles" or sub == "icons":
 				want = Vector2i(128, 128)
+			elif sub == "props":
+				want = Vector2i(64, 64)
 			elif sub == "walls":
-				if f.begins_with("wall_door"):
-					want = Vector2i(256, 256)
+				if f.begins_with("wdeco_door"):
+					want = Vector2i(128, 256)
+				elif f.begins_with("wdeco_"):
+					want = Vector2i(128, 128)
 				elif f.begins_with("wall_low"):
 					want = Vector2i(128, 64)
 				elif f.begins_with("wall_side"):
