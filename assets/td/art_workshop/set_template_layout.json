@@ -1,0 +1,780 @@
+{
+ "sheetW": 1920,
+ "sheetH": 2936,
+ "items": [
+  {
+   "id": "tile_floor_a",
+   "folder": "tiles",
+   "file": "tile_floor_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 212,
+   "category": "พื้น",
+   "label": "พื้นร้านหลัก A",
+   "hint": "tile",
+   "flags": "tile",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "tile_floor_b",
+   "folder": "tiles",
+   "file": "tile_floor_02",
+   "w": 128,
+   "h": 128,
+   "x": 272,
+   "y": 212,
+   "category": "พื้น",
+   "label": "พื้นร้าน B (สลับ A)",
+   "hint": "tile",
+   "flags": "tile",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "tile_floor_kitchen",
+   "folder": "tiles",
+   "file": "tile_floor_03",
+   "w": 128,
+   "h": 128,
+   "x": 484,
+   "y": 212,
+   "category": "พื้น",
+   "label": "พื้นครัว",
+   "hint": "tile",
+   "flags": "tile",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "tile_pavement",
+   "folder": "tiles",
+   "file": "tile_pavement_01",
+   "w": 128,
+   "h": 128,
+   "x": 696,
+   "y": 212,
+   "category": "พื้น",
+   "label": "ลานหน้าร้าน",
+   "hint": "tile",
+   "flags": "tile",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "wall_plain",
+   "folder": "walls",
+   "file": "wall_plain_01",
+   "w": 128,
+   "h": 256,
+   "x": 60,
+   "y": 478,
+   "category": "ผนัง",
+   "label": "ผนังหลัง (สูง 2 ช่อง)",
+   "hint": "wallplain",
+   "flags": "flush",
+   "anchor": [
+    64,
+    232
+   ]
+  },
+  {
+   "id": "wall_low",
+   "folder": "walls",
+   "file": "wall_low_01",
+   "w": 128,
+   "h": 64,
+   "x": 272,
+   "y": 478,
+   "category": "ผนัง",
+   "label": "ผนังเตี้ย / ราว",
+   "hint": "walllow",
+   "flags": "flush",
+   "anchor": [
+    64,
+    40
+   ]
+  },
+  {
+   "id": "wall_side",
+   "folder": "walls",
+   "file": "wall_side_01",
+   "w": 32,
+   "h": 256,
+   "x": 532,
+   "y": 478,
+   "category": "ผนัง",
+   "label": "ผนังข้าง (แถบบาง)",
+   "hint": "wallside",
+   "flags": "",
+   "anchor": [
+    16,
+    232
+   ]
+  },
+  {
+   "id": "wdeco_window",
+   "folder": "walls",
+   "file": "wdeco_window_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 872,
+   "category": "ของติดผนัง",
+   "label": "หน้าต่าง",
+   "hint": "window",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "wdeco_door",
+   "folder": "walls",
+   "file": "wdeco_door_01",
+   "w": 128,
+   "h": 256,
+   "x": 272,
+   "y": 872,
+   "category": "ของติดผนัง",
+   "label": "ประตู",
+   "hint": "door",
+   "flags": "",
+   "anchor": [
+    64,
+    232
+   ]
+  },
+  {
+   "id": "wdeco_lamp",
+   "folder": "walls",
+   "file": "wdeco_lamp_01",
+   "w": 128,
+   "h": 128,
+   "x": 484,
+   "y": 872,
+   "category": "ของติดผนัง",
+   "label": "โคมไฟติดผนัง",
+   "hint": "lamp",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "wdeco_painting",
+   "folder": "walls",
+   "file": "wdeco_painting_01",
+   "w": 128,
+   "h": 128,
+   "x": 696,
+   "y": 872,
+   "category": "ของติดผนัง",
+   "label": "ภาพวาด",
+   "hint": "painting",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "wdeco_hood",
+   "folder": "walls",
+   "file": "wdeco_hood_01",
+   "w": 128,
+   "h": 128,
+   "x": 908,
+   "y": 872,
+   "category": "ของติดผนัง",
+   "label": "ฮู้ดเหนือเตา",
+   "hint": "hood",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_counter",
+   "folder": "modular",
+   "file": "mod_modern_counter_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "เคาน์เตอร์ตรง",
+   "hint": "module",
+   "flags": "flush",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_sink",
+   "folder": "modular",
+   "file": "mod_modern_sink_01",
+   "w": 128,
+   "h": 128,
+   "x": 272,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "อ่างล้างจาน",
+   "hint": "module",
+   "flags": "flush",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_stove",
+   "folder": "modular",
+   "file": "mod_modern_stove_01",
+   "w": 128,
+   "h": 128,
+   "x": 484,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "เตา",
+   "hint": "module",
+   "flags": "flush",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_oven",
+   "folder": "modular",
+   "file": "mod_modern_oven_01",
+   "w": 128,
+   "h": 128,
+   "x": 696,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "เตาอบ",
+   "hint": "module",
+   "flags": "flush",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_cap_left",
+   "folder": "modular",
+   "file": "mod_modern_cap_left_01",
+   "w": 128,
+   "h": 128,
+   "x": 908,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "ปิดปลายแถวด้านซ้าย",
+   "hint": "module",
+   "flags": "flushr",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_cap_right",
+   "folder": "modular",
+   "file": "mod_modern_cap_right_01",
+   "w": 128,
+   "h": 128,
+   "x": 1120,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "ปิดปลายแถวด้านขวา",
+   "hint": "module",
+   "flags": "flushl",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "mod_fridge",
+   "folder": "modular",
+   "file": "mod_modern_fridge_01",
+   "w": 128,
+   "h": 256,
+   "x": 1332,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "ตู้เย็น",
+   "hint": "fridge",
+   "flags": "",
+   "anchor": [
+    64,
+    232
+   ]
+  },
+  {
+   "id": "mod_prep",
+   "folder": "modular",
+   "file": "mod_modern_prep_table_01",
+   "w": 256,
+   "h": 128,
+   "x": 1516,
+   "y": 1266,
+   "category": "ครัว",
+   "label": "โต๊ะเตรียม (เกาะกลาง)",
+   "hint": "module",
+   "flags": "flush",
+   "anchor": [
+    128,
+    104
+   ]
+  },
+  {
+   "id": "rest_table_small",
+   "folder": "furniture",
+   "file": "rest_table_small_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "โต๊ะเล็ก",
+   "hint": "table",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_table_long",
+   "folder": "furniture",
+   "file": "rest_table_long_01",
+   "w": 256,
+   "h": 128,
+   "x": 244,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "โต๊ะยาว",
+   "hint": "table",
+   "flags": "",
+   "anchor": [
+    128,
+    104
+   ]
+  },
+  {
+   "id": "rest_chair_up",
+   "folder": "furniture",
+   "file": "rest_chair_up_01",
+   "w": 128,
+   "h": 128,
+   "x": 556,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "เก้าอี้หันขึ้น (ใต้โต๊ะ)",
+   "hint": "chair",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_chair_down",
+   "folder": "furniture",
+   "file": "rest_chair_down_01",
+   "w": 128,
+   "h": 128,
+   "x": 768,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "เก้าอี้หันลง (เหนือโต๊ะ)",
+   "hint": "chair",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_chair_left",
+   "folder": "furniture",
+   "file": "rest_chair_left_01",
+   "w": 128,
+   "h": 128,
+   "x": 980,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "เก้าอี้หันซ้าย",
+   "hint": "chair",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_chair_right",
+   "folder": "furniture",
+   "file": "rest_chair_right_01",
+   "w": 128,
+   "h": 128,
+   "x": 1192,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "เก้าอี้หันขวา",
+   "hint": "chair",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_stool",
+   "folder": "furniture",
+   "file": "rest_stool_01",
+   "w": 128,
+   "h": 128,
+   "x": 1404,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "สตูล",
+   "hint": "stool",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_bench",
+   "folder": "furniture",
+   "file": "rest_bench_01",
+   "w": 256,
+   "h": 128,
+   "x": 1588,
+   "y": 1660,
+   "category": "โซนลูกค้า",
+   "label": "ม้านั่งยาว",
+   "hint": "table",
+   "flags": "",
+   "anchor": [
+    128,
+    104
+   ]
+  },
+  {
+   "id": "rest_register",
+   "folder": "furniture",
+   "file": "rest_register_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 1874,
+   "category": "โซนลูกค้า",
+   "label": "เครื่องคิดเงิน",
+   "hint": "register",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "rest_shelf",
+   "folder": "furniture",
+   "file": "rest_shelf_01",
+   "w": 128,
+   "h": 256,
+   "x": 272,
+   "y": 1874,
+   "category": "โซนลูกค้า",
+   "label": "ชั้นวางของ",
+   "hint": "shelf",
+   "flags": "",
+   "anchor": [
+    64,
+    232
+   ]
+  },
+  {
+   "id": "rest_menu_sign",
+   "folder": "furniture",
+   "file": "rest_menu_sign_01",
+   "w": 128,
+   "h": 128,
+   "x": 484,
+   "y": 1874,
+   "category": "โซนลูกค้า",
+   "label": "ป้ายเมนูตั้งพื้น",
+   "hint": "sign",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "deco_plant",
+   "folder": "deco",
+   "file": "deco_plant_pot_01",
+   "w": 128,
+   "h": 128,
+   "x": 60,
+   "y": 2268,
+   "category": "ตกแต่ง",
+   "label": "กระถางต้นไม้",
+   "hint": "plant",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "deco_rug",
+   "folder": "deco",
+   "file": "deco_rug_01",
+   "w": 256,
+   "h": 256,
+   "x": 244,
+   "y": 2268,
+   "category": "ตกแต่ง",
+   "label": "พรม (ภาพแบนบนพื้น)",
+   "hint": "rug",
+   "flags": "flat",
+   "anchor": [
+    128,
+    232
+   ]
+  },
+  {
+   "id": "deco_lamp_floor",
+   "folder": "deco",
+   "file": "deco_lamp_floor_01",
+   "w": 128,
+   "h": 256,
+   "x": 556,
+   "y": 2268,
+   "category": "ตกแต่ง",
+   "label": "โคมไฟตั้งพื้น",
+   "hint": "floorlamp",
+   "flags": "",
+   "anchor": [
+    64,
+    232
+   ]
+  },
+  {
+   "id": "deco_bin",
+   "folder": "deco",
+   "file": "deco_trash_bin_01",
+   "w": 128,
+   "h": 128,
+   "x": 768,
+   "y": 2268,
+   "category": "ตกแต่ง",
+   "label": "ถังขยะ",
+   "hint": "bin",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "deco_crate",
+   "folder": "deco",
+   "file": "deco_crate_01",
+   "w": 128,
+   "h": 128,
+   "x": 980,
+   "y": 2268,
+   "category": "ตกแต่ง",
+   "label": "ลังไม้",
+   "hint": "crate",
+   "flags": "",
+   "anchor": [
+    64,
+    104
+   ]
+  },
+  {
+   "id": "prop_plate",
+   "folder": "props",
+   "file": "prop_plate_01",
+   "w": 64,
+   "h": 64,
+   "x": 92,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "จาน",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_bowl",
+   "folder": "props",
+   "file": "prop_bowl_01",
+   "w": 64,
+   "h": 64,
+   "x": 304,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "ชาม",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_cup",
+   "folder": "props",
+   "file": "prop_cup_01",
+   "w": 64,
+   "h": 64,
+   "x": 516,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "ถ้วย",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_pot",
+   "folder": "props",
+   "file": "prop_pot_01",
+   "w": 64,
+   "h": 64,
+   "x": 728,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "หม้อ",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_pan",
+   "folder": "props",
+   "file": "prop_pan_01",
+   "w": 64,
+   "h": 64,
+   "x": 940,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "กระทะ",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_knife",
+   "folder": "props",
+   "file": "prop_knife_01",
+   "w": 64,
+   "h": 64,
+   "x": 1152,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "มีด",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_board",
+   "folder": "props",
+   "file": "prop_cutting_board_01",
+   "w": 64,
+   "h": 64,
+   "x": 1364,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "เขียง",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_vase",
+   "folder": "props",
+   "file": "prop_vase_01",
+   "w": 64,
+   "h": 64,
+   "x": 1576,
+   "y": 2662,
+   "category": "ของเล็ก",
+   "label": "แจกัน",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  },
+  {
+   "id": "prop_bottle",
+   "folder": "props",
+   "file": "prop_bottle_01",
+   "w": 64,
+   "h": 64,
+   "x": 92,
+   "y": 2812,
+   "category": "ของเล็ก",
+   "label": "ขวด",
+   "hint": "prop",
+   "flags": "",
+   "anchor": [
+    32,
+    52
+   ]
+  }
+ ],
+ "categories": [
+  "พื้น",
+  "ผนัง",
+  "ของติดผนัง",
+  "ครัว",
+  "โซนลูกค้า",
+  "ตกแต่ง",
+  "ของเล็ก"
+ ]
+}

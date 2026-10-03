@@ -169,10 +169,11 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_rect(Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, 7 if kind != "low" else 5)), TRIM)
 	var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
 	if overlay != null:
-		# art anchor: the base line of a 128 px canvas is 24 px above its bottom (12 px at the drawn size)
+		# art anchor: the base line is 24 px (source) above the canvas bottom; a window's base sits 70 px up the wall, a door's on the floor line
 		var size := overlay.get_size() * (Iso.TILE_W / overlay.get_width())
-		var base_y := a.y - (36.0 if kind == "window" else -6.0)
-		draw_texture_rect(overlay, Rect2(Vector2(a.x, base_y + size.y * 0.1875 - size.y), size), false)
+		var base_y := a.y - (70.0 if kind == "window" else 0.0)
+		var drop := 24.0 * Iso.TILE_W / overlay.get_width()
+		draw_texture_rect(overlay, Rect2(Vector2(a.x, base_y + drop - size.y), size), false)
 	elif kind == "window":
 		draw_rect(Rect2(a + Vector2(10, -96), Vector2(44, 52)), WHITE_FRAME)
 		draw_rect(Rect2(a + Vector2(14, -92), Vector2(36, 44)), GLASS)
