@@ -90,7 +90,39 @@ for t in arr:
     t['svg'] = 'data:image/svg+xml;base64,' + b64(svg.encode('utf-8'))
     new_files[i] = (g, blank, svg)
 
+# Wall pieces and wall decor that the first version of the workshop did not have.
+NEW = [
+    ('wall_plain', 'ผนังเรียบ (1 ช่อง กว้าง สูง 2 ช่อง ซ้ายขวาต่อเนียน)', 128, 256, [('rect', 0, 0, 127, 24), ('rect', 0, 24, 127, 200), ('rect', 0, 200, 127, 255)], 232),
+    ('wall_low', 'ผนังเตี้ย / ราว', 128, 64, [('rect', 0, 8, 127, 56)], 56),
+    ('wall_side', 'ผนังข้าง (แถบบางตั้ง 32x256)', 32, 256, [('rect', 3, 3, 28, 252)], 232),
+    ('wall_lamp', 'โคมไฟติดผนัง', 128, 128, [('rect', 48, 40, 80, 100), ('line', 64, 28, 64, 40)], 104),
+    ('wall_painting', 'ภาพวาดติดผนัง', 128, 128, [('rect', 20, 36, 108, 100), ('rect', 28, 44, 100, 92)], 104),
+    ('rug', 'พรมปูพื้น 2x2 (ภาพแบนบนพื้น)', 256, 256, [('rect', 20, 90, 235, 235), ('rect', 32, 102, 223, 223)], 232),
+]
+def free_slot(w, h):
+    for y in range(0, 2560 - h + 1, 32):
+        for x in range(0, 1024 - w + 1, 32):
+            ok = True
+            for t in arr:
+                if x < t['x'] + t['w'] + 8 and x + w + 8 > t['x'] and y < t['y'] + t['h'] + 8 and y + h + 8 > t['y']:
+                    ok = False; break
+            if ok: return x, y
+    raise SystemExit('no room in the atlas for ' + str(w) + 'x' + str(h))
+for (i, label, w, h, sh, ay) in NEW:
+    if any(t['id'] == i for t in arr):
+        continue
+    x, y = free_slot(w, h)
+    t = {'id': i, 'label': label, 'category': 'อาคาร' if i.startswith('wall') else 'เฟอร์นิเจอร์', 'w': w, 'h': h, 'cols': max(1, w // 128), 'rows': max(1, h // 128), 'anchor': [w // 2, ay], 'x': x, 'y': y}
+    g = draw_guide(w, h, t['anchor'], sh, t['cols'], t['rows'])
+    blank = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    svg = draw_svg(w, h, t['anchor'], sh, t['cols'], t['rows'], label)
+    t['guide'] = 'data:image/png;base64,' + b64(png_bytes(g)); t['blank'] = 'data:image/png;base64,' + b64(png_bytes(blank)); t['svg'] = 'data:image/svg+xml;base64,' + b64(svg.encode('utf-8'))
+    atlas.alpha_composite(g, (x, y))
+    arr.append(t); new_files[i] = (g, blank, svg)
+
 html = html.replace(m.group(0), 'const TEMPLATES=' + json.dumps(arr, ensure_ascii=False) + ';\nconst ATLAS_URL="data:image/png;base64,' + b64(png_bytes(atlas)) + '"', 1)
+html = re.sub(r'(?<![\d,+/])37(\s*(?:แบบ|ชิ้น))', lambda mm: str(len(arr)) + mm.group(1), html)
+html = re.sub(r'แม่แบบ <span>\d+</span>', 'แม่แบบ <span>%d</span>' % len(arr), html)
 open(f'{D}/index.html', 'w', encoding='utf-8').write(html)
 
 # zips
@@ -102,6 +134,10 @@ for i, (g, blank, svg) in new_files.items():
     items[f'templates/{i}_guide.png'] = png_bytes(g); items[f'templates/{i}_blank.png'] = png_bytes(blank); items[f'templates/{i}_guide.svg'] = svg.encode('utf-8')
 items['atlas_guide.png'] = png_bytes(atlas)
 lay = json.loads(items['templates.json'])
+have = {e['id'] for e in lay}
+for t in arr:
+    if t['id'] not in have:
+        lay.append({k: t[k] for k in ('id', 'label', 'category', 'w', 'h', 'cols', 'rows', 'anchor', 'x', 'y')} | {'guide': 'templates/%s_guide.png' % t['id'], 'blank': 'templates/%s_blank.png' % t['id'], 'svg': 'templates/%s_guide.svg' % t['id']})
 for e in lay:
     t = next(x for x in arr if x['id'] == e['id'])
     for k in ('label', 'w', 'h', 'cols', 'rows', 'anchor'): e[k] = t[k]
