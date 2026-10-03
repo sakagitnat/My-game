@@ -2,17 +2,15 @@ class_name Terrain
 extends Node2D
 
 # Continuous ground: every cell corner gets a colour from smooth noise, so neighbouring
-# cells blend with no seams. Also draws the beach, grass tufts, stone walls and sale signs.
+# cells blend with no seams. Also draws the beach, grass tufts and plain sale signs (price is shown only when the block is tapped).
 const GRASS_DARK := Color("5fa838")
 const GRASS_LIGHT := Color("94d856")
 const SAND_DARK := Color("d6bb7f")
 const SAND_LIGHT := Color("f0deac")
 const DRY := Color("cdb860")
-const STONE := Color("b9bcc0")
-const WALL_STEP := 11.0
 
 var zone: String = "restaurant"
-# "ground" draws the terrain; a second instance with "signs" sits above objects so prices stay readable.
+# "ground" draws the terrain; a second instance with "signs" sits above objects so signs stay readable.
 var layer: String = "ground"
 var _colors: Dictionary = {}
 
@@ -135,43 +133,20 @@ func _draw_decor(g: WorldGrid, vis: Rect2i) -> void:
 					draw_line(Vector2(bx, p.y), Vector2(bx + (k - 1) * 2.0, p.y - 6.0 - k % 2 * 2.0), col, 1.6)
 
 func _draw_for_sale(g: WorldGrid, signs: bool) -> void:
+	if not signs:
+		return
 	var psize := Vector2i.ONE * WorldGrid.PARCEL
-	var font := ThemeDB.fallback_font
 	for py in range(g.parcel_grid().y):
 		for px in range(g.parcel_grid().x):
 			var parcel := Vector2i(px, py)
-			if not g.can_buy_parcel(parcel):
-				continue
-			var origin := parcel * WorldGrid.PARCEL
-			if signs:
-				_draw_sign(Iso.footprint_center(origin, psize), str(GameState.land_cost(zone)), font)
-				continue
-			var k := Iso.footprint_corners(origin, psize)
-			for i in range(4):
-				_draw_wall(k[i], k[(i + 1) % 4], origin.x * 7 + origin.y * 13 + i)
+			if g.can_buy_parcel(parcel):
+				_draw_sign(Iso.footprint_center(parcel * WorldGrid.PARCEL, psize))
 
-func _draw_wall(a: Vector2, b: Vector2, seed_v: int) -> void:
-	var n := maxi(2, int(a.distance_to(b) / WALL_STEP))
-	for i in range(n + 1):
-		var p := a.lerp(b, float(i) / n)
-		var jx := Noise2D.hash2(i, seed_v, 3) - 0.5
-		var jy := Noise2D.hash2(i, seed_v, 4) - 0.5
-		p += Vector2(jx, jy) * 3.0
-		if not GameState.layout_for(zone).is_solid(Iso.world_to_cell(p)):
-			continue
-		var r := 4.6 + Noise2D.hash2(i, seed_v, 9) * 2.2
-		draw_circle(p + Vector2(1.2, 2.2), r, Color(0, 0, 0, 0.25))
-		draw_circle(p, r, STONE.darkened(0.12 + 0.1 * Noise2D.hash2(i, seed_v, 10)))
-		draw_circle(p + Vector2(-1.2, -1.6), r * 0.62, STONE.lightened(0.18))
-
-func _draw_sign(center: Vector2, price: String, font: Font) -> void:
-	var post_top := center + Vector2(0, -34)
-	draw_line(center + Vector2(0, 4), post_top, Color("6b4a2c"), 4.0)
-	draw_circle(center + Vector2(0, 5), 7, Color(0, 0, 0, 0.22))
-	var board := Rect2(post_top + Vector2(-46, -36), Vector2(92, 42))
-	draw_rect(Rect2(board.position + Vector2(2, 3), board.size), Color(0, 0, 0, 0.25))
+func _draw_sign(center: Vector2) -> void:
+	var post_top := center + Vector2(0, -26)
+	draw_circle(center + Vector2(0, 3), 6, Color(0, 0, 0, 0.22))
+	draw_line(center + Vector2(0, 3), post_top, Color("6b4a2c"), 3.5)
+	var board := Rect2(post_top + Vector2(-17, -20), Vector2(34, 22))
+	draw_rect(Rect2(board.position + Vector2(2, 2), board.size), Color(0, 0, 0, 0.25))
 	draw_rect(board, Color("8a5a32"))
 	draw_rect(board.grow(-3), Color("e8c98a"))
-	draw_circle(board.position + Vector2(18, 21), 9, Color("a8761f"))
-	draw_circle(board.position + Vector2(18, 21), 7, Color("ffd66b"))
-	draw_string(font, board.position + Vector2(30, 29), price, HORIZONTAL_ALIGNMENT_LEFT, 58, 22, Color("3a2412"))
