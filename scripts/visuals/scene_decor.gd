@@ -29,7 +29,7 @@ const GRID := Color(1, 1, 1, 0.34)
 const TILE_ART := {
 	SceneLayout.Tile.ROAD: ["tile_road_dirt_01", "tile_road_dirt_02", "tile_road_dirt_03"],
 	SceneLayout.Tile.PAVEMENT: ["tile_pavement_01", "tile_pavement_02"],
-	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02", "tile_floor_03"],
+	SceneLayout.Tile.FLOOR: ["tile_floor_01", "tile_floor_02"],   # tile_floor_03 is the kitchen floor (no ground kind for it yet)
 }
 const WALL_ART := {"wall": "wall_plain_01", "low": "wall_low_01"}
 const WALL_SIDE_ART := "wall_side_01"
@@ -90,7 +90,10 @@ func _draw_tile_art(c: Vector2i, t: int) -> bool:
 	var variants: Array = ids.filter(func(id: String) -> bool: return Assets.get_tex(id) != null)
 	if variants.is_empty():
 		return false
-	var tex := Assets.get_tex(variants[int(Noise2D.hash2(c.x, c.y, 71) * variants.size()) % variants.size()])
+	var pick := int(Noise2D.hash2(c.x, c.y, 71) * variants.size()) % variants.size()
+	if t == SceneLayout.Tile.FLOOR:
+		pick = (c.x + c.y) % 2 % variants.size()   # the shop floor alternates its two boards like a checker
+	var tex := Assets.get_tex(variants[pick])
 	var mid := Iso.cell_to_world(c)
 	var size := Vector2.ONE * Iso.TILE_W * 1.04
 	draw_texture_rect(tex, Rect2(mid - size * 0.5, size), false)

@@ -9,3 +9,4 @@
 - รายการชิ้นทั้งหมดดู `docs/ART_SET.md`
 
 สร้างด้วย `python3 tools/workshop/build.py` (แหล่งรายการ: `tools/workshop/items.py`, หน้าเว็บ: `tools/workshop/template.html`) ไฟล์ `set_template_*` เป็นแม่แบบที่ดาวน์โหลดได้โดยตรง
+- ตัดแผ่นที่วาดเป็นไฟล์เกมจากบรรทัดคำสั่ง: `python3 tools/workshop/cut_sheet.py SHEET.png [--skip id,id]` (ผลเหมือน ZIP จากเว็บ) ชุดแรก (ชุด A, วาดโดย GPT) อยู่ใน `assets/td/`
