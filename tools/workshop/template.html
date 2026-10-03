@@ -91,6 +91,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
       <label class="field"><input type="checkbox" id="rmbg"> ภาพมีพื้นหลังทึบ ให้ลบสีพื้นหลัง (สีที่มุมซ้ายบน)</label>
       <label class="field">ความต่างสี <input type="range" id="tol" min="2" max="60" value="14"> <span id="tolv">14</span></label>
       <label class="field"><input type="checkbox" id="hires"> ส่งออกขนาดละเอียด (ไม่ย่อ)</label>
+      <label class="field">แผ่นนี้คือชุด <select id="slotSel"><option value="A">A</option><option value="B">B</option></select> <span class="muted">(ใช้ A กับ B เพื่อลองผสมชุด เช่น ผนังชุด A ประตูชุด B)</span></label>
     </div>
   </div>
   <div class="panel" id="summary" hidden>
@@ -117,7 +118,9 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
       <label class="field"><input type="checkbox" id="lProps" checked> ของเล็ก</label>
       <label class="field"><input type="checkbox" id="lGrid"> เส้นกริด</label>
       <label class="field"><input type="checkbox" id="lMissing" checked> แสดงกรอบชิ้นที่ยังไม่มี</label>
+      <label class="field"><input type="checkbox" id="doorOpen"> เปิดประตู</label>
     </div>
+    <div class="row flags" id="mix"><b>ใช้ภาพจากชุด:</b></div>
     <p class="muted" id="sceneInfo"></p>
   </div>
   <div id="sceneWrap"><canvas id="sceneCanvas"></canvas></div>
@@ -135,6 +138,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
       <li>ผนังและเคาน์เตอร์: ปลายซ้ายขวาชนขอบภาพพอดี ไม่มีเส้นตั้ง เงา หรือเสาที่ปลาย (เส้นแดงในแม่แบบ) เพื่อให้ต่อกันเป็นแถว</li>
       <li>เฟอร์นิเจอร์และของตกแต่ง: ฐานอยู่ที่เส้นชมพู (สูงจากขอบล่าง 24 px) ตัวของอยู่ในกรอบ นอกกรอบเว้นโปร่งใส</li>
       <li>เก้าอี้ทำ 4 ทิศ: ทิศคือทิศที่คนนั่งหันหน้าไป</li>
+      <li><b>ประตู หน้าต่าง ภาพวาด โคมไฟ ต้องวาดเฉพาะตัวของและกรอบ ห้ามมีผนังของชุดติดมาในภาพ</b> เพื่อให้เอาไปติดบนผนังของชุดอื่นได้ กรอบประตูควรหนาพอปิดรอยต่อกับผนังได้ ประตูทำ 2 ภาพ: ปิด และเปิด (ช่องประตูเห็นพื้นข้างใน) ใช้แท็บ "จัดฉาก" เลือกชุด A/B ต่อหมวดเพื่อลองผสมชุด</li>
       <li>แสงมาจากบนซ้าย ท็อปเคาน์เตอร์สูงเท่ากันทุกชิ้น สี วัสดุ และความหนาเส้นขอบเหมือนกันทั้งชุด</li>
       <li>ไม่วาดเงาตกพื้น เกมวาดเงาให้เอง</li>
     </ul>
@@ -160,6 +164,13 @@ $('guideImg').src=GUIDE1;$('dlGuide').href=GUIDE1;$('dlGuide2').href=GUIDE2;$('d
 $('dlLayout').href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(LAYOUT,null,1));
 // ---------------- cutting ----------------
 let pieces={}, report={}, scale=1;
+let slots={A:{pieces:{},report:{}},B:{pieces:{},report:{}}}, slotNow='A';
+function saveSlot(){slots[slotNow]={pieces,report};}
+function hasAny(){return Object.keys(slots.A.pieces).length>0||Object.keys(slots.B.pieces).length>0;}
+function srcSlot(id){const cat=byId[id].category,sel=document.querySelector(`select[data-cat="${cat}"]`);return sel?sel.value:'A';}
+function getP(id){const sl=slots[srcSlot(id)],r=sl.report[id];return r&&r.status!=='empty'?sl.pieces[id]:null;}
+function getR(id){return slots[srcSlot(id)].report[id];}
+$('slotSel').onchange=()=>{slotNow=$('slotSel').value;pieces=slots[slotNow].pieces;report=slots[slotNow].report;lastImg=null;$('fileInfo').textContent='ชุด '+slotNow+(Object.keys(pieces).length?' มีภาพแล้ว (เลือกไฟล์ใหม่เพื่อแทนที่)':' ยังไม่มีภาพ');render();};
 $('tol').oninput=()=>{$('tolv').textContent=$('tol').value;if(lastImg)process();};
 $('rmbg').onchange=()=>{if(lastImg)process();};
 $('hires').onchange=()=>{if(lastImg)process();};
@@ -175,7 +186,7 @@ function process(){
   const im=lastImg;
   scale=im.width/BASE;
   const okScale=Number.isInteger(scale)&&scale>=1&&scale<=4&&im.height===BASEH*scale;
-  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับแม่แบบ (ต้องเป็น ${BASE}×${BASEH} หรือเท่าตัวของมัน เช่น ${BASE*2}×${BASEH*2}) อย่าย่อหรือตัดขอบภาพ`;pieces={};report={};render();return;}
+  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับแม่แบบ (ต้องเป็น ${BASE}×${BASEH} หรือเท่าตัวของมัน เช่น ${BASE*2}×${BASEH*2}) อย่าย่อหรือตัดขอบภาพ`;pieces={};report={};saveSlot();render();return;}
   $('fileInfo').textContent=`ไฟล์ ${im.width}×${im.height} px (ขยาย ${scale} เท่า)`;
   const sheet=document.createElement('canvas');sheet.width=im.width;sheet.height=im.height;const sc=sheet.getContext('2d',{willReadFrequently:true});sc.drawImage(im,0,0);
   if($('rmbg').checked)removeBackground(sc,sheet.width,sheet.height);
@@ -187,7 +198,7 @@ function process(){
     if($('hires').checked||s===1){out.width=w;out.height=h;out.getContext('2d').drawImage(raw,0,0);}else{out.width=it.w;out.height=it.h;const c=out.getContext('2d');c.imageSmoothingQuality='high';c.drawImage(raw,0,0,it.w,it.h);}
     pieces[it.id]=out;report[it.id]=check(it,out);
   });
-  render();
+  saveSlot();render();
 }
 function removeBackground(c,w,h){
   const d=c.getImageData(0,0,w,h),a=d.data,bg=[a[0],a[1],a[2],a[3]],t=Number($('tol').value);
@@ -292,7 +303,7 @@ function renderScene(){
   const ground=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
   ground(0,OFFY-WALL_H-80,CW,80,'#b79a6a');       // country road along the top
   const used=new Set(),missing=new Set();
-  const piece=id=>{used.add(id);return pieces[id]&&report[id]&&report[id].status!=='empty'?pieces[id]:null;};
+  const piece=id=>{used.add(id);return getP(id);};
   const place=(id,bx,by)=>{ // draw piece so its anchor (base point) lands on (bx,by)
     const it=byId[id],cv2=piece(id);
     if(cv2){c.drawImage(cv2,bx-it.anchor[0],by-it.anchor[1],it.w,it.h);return true;}
@@ -314,7 +325,7 @@ function renderScene(){
   if($('lWall').checked){
     for(let q=0;q<SW;q++){const t=piece('wall_plain');if(t)c.drawImage(t,OFFX+q*CELL,OFFY-WALL_H,CELL,WALL_H);else{missing.add('wall_plain');c.fillStyle='#f0e4c8';c.fillRect(OFFX+q*CELL,OFFY-WALL_H,CELL,WALL_H);c.fillStyle='#a3714a';c.fillRect(OFFX+q*CELL,OFFY-30,CELL,30);}}
     WALLDECO.forEach(([id,col,h])=>place(id,OFFX+col*CELL+CELL/2,OFFY-h*2));
-    place('wdeco_door',OFFX+7*CELL+CELL/2,OFFY);
+    place($('doorOpen').checked&&getP('wdeco_door_open')?'wdeco_door_open':'wdeco_door',OFFX+7*CELL+CELL/2,OFFY);
   }
   // thin side walls (cap sits one wall height up)
   if($('lWall').checked){
@@ -329,26 +340,29 @@ function renderScene(){
   // low wall in front, gap at the entrance
   if($('lWall').checked){for(let q=0;q<SW;q++){if(q===3||q===4)continue;const t=piece('wall_low'),x=OFFX+q*CELL,y=OFFY+SH*CELL-64;if(t)c.drawImage(t,x,y,CELL,64);else{missing.add('wall_low');c.fillStyle='#e3d0a8';c.fillRect(x,y,CELL,64);}}}
   const miss=[...missing];
-  $('sceneInfo').textContent=Object.keys(pieces).length?`แสดงชิ้นที่ตัดจากภาพของคุณ ชิ้นที่ยังไม่มีเป็นกรอบประสีชมพู (${miss.length} รายการ)`:'ยังไม่ได้อัปโหลดภาพ: แสดงเฉพาะผังตำแหน่งและกรอบชิ้นที่ต้องวาด ไปแท็บ "ตัดภาพ" เพื่ออัปโหลด';
+  $('sceneInfo').textContent=hasAny()?`แสดงชิ้นที่ตัดจากภาพของคุณ ชิ้นที่ยังไม่มีเป็นกรอบประสีชมพู (${miss.length} รายการ)`:'ยังไม่ได้อัปโหลดภาพ: แสดงเฉพาะผังตำแหน่งและกรอบชิ้นที่ต้องวาด ไปแท็บ "ตัดภาพ" เพื่ออัปโหลด';
   palette();issues();
 }
 ['lFloor','lWall','lKitchen','lDining','lDecor','lProps','lGrid','lMissing'].forEach(i=>$(i).onchange=renderScene);
 function avgColor(cv){const d=data(cv).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4){if(d[i+3]>200){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}}return n?[r/n,g/n,b/n]:null;}
 function palette(){
-  const box=$('palette');if(!Object.keys(pieces).length){box.textContent='ยังไม่มีภาพ';return;}
+  const box=$('palette');if(!hasAny()){box.textContent='ยังไม่มีภาพ';return;}
   box.innerHTML='';
   LAYOUT.categories.forEach(cat=>{const row=document.createElement('div');row.innerHTML=`<b>${cat}</b> `;
-    ITEMS.filter(i=>i.category===cat&&report[i.id]&&report[i.id].status!=='empty').forEach(it=>{const col=avgColor(pieces[it.id]);if(!col)return;const s=document.createElement('span');s.className='sw';s.style.background=`rgb(${col.map(Math.round)})`;s.title=it.label;row.appendChild(s);});box.appendChild(row);});
+    ITEMS.filter(i=>i.category===cat&&getP(i.id)).forEach(it=>{const col=avgColor(getP(it.id));if(!col)return;const s=document.createElement('span');s.className='sw';s.style.background=`rgb(${col.map(Math.round)})`;s.title=it.label;row.appendChild(s);});box.appendChild(row);});
 }
 function issues(){
-  const box=$('issues');if(!Object.keys(pieces).length){box.textContent='ยังไม่มีภาพ';return;}
+  const box=$('issues');if(!hasAny()){box.textContent='ยังไม่มีภาพ';return;}
   const out=[];
-  ITEMS.forEach(it=>{const r=report[it.id];if(!r)return;if(r.status==='empty')out.push(`ยังว่าง: ${it.label} (${it.file})`);else r.warns.forEach(w=>out.push(`${it.label}: ${w}`));});
+  ITEMS.forEach(it=>{const r=getR(it.id);if(!r)return;if(r.status==='empty')out.push(`ยังว่าง: ${it.label} (${it.file})`);else r.warns.forEach(w=>out.push(`${it.label}${srcSlot(it.id)==='B'?' (ชุด B)':''}: ${w}`));});
   // brightness spread within the set
-  const lum=[];ITEMS.forEach(it=>{if(report[it.id]&&report[it.id].status!=='empty'&&it.category!=='ของเล็ก'){const c=avgColor(pieces[it.id]);if(c)lum.push([it,(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])]);}});
+  const lum=[];ITEMS.forEach(it=>{if(getP(it.id)&&it.category!=='ของเล็ก'){const c=avgColor(getP(it.id));if(c)lum.push([it,(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])]);}});
   if(lum.length>3){const m=lum.reduce((a,b)=>a+b[1],0)/lum.length;lum.forEach(([it,l])=>{if(Math.abs(l-m)>70)out.push(`${it.label}: ความสว่างต่างจากชิ้นอื่นในชุดมาก (${Math.round(l)} เทียบเฉลี่ย ${Math.round(m)}) ตรวจว่าโทนเข้ากันไหม`);});}
   box.textContent=out.length?out.join('\n'):'ไม่พบจุดที่ต้องแก้ตามที่เว็บตรวจได้ (ลองดูภาพจริงด้วยตาอีกครั้ง)';
 }
+const mix=$('mix');
+LAYOUT.categories.forEach(cat=>{const l=document.createElement('label');l.className='field';l.append(cat+' ');const sel=document.createElement('select');sel.dataset.cat=cat;sel.innerHTML='<option value="A">A</option><option value="B">B</option>';sel.onchange=renderScene;l.append(sel);mix.append(l);});
+$('doorOpen').onchange=renderScene;
 renderScene();
 </script>
 </body>

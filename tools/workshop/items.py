@@ -13,7 +13,8 @@ ITEMS = [
     ("wall_side", "walls", "wall_side_01", 32, 256, "ผนัง", "ผนังข้าง (แถบบาง)", "wallside", ""),
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
-    ("wdeco_door", "walls", "wdeco_door_01", 128, 256, "ของติดผนัง", "ประตู", "door", ""),
+    ("wdeco_door", "walls", "wdeco_door_01", 128, 256, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
+    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 256, "ของติดผนัง", "ประตู (เปิด)", "dooropen", ""),
     ("wdeco_lamp", "walls", "wdeco_lamp_01", 128, 128, "ของติดผนัง", "โคมไฟติดผนัง", "lamp", ""),
     ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด", "painting", ""),
     ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา", "hood", ""),
