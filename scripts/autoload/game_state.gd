@@ -210,11 +210,32 @@ func _min_seed_cost() -> int:
 	return lowest
 
 func _farm_has(id: String) -> bool:
-	return grid("farm").objects.values().has(id)
+	for z in grids:
+		if grids[z].objects.values().has(id):
+			return true
+	return false
 
 # True when the player has no coins, nothing to sell and nothing growing, so no action can ever earn money.
 func is_broke() -> bool:
-	return coins < _min_seed_cost() and inventory.total() == 0 and grid("farm").states.is_empty()
+	if coins >= _min_seed_cost() or inventory.total() > 0:
+		return false
+	for z in grids:
+		if not grids[z].states.is_empty():
+			return false
+	return true
+
+# The restaurant and the farm are one map when the main map takes every item ("any"); otherwise the farm is its own scene.
+func has_farm_zone() -> bool:
+	return layout_for("restaurant").area != "any"
+
+# Items that can be bought and placed in a scene.
+func placeables_in(zone: String) -> Array[String]:
+	if layout_for(zone).area == "any":
+		var out: Array[String] = []
+		for id in Catalog.PLACEABLES:
+			out.append(id)
+		return out
+	return Catalog.placeables_for(zone)
 
 func grant_test_coins() -> void:
 	coins += TEST_GRANT
@@ -227,7 +248,7 @@ func footprint_origin(c: Vector2i, sz: Vector2i) -> Vector2i:
 # Why `id` can or cannot be placed with a footprint centred on `c`: "ok", "invalid", "level", "locked", "occupied", "area" or "no_coins".
 func check_place(zone: String, c: Vector2i, id: String) -> String:
 	var def = Catalog.PLACEABLES.get(id)
-	if def == null or def.area != zone:
+	if def == null or not (def.area == zone or layout_for(zone).area == "any"):
 		return "invalid"
 	if level < Catalog.unlock_level(id):
 		return "level"

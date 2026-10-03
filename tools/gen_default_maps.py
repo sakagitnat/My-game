@@ -85,7 +85,8 @@ def restaurant():
         walls.append([X1, y, "w", "low"])
     for x in range(X0, X1):
         walls.append([x, Y1, "n", "low"])
-    parcels = ["............", ".BSSBB......", ".BSSBB......", ".BBBBB......", "..BBB.......", "............", "............", "............", "............"]
+    # shop blocks (S at columns 2-3) and farm blocks (S at columns 7-8), land for sale (B) all around them
+    parcels = ["............", ".BSSBBBBBB..", ".BSSBBBSSB..", ".BBBBBBSSB..", "..BBBBBBBB..", "..BBBB......", "............", "............", "............"]
     protected = set()
     for py, row in enumerate(parcels):
         for px, ch in enumerate(row):
@@ -100,12 +101,12 @@ def restaurant():
         px, py = x // 6, y // 6
         ch = parcels[py][px]
         if px < 1 or px > 10:                      # woods down the left and right edges
-            return (3.0, 0.85)
+            return (2.0, 0.55)
         if ch == 'B':
-            return (1.6, 0.2)
-        return (0.5, 0.15)                         # the rest of the land is lightly wooded
+            return (0.9, 0.08)                     # open land waiting to be bought and cleared
+        return (0.4, 0.08)
     obstacles = scatter(W, H, tiles, parcels, 20261002, dens, protected)
-    return {"version": 1, "id": "restaurant", "area": "restaurant", "size": [W, H],
+    return {"version": 1, "id": "restaurant", "area": "any", "size": [W, H],
             "tiles": ["".join(r) for r in tiles], "walls": walls, "obstacles": obstacles, "objects": [],
             "parcels": parcels, "exits": []}
 

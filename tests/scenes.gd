@@ -27,7 +27,7 @@ func run() -> void:
 	# The restaurant map: sea along the bottom-left edge only, a country road across the top, the shop near the corner
 	var lay: SceneLayout = gs.layout_for("restaurant")
 	var g: WorldGrid = gs.grid("restaurant")
-	check(lay.cells == Vector2i(72, 54) and g.size == lay.cells and lay.area == "restaurant", "restaurant map is 72x54 cells")
+	check(lay.cells == Vector2i(72, 54) and g.size == lay.cells and lay.area == "any", "the main map is 72x54 cells and takes every item")
 	check(lay.parcels.size() == 9 and lay.parcels[0].length() == 12, "12x9 land blocks")
 	var water := {"top": 0, "bottom": 0, "left_upper": 0, "right_upper": 0}
 	for i in range(72):
@@ -59,7 +59,7 @@ func run() -> void:
 	check(lay.wall_at(Vector2i(24, 10), "w") == "low" and lay.wall_at(Vector2i(15, 18), "n") == "low", "low walls on the open sides")
 	check(lay.walls.size() == 48, "the shop has 48 wall pieces")
 	check(lay.tile_at(Vector2i(17, 4)) == SceneLayout.Tile.PAVEMENT and lay.tile_at(Vector2i(18, 5)) == SceneLayout.Tile.PAVEMENT, "a paved path joins the road to the door")
-	check(lay.starts.size() == 4 and g.owned_parcels.size() == 4 and g.bought_count() == 0, "the four shop blocks are owned at the start")
+	check(lay.starts.size() == 8 and g.owned_parcels.size() == 8 and g.bought_count() == 0, "the four shop blocks and the four farm blocks are owned at the start")
 	check(gs.start_cell() == Vector2i(18, 12), "the camera starts in the middle of the shop")
 	check(g.has_floor(Vector2i(2, 1)) == false, "the shop floor is painted tiles, not a bought style")
 
@@ -68,7 +68,7 @@ func run() -> void:
 	check(not g.can_buy_parcel(Vector2i(2, 0)) and not g.can_buy_parcel(Vector2i(3, 8)) and not g.can_buy_parcel(Vector2i(6, 1)), "the road, the sea and locked land are not for sale")
 	for p in lay.sale_parcels():
 		check(lay.label_of_parcel(p) == "B", "only blocks marked B are for sale")
-	check(lay.sale_parcels().size() == 14, "fourteen blocks around the shop are for sale")
+	check(lay.sale_parcels().size() == 31, "thirty-one blocks around the shop and the farm are for sale")
 	check(gs.buy_land("restaurant", Vector2i(1, 1) * 6) == "ok" and gs.coins == 4850, "buy the block beside the shop")
 
 	# Floors: the shop is fixed, bought land can be built over and put back
@@ -85,7 +85,7 @@ func run() -> void:
 
 	# Items only where they belong
 	check(gs.check_place("restaurant", gs.start_cell(), "rest_table_small_01") == "ok", "table in the shop")
-	check(gs.check_place("restaurant", gs.start_cell(), "farm_plot_01") == "invalid", "farm items do not belong in the restaurant")
+	check(gs.check_place("restaurant", gs.start_cell(), "farm_plot_01") == "ok", "farm items can be placed on the one main map")
 	check(gs.check_place("restaurant", Vector2i(36, 2), "rest_table_small_01") == "area", "nothing on the road")
 	check(gs.check_place("restaurant", Vector2i(36, 50), "rest_table_small_01") == "invalid", "nothing in the sea")
 	check(gs.check_place("restaurant", Vector2i(2, 3) * 6 + Vector2i(3, 3), "rest_table_small_01") == "locked", "unbought land is locked")
@@ -143,7 +143,7 @@ func run() -> void:
 	f.store_string(JSON.stringify({"version": 1, "coins": 777, "grids": {"restaurant": {"size": [30, 30], "parcel": 6, "parcels": [[2, 2]], "start": 1, "objects": [[13, 13, "rest_table_small_01", 2, 2]]}}}))
 	f.close()
 	gs.reset()
-	check(gs.load_game() and gs.coins == 777 and gs.grid("restaurant").objects.is_empty() and gs.grid("restaurant").owned_parcels.size() == 4, "a restaurant saved on a map of another size is replaced by the new one")
+	check(gs.load_game() and gs.coins == 777 and gs.grid("restaurant").objects.is_empty() and gs.grid("restaurant").owned_parcels.size() == 8, "a restaurant saved on a map of another size is replaced by the new one")
 	gs.autosave = false
 
 	# World: scene switching, the floor bubble and the placement grid

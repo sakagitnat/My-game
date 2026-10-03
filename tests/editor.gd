@@ -120,7 +120,7 @@ func run() -> void:
 	check(gs.grid("restaurant").objects.size() == 1, "the table is an object of the scene")
 	ed.prop_id = "farm_plot_01"
 	ed.begin_stroke()
-	check(not ed.apply_at(_world_at(Vector2i(14, 10))), "a farm item does not belong in the restaurant")
+	check(not ed.apply_at(_world_at(Vector2i(10, 52))), "an item does not stand on the sea")
 	ed.end_stroke()
 
 	# Walls
@@ -146,16 +146,16 @@ func run() -> void:
 	# Land blocks
 	ed.tool = "land"
 	ed.land_label = "S"
-	var block := Vector2i(8, 3)
+	var block := Vector2i(10, 5)
 	ed.begin_stroke()
 	check(ed.apply_at(_world_at(block * 6 + Vector2i(3, 3))), "mark a block as owned from the start")
 	ed.end_stroke()
-	check(lay.starts.size() == 5 and gs.grid("restaurant").owned_parcels.has(block), "it is owned in the scene")
+	check(lay.starts.size() == 9 and gs.grid("restaurant").owned_parcels.has(block), "it is owned in the scene")
 	ed.land_label = "."
 	ed.begin_stroke()
 	ed.apply_at(_world_at(block * 6 + Vector2i(3, 3)))
 	ed.end_stroke()
-	check(lay.starts.size() == 4 and not gs.grid("restaurant").owned_parcels.has(block), "and locked again")
+	check(lay.starts.size() == 8 and not gs.grid("restaurant").owned_parcels.has(block), "and locked again")
 
 	# Size
 	check(lay.cells == Vector2i(72, 54), "72x54 before resizing")
@@ -189,7 +189,7 @@ func run() -> void:
 	check(lay.tile_at(Vector2i(3, 30)) == SceneLayout.Tile.GRASS, "undone")
 	check(ed.import_text(text) == "ok" and lay.tile_at(Vector2i(3, 30)) == SceneLayout.Tile.DIRT, "pasting the text brings the map back")
 	check(ed.import_text("not json") == "invalid" and ed.import_text('{"size": [7, 7], "tiles": []}') == "invalid", "bad text is refused")
-	check(ed.import_text(JSON.stringify({"size": [30, 30], "tiles": ["g".repeat(30)]})) == "ok" and lay.cells == Vector2i(30, 30) and lay.id == "restaurant" and lay.area == "restaurant", "a map of another size loads and keeps the scene's id")
+	check(ed.import_text(JSON.stringify({"size": [30, 30], "tiles": ["g".repeat(30)]})) == "ok" and lay.cells == Vector2i(30, 30) and lay.id == "restaurant" and lay.area == "any", "a map of another size loads and keeps the scene's id")
 	ed.undo()
 
 	# Save, keep and discard
@@ -241,7 +241,7 @@ func run() -> void:
 	check(ui.items_row.get_child_count() == 7 and ui.brush_row.visible, "seven ground kinds and a brush size")
 	ui._choose_tool("prop")
 	var prop_names: Array = ui.items_row.get_children().map(func(b: Button) -> String: return b.text)
-	check(prop_names.has("Tree") and prop_names.has("Table") and not prop_names.has("Plot"), "trees and the restaurant's items are listed")
+	check(prop_names.has("Tree") and prop_names.has("Table") and prop_names.has("Plot"), "trees and every item of the one map are listed")
 	ui._choose_tool("land")
 	await process_frame
 	world._sync_view()

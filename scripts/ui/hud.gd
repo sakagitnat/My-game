@@ -240,6 +240,7 @@ func refresh() -> void:
 	shop_button.text = Loc.t("BTN_SHOP")
 	barn_button.text = Loc.t("BTN_BARN") % [GameState.inventory.total(), GameState.inventory.capacity]
 	zone_button.text = Loc.t("GO_FARM") if zone == "restaurant" else Loc.t("GO_RESTAURANT")
+	zone_button.visible = GameState.has_farm_zone()
 	placement_ok.text = Loc.t("BTN_PLACE")
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
@@ -554,8 +555,8 @@ func _build_modal() -> void:
 		"names": _build_names()
 
 func _build_shop() -> void:
-	_modal_header(Loc.t("SHOP_TITLE") + " - " + Loc.t("ZONE_RESTAURANT" if zone == "restaurant" else "ZONE_FARM"))
-	var items := Catalog.placeables_for(zone)
+	_modal_header(Loc.t("SHOP_TITLE") if not GameState.has_farm_zone() else Loc.t("SHOP_TITLE") + " - " + Loc.t("ZONE_RESTAURANT" if zone == "restaurant" else "ZONE_FARM"))
+	var items := GameState.placeables_in(zone)
 	var list := _scroll_area(items.size())
 	for id in items:
 		var def: Dictionary = Catalog.PLACEABLES[id]
