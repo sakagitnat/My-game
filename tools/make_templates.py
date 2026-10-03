@@ -111,6 +111,40 @@ d.text((10, 600), 'วาดเฉพาะของที่ติดผนั�
 d.text((10, 628), 'นอกนั้นโปร่งใส', font=font(18), fill=(255, 255, 255, 255))
 im.save(f'{OUT}/tpl_wall_overlay_256x840.png')
 
+# 4d. door piece, window / lamp / painting overlays, flat rug
+def sized(w, h): return Image.new('RGBA', (w, h), (0, 0, 0, 0))
+def frame(d, w, h, title, lines, seam=None):
+    d.rectangle([0, 0, w - 1, h - 1], outline=GR, width=3)
+    if seam: d.line([(seam, 0), (seam, h)], fill=MG, width=3)
+    d.rectangle([4, 4, w - 5, 44 + len(lines) * 26], fill=(0, 0, 0, 170))
+    d.text((10, 8), title, font=font(24), fill=(255, 255, 255, 255))
+    for i, t in enumerate(lines): d.text((10, 44 + i * 26), t, font=font(18), fill=(255, 235, 150, 255))
+# door: two cells wide, opening in the middle must be fully transparent down to the bottom edge
+im = sized(512, 840); d = ImageDraw.Draw(im)
+frame(d, 512, 840, 'ประตู 512 x 840 (wall_door_01)', ['ช่องกลาง (ฟ้า) เจาะโปร่งใสถึงขอบล่างภาพ', 'ผนังซ้ายขวาของช่องวาดเหมือนผนังเรียบ', 'กรอบประตู + คานบน เป็นส่วนของภาพ'], 256)
+d.rectangle([128, 200, 384, 840], outline=CY, width=4); d.text((150, 600), 'ช่องประตู (โปร่งใส)', font=font(22), fill=CY)
+d.rectangle([0, 0, 511, 40], outline=YL, width=2); d.rectangle([0, 750, 511, 839], outline=YL, width=2)
+im.save(f'{OUT}/tpl_door_512x840.png')
+def overlay(name, title, lines, zone, zcol, extra=None):
+    im = sized(256, 840); d = ImageDraw.Draw(im)
+    frame(d, 256, 840, title, lines, 128)
+    d.rectangle(zone, outline=zcol, width=4)
+    if extra: extra(d)
+    im.save(f'{OUT}/{name}')
+overlay('tpl_window_256x840.png', 'หน้าต่าง 256 x 840', ['กรอบฟ้า = ตัวหน้าต่าง', 'พื้นที่อื่นโปร่งใส', 'ซ้อนบนผนังเรียบ'], [30, 230, 226, 580], CY,
+        lambda d: d.rectangle([20, 575, 236, 600], outline=YL, width=2))
+overlay('tpl_wall_lamp_256x840.png', 'โคมไฟติดผนัง 256 x 840', ['กรอบชมพู = ตัวโคม', 'ติดสูงระดับสายตา', 'พื้นที่อื่นโปร่งใส'], [88, 250, 168, 380], MG)
+overlay('tpl_wall_painting_256x840.png', 'ภาพวาดติดผนัง 256 x 840', ['กรอบชมพู = กรอบภาพ', 'ใหญ่เล็กได้ในกรอบนี้', 'พื้นที่อื่นโปร่งใส'], [40, 230, 216, 450], MG)
+# rug: flat on the 2x2 base diamond (bottom aligned, canvas width = footprint width)
+im = canvas(); d = ImageDraw.Draw(im)
+diamond(d, 512, 768, 1024, 512, CY, 8)
+d.line([(512, 512), (512, 1024)], fill=GR, width=2)
+d.rectangle([0, 0, 1023, 1023], outline=GR, width=2)
+label(d, (30, 30), "แม่แบบพรมปูพื้น 2x2 ช่อง (deco_rug_01)")
+label(d, (30, 90), "ภาพแบน วาดอยู่ในกรอบข้าวหลามตัดสีฟ้า ไม่ตั้งขึ้น ไม่มีเงา", 28)
+label(d, (30, 135), "ขอบพรมมนหรือหยักได้ในกรอบ นอกกรอบโปร่งใส", 28)
+im.save(f'{OUT}/tpl_rug_2x2.png')
+
 # 5. icon
 im = canvas(256, 256); d = ImageDraw.Draw(im)
 d.rectangle([0, 0, 255, 255], outline=GR, width=3); d.rectangle([16, 16, 239, 239], outline=CY, width=3)
