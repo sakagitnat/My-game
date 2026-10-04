@@ -5,7 +5,7 @@ ITEMS = [
     # floors (opaque, seamless)
     ("tile_floor_a", "tiles", "tile_floor_01", 128, 128, "พื้น", "พื้นร้านหลัก A", "tile", "tile"),
     ("tile_floor_b", "tiles", "tile_floor_02", 128, 128, "พื้น", "พื้นร้าน B (สลับ A)", "tile", "tile"),
-    ("tile_floor_kitchen", "tiles", "tile_floor_03", 128, 128, "พื้น", "พื้นครัว", "tile", "tile"),
+    ("tile_floor_kitchen", "tiles", "tile_floor_03", 128, 128, "พื้น", "พื้นครัว (เกมยังไม่ใช้ ทำไว้ล่วงหน้า)", "tile", "tile"),
     ("tile_pavement", "tiles", "tile_pavement_01", 128, 128, "พื้น", "ลานหน้าร้าน", "tile", "tile"),
     # walls
     ("wall_plain", "walls", "wall_plain_01", 128, 256, "ผนัง", "ผนังหลัง (สูง 2 ช่อง)", "wallplain", "flush"),
@@ -14,10 +14,10 @@ ITEMS = [
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
     ("wdeco_door", "walls", "wdeco_door_01", 128, 256, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
-    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 256, "ของติดผนัง", "ประตู (เปิด)", "dooropen", ""),
-    ("wdeco_lamp", "walls", "wdeco_lamp_01", 128, 128, "ของติดผนัง", "โคมไฟติดผนัง", "lamp", ""),
-    ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด", "painting", ""),
-    ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา", "hood", ""),
+    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 256, "ของติดผนัง", "ประตู (เปิด) (เกมยังไม่ใช้)", "dooropen", ""),
+    ("wdeco_lamp", "walls", "wdeco_lamp_01", 128, 128, "ของติดผนัง", "โคมไฟติดผนัง (เกมยังไม่ใช้)", "lamp", ""),
+    ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด (เกมยังไม่ใช้)", "painting", ""),
+    ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา (เกมยังไม่ใช้)", "hood", ""),
     # kitchen modules (join left-right without a seam)
     ("mod_counter", "modular", "mod_modern_counter_01", 128, 128, "ครัว", "เคาน์เตอร์ตรง", "module", "flush"),
     ("mod_sink", "modular", "mod_modern_sink_01", 128, 128, "ครัว", "อ่างล้างจาน", "module", "flush"),
@@ -28,7 +28,6 @@ ITEMS = [
     ("mod_fridge", "modular", "mod_modern_fridge_01", 128, 256, "ครัว", "ตู้เย็น", "fridge", ""),
     ("mod_prep", "modular", "mod_modern_prep_table_01", 256, 128, "ครัว", "โต๊ะเตรียม (เกาะกลาง)", "module", "flush"),
     # customer area
-    ("rest_table_small", "furniture", "rest_table_small_01", 128, 128, "โซนลูกค้า", "โต๊ะเล็ก", "table", ""),
     ("rest_table_long", "furniture", "rest_table_long_01", 256, 128, "โซนลูกค้า", "โต๊ะยาว", "table", ""),
     ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
     ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
@@ -58,14 +57,66 @@ ITEMS = [
     ("tile_sand", "tiles", "tile_sand_01", 128, 128, "พื้นกลางแจ้ง", "ทราย", "tile", "tile"),
     ("tile_dirt", "tiles", "tile_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ดิน", "tile", "tile"),
     ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน", "tile", "tile"),
+    # trees, rocks and bushes the player clears (the base of the trunk / rock sits on the bottom edge of the cell)
+    ("obs_tree", "obstacles", "obs_tree_01", 256, 384, "ต้นไม้ หิน พุ่ม", "ต้นไม้ (ฐานลำต้นอยู่กลางภาพชิดขอบล่าง)", "tree", ""),
+    ("obs_rock", "obstacles", "obs_rock_01", 128, 96, "ต้นไม้ หิน พุ่ม", "ก้อนหิน", "rock", ""),
+    ("obs_bush", "obstacles", "obs_bush_01", 128, 96, "ต้นไม้ หิน พุ่ม", "พุ่มไม้", "bush", ""),
+    # farm plot (2 x 2 cells), what grows on it, and the farm things
+    ("tile_soil_dry", "farm", "tile_soil_dry_01", 256, 256, "แปลงปลูก", "ดินแปลง (แห้ง ยังไม่ปลูก)", "soil", "flat"),
+    ("tile_soil_wet", "farm", "tile_soil_wet_01", 256, 256, "แปลงปลูก", "ดินแปลง (เปียก มีพืชปลูกอยู่)", "soil", "flat"),
 ]
+for _crop, _clabel in (("wheat", "ข้าวสาลี"), ("tomato", "มะเขือเทศ"), ("cabbage", "กะหล่ำปลี")):
+    for _stage, _slabel in ((1, "ต้นอ่อน"), (2, "กำลังโต"), (3, "ใกล้สุก"), (4, "สุก เก็บเกี่ยวได้")):
+        ITEMS.append((f"crop_{_crop}_s{_stage}", "farm", f"crop_{_crop}_s{_stage}", 256, 256, "พืช", f"{_clabel} {_slabel}", f"crop{_stage}", ""))
+ITEMS += [
+    ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
+    ("farm_coop", "farm", "farm_coop_01", 384, 384, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง)", "coop", ""),
+    # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
+    ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
+    ("rest_stove", "furniture", "rest_stove_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา (2x2 ช่อง)", "stove2", ""),
+    ("rest_vase_small", "furniture", "rest_vase_small_01", 64, 64, "ร้าน (ในเกมตอนนี้)", "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)", "prop", ""),
+    ("rest_vase_large", "furniture", "rest_vase_large_01", 128, 128, "ร้าน (ในเกมตอนนี้)", "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)", "vase", ""),
+    # icons (not used by the game yet; one cell, seen straight on)
+    ("icon_wood", "icons", "icon_wood_01", 128, 128, "ไอคอน", "ไม้", "icon", ""),
+    ("icon_stone", "icons", "icon_stone_01", 128, 128, "ไอคอน", "หิน", "icon", ""),
+    ("icon_wheat", "icons", "icon_wheat_01", 128, 128, "ไอคอน", "ข้าวสาลี", "icon", ""),
+    ("icon_tomato", "icons", "icon_tomato_01", 128, 128, "ไอคอน", "มะเขือเทศ", "icon", ""),
+    ("icon_cabbage", "icons", "icon_cabbage_01", 128, 128, "ไอคอน", "กะหล่ำปลี", "icon", ""),
+    ("icon_egg", "icons", "icon_egg_01", 128, 128, "ไอคอน", "ไข่", "icon", ""),
+    ("icon_dish_porridge", "icons", "icon_dish_porridge_01", 128, 128, "ไอคอน", "โจ๊กข้าวสาลี", "icon", ""),
+    ("icon_dish_omelet", "icons", "icon_dish_omelet_01", 128, 128, "ไอคอน", "ไข่เจียว", "icon", ""),
+    ("icon_dish_tomato_soup", "icons", "icon_dish_tomato_soup_01", 128, 128, "ไอคอน", "ซุปมะเขือเทศ", "icon", ""),
+    ("icon_dish_salad", "icons", "icon_dish_salad_01", 128, 128, "ไอคอน", "สลัดกะหล่ำ", "icon", ""),
+    ("icon_coin", "icons", "icon_coin_01", 128, 128, "ไอคอน", "เหรียญ", "icon", ""),
+    # characters (not used by the game yet): one cell wide, a cell and a half tall; the right side is the left side mirrored by the game
+]
+
 for _kind, _label in (("grass", "หญ้า"), ("dirt", "ดิน")):
     for _side, _where in (("n", "ด้านบน"), ("e", "ด้านขวา"), ("s", "ด้านล่าง"), ("w", "ด้านซ้าย")):
         ITEMS.append((f"edge_{_kind}_{_side}", "tiles", f"edge_{_kind}_{_side}_01", 128, 128, "พื้นกลางแจ้ง", f"ขอบ{_label} {_where}", f"edge_{_side}", ""))
     for _corner, _where in (("ne", "บนขวา"), ("se", "ล่างขวา"), ("sw", "ล่างซ้าย"), ("nw", "บนซ้าย")):
         ITEMS.append((f"corner_{_kind}_{_corner}", "tiles", f"corner_{_kind}_{_corner}_01", 128, 128, "พื้นกลางแจ้ง", f"มุม{_label} {_where}", f"corner_{_corner}", ""))
 
-CATEGORIES = ["พื้น", "พื้นกลางแจ้ง", "ผนัง", "ของติดผนัง", "ครัว", "โซนลูกค้า", "ตกแต่ง", "ของเล็ก"]
+for _who, _wlabel in (("player", "ผู้เล่น"), ("customer_a", "ลูกค้า A"), ("customer_b", "ลูกค้า B"), ("customer_c", "ลูกค้า C")):
+    for _dir, _dlabel in (("front", "หน้า"), ("back", "หลัง"), ("side", "ข้างซ้าย")):
+        for _frame, _flabel in (("idle", "ยืน"), ("walk1", "เดิน 1"), ("walk2", "เดิน 2")):
+            ITEMS.append((f"char_{_who}_{_dir}_{_frame}", "chars", f"char_{_who}_{_dir}_{_frame}_01", 128, 192, f"ตัวละคร: {_wlabel}", f"{_wlabel} {_dlabel} {_flabel}", "char", ""))
+# The template is split into sheets so each one is a size a drawing app (or an image AI) copes with.
+# status: "now" = the game loads these pieces today, "next" = to be added to the game's shop, "later" = the game does not use them yet.
+SHEETS = [
+    {"id": "now_outdoor", "title": "แผ่น 1: พื้นกลางแจ้งและฟาร์ม", "status": "now", "note": "ใช้ในเกมตอนนี้",
+     "categories": ["พื้นกลางแจ้ง", "ต้นไม้ หิน พุ่ม", "แปลงปลูก", "พืช", "ฟาร์ม"]},
+    {"id": "now_shop", "title": "แผ่น 2: ร้านและผนัง", "status": "now", "note": "ใช้ในเกมตอนนี้",
+     "categories": ["พื้น", "ผนัง", "ของติดผนัง", "ร้าน (ในเกมตอนนี้)"]},
+    {"id": "next_shop", "title": "แผ่น 3: ชุดตกแต่งร้าน", "status": "next", "note": "จะเพิ่มเข้าร้านค้าของเกมต่อ",
+     "categories": ["ครัว", "โซนลูกค้า", "ตกแต่ง", "ของเล็ก"]},
+    {"id": "later_icons", "title": "แผ่น 4: ไอคอน", "status": "later", "note": "เกมยังไม่ใช้",
+     "categories": ["ไอคอน"]},
+    {"id": "later_chars", "title": "แผ่น 5: ตัวละคร", "status": "later", "note": "เกมยังไม่ใช้ (ตัวละครยังไม่เดินในแมพ)",
+     "categories": ["ตัวละคร: ผู้เล่น", "ตัวละคร: ลูกค้า A", "ตัวละคร: ลูกค้า B", "ตัวละคร: ลูกค้า C"]},
+]
+CATEGORIES = [c for sh in SHEETS for c in sh["categories"]]
+assert sorted(CATEGORIES) == sorted(set(i[5] for i in ITEMS)), "every item category must be on a sheet"
 WALL_DECO = ("window", "door", "dooropen", "lamp", "painting", "hood")
 def anchor(w, h, hint=""):
     """Where the piece stands. Things on the floor (furniture, kitchen modules, decoration, small things) stand with the
