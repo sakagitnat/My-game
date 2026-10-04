@@ -121,7 +121,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
     <p class="muted" id="sceneInfo"></p>
   </div>
   <div id="sceneWrap"><canvas id="sceneCanvas"></canvas></div>
-  <div class="panel"><h2>พื้นกลางแจ้ง: ดูว่าขอบพื้นต่อกันสวยไหม</h2><p class="muted">หญ้า ดิน และทราย วางติดกัน ชิ้นขอบ/มุมของหญ้าและดินซ้อนทับช่องที่ต่ำกว่า (หญ้าทับดิน ดินทับทราย) ถ้ายังไม่มีชิ้นขอบ จะแสดงเป็นไล่สีนุ่ม ๆ เหมือนที่เกมวาดให้เอง</p></div>
+  <div class="panel"><h2>พื้นกลางแจ้ง: ดูว่าขอบพื้นต่อกันสวยไหม</h2><p class="muted">หญ้า ดิน และทราย วางติดกัน ชิ้นขอบ/มุมสร้างจากพื้นฐานอัตโนมัติ (ผมสร้างให้หลังได้ภาพพื้น) ในหน้านี้แสดงเป็นไล่สีนุ่ม ๆ เหมือนที่เกมวาดให้เอง</p></div>
   <div id="groundWrap"><canvas id="groundCanvas"></canvas></div>
   <div class="panel"><h2>สีเฉลี่ยของแต่ละชิ้น (ดูว่าโทนเข้ากันไหม)</h2><div id="palette" class="muted">ยังไม่มีภาพ</div></div>
   <div class="panel"><h2>จุดที่ควรแก้</h2><div id="issues" class="report muted">ยังไม่มีภาพ</div></div>
@@ -176,7 +176,7 @@ let pieces={}, report={}, scale=1;
 let slots={A:{pieces:{},report:{}},B:{pieces:{},report:{}}}, slotNow='A';
 function saveSlot(){slots[slotNow]={pieces,report};}
 function hasAny(){return Object.keys(slots.A.pieces).length>0||Object.keys(slots.B.pieces).length>0;}
-function srcSlot(id){const cat=byId[id].category,sel=document.querySelector(`select[data-cat="${cat}"]`);return sel?sel.value:'A';}
+function srcSlot(id){const cat=byId[id]?byId[id].category:'',sel=document.querySelector(`select[data-cat="${cat}"]`);return sel?sel.value:'A';}
 function getP(id){const sl=slots[srcSlot(id)],r=sl.report[id];return r&&r.status!=='empty'?sl.pieces[id]:null;}
 function getR(id){return slots[srcSlot(id)].report[id];}
 $('slotSel').onchange=()=>{slotNow=$('slotSel').value;pieces=slots[slotNow].pieces;report=slots[slotNow].report;lastImg=null;$('fileInfo').textContent='ชุด '+slotNow+(Object.keys(pieces).length?' มีภาพแล้ว (เลือกไฟล์ใหม่เพื่อแทนที่)':' ยังไม่มีภาพ');render();};
@@ -377,7 +377,7 @@ function issues(){
 }
 // Outdoor ground: grass, dirt and sand side by side with the soft edges, laid out the way the game does it.
 const GMAP=['gggggggggggg','ggddddgggggg','gdddddgggssg','gggdddgggsss','gggggggggsss','ggssgggggggg','gsssggddgggg','gggggggddggg'];
-const GRANK={s:1,d:2,g:3},GNAME={d:'dirt',g:'grass'},GCOL={g:'#7fb857',d:'#9a7a52',s:'#ecd9a4'},GBASE={s:'tile_sand',d:'tile_dirt'};
+const GRANK={s:1,d:2,g:3},GNAME={d:'dirt',g:'grass'},GCOL={g:'#7fb857',d:'#9a7a52',s:'#ecd9a4'},GBASE={s:'tile_sand',d:'tile_dirt',g:'tile_grass'};
 const GSIDES={n:[0,-1],e:[1,0],s:[0,1],w:[-1,0]},GCORN={ne:[1,-1],se:[1,1],sw:[-1,1],nw:[-1,-1]};
 function renderGround(){
   const cv=$('groundCanvas'),N=GMAP[0].length,R=GMAP.length,S=128;cv.width=N*S;cv.height=R*S;const c=cv.getContext('2d');

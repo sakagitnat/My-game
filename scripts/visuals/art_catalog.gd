@@ -27,6 +27,12 @@ const OBSTACLE := {
 	"bush": {"art": "obs_bush_01", "scale": 1.0},
 }
 
+# A second, smaller look for a share of the trees (`share` of them, picked per cell): a young tree as tall as a person.
+# Used only when its art exists; heights (docs/ART_TOPDOWN.md): big tree 3 blocks, small tree 2, bush 1, rock half a block.
+const OBSTACLE_ALT := {
+	"tree": {"art": "obs_tree_02", "scale": 1.0, "share": 0.35},
+}
+
 # Art for things that look different from each side: [front, left, back, right]; a name ending "|flip" is the same picture mirrored.
 # Items without an entry use their own art for every turn. (The chair needs only front, back and one side: the right side is the left one mirrored.)
 const FACING_ART := {
@@ -67,3 +73,10 @@ static func crop_color(crop: String) -> Color:
 
 static func obstacle(kind: String) -> Dictionary:
 	return OBSTACLE.get(kind, {"art": "", "scale": 1.0})
+
+# The look of an obstacle on one cell: the smaller variant for part of the trees (roll is a 0..1 hash of the cell) when its art exists.
+static func obstacle_look(kind: String, roll: float, has_art: Callable) -> Dictionary:
+	var alt: Dictionary = OBSTACLE_ALT.get(kind, {})
+	if not alt.is_empty() and roll < float(alt.share) and bool(has_art.call(str(alt.art))):
+		return alt
+	return obstacle(kind)

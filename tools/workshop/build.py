@@ -63,9 +63,10 @@ SHAPES = {
     'table2': [('r', 8, 4, 'W-8', 128), ('r', 16, 128, 'W-16', 252)],
     'stove2': [('r', 8, 4, 'W-8', 128), ('r', 16, 128, 'W-16', 252), ('e', 80, 64, 22, 14), ('e', 176, 64, 22, 14)],
     # outdoors and farm
-    'tree': [('e', 'W/2', 130, 100, 100), ('r', 114, 230, 142, 378), ('e', 'W/2', 378, 40, 10)],
+    'tree': [('e', 'W/2', 170, 110, 110), ('r', 112, 280, 144, 500), ('e', 'W/2', 500, 40, 10)],
+    'treesmall': [('e', 'W/2', 80, 52, 52), ('r', 56, 130, 72, 244), ('e', 'W/2', 244, 22, 8)],
     'rock': [('e', 'W/2', 60, 48, 30)],
-    'bush': [('e', 'W/2', 58, 50, 32)],
+    'bush': [('e', 'W/2', 80, 50, 40)],
     'soil': [('r', 10, 10, 'W-10', 'H-10')],
     'crop1': [('e', 'W/2', 214, 14, 16)], 'crop2': [('e', 'W/2', 200, 30, 36)],
     'crop3': [('e', 'W/2', 188, 44, 56)], 'crop4': [('e', 'W/2', 178, 56, 70)],
@@ -79,10 +80,10 @@ SHAPES = {
     'corner_nw': [('r', 0, 0, 50, 50)], 'corner_ne': [('r', 77, 0, 127, 50)],
     'corner_sw': [('r', 0, 77, 50, 127)], 'corner_se': [('r', 77, 77, 127, 127)],
 }
-FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove2', 'vase', 'tree', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
+FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove2', 'vase', 'tree', 'treesmall', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
 # how deep (px) and how wide the dashed floor marker is for pieces that are not one cell
 FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 256, 'stove2': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
-FOOT_WIDTH = {'tree': 128, 'rock': 128, 'bush': 128}
+FOOT_WIDTH = {'tree': 128, 'treesmall': 128, 'rock': 128, 'bush': 128}
 def ev(v, w, h):
     return int(eval(str(v), {}, {'W': w - 1, 'H': h})) if isinstance(v, str) else v
 

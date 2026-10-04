@@ -54,20 +54,22 @@ ITEMS = [
     ("prop_vase", "props", "prop_vase_01", 64, 64, "ของเล็ก", "แจกัน", "prop", ""),
     ("prop_bottle", "props", "prop_bottle_01", 64, 64, "ของเล็ก", "ขวด", "prop", ""),
     # outdoor ground: the base tiles, and the soft edges that join one ground to another (docs/ART_TOPDOWN.md)
-    ("tile_sand", "tiles", "tile_sand_01", 128, 128, "พื้นกลางแจ้ง", "ทราย", "tile", "tile"),
-    ("tile_dirt", "tiles", "tile_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ดิน", "tile", "tile"),
-    ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน", "tile", "tile"),
+    ("tile_grass", "tiles", "tile_grass_01", 128, 128, "พื้นกลางแจ้ง", "หญ้า (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
+    ("tile_sand", "tiles", "tile_sand_01", 128, 128, "พื้นกลางแจ้ง", "ทราย (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
+    ("tile_dirt", "tiles", "tile_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ดิน (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
+    ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
     # trees, rocks and bushes the player clears (the base of the trunk / rock sits on the bottom edge of the cell)
-    ("obs_tree", "obstacles", "obs_tree_01", 256, 384, "ต้นไม้ หิน พุ่ม", "ต้นไม้ (ฐานลำต้นอยู่กลางภาพชิดขอบล่าง)", "tree", ""),
-    ("obs_rock", "obstacles", "obs_rock_01", 128, 96, "ต้นไม้ หิน พุ่ม", "ก้อนหิน", "rock", ""),
-    ("obs_bush", "obstacles", "obs_bush_01", 128, 96, "ต้นไม้ หิน พุ่ม", "พุ่มไม้", "bush", ""),
+    ("obs_tree", "obstacles", "obs_tree_01", 256, 512, "ต้นไม้ หิน พุ่ม", "ต้นไม้ใหญ่ (สูง 3 บล็อก ฐานลำต้นอยู่กลางภาพชิดขอบล่าง)", "tree", ""),
+    ("obs_tree_small", "obstacles", "obs_tree_02", 128, 256, "ต้นไม้ หิน พุ่ม", "ต้นไม้เล็ก (สูง 2 บล็อก เท่าตัวละคร)", "treesmall", ""),
+    ("obs_bush", "obstacles", "obs_bush_01", 128, 128, "ต้นไม้ หิน พุ่ม", "พุ่มไม้ (สูง 1 บล็อก)", "bush", ""),
+    ("obs_rock", "obstacles", "obs_rock_01", 128, 96, "ต้นไม้ หิน พุ่ม", "ก้อนหิน (สูงครึ่งบล็อก)", "rock", ""),
     # farm plot (2 x 2 cells), what grows on it, and the farm things
-    ("tile_soil_dry", "farm", "tile_soil_dry_01", 256, 256, "แปลงปลูก", "ดินแปลง (แห้ง ยังไม่ปลูก)", "soil", "flat"),
-    ("tile_soil_wet", "farm", "tile_soil_wet_01", 256, 256, "แปลงปลูก", "ดินแปลง (เปียก มีพืชปลูกอยู่)", "soil", "flat"),
+    ("tile_soil_dry", "farm", "tile_soil_dry_01", 256, 256, "แปลงปลูก", "ดินแปลง สีอ่อน (แห้ง ดินล้วน ห้ามมีพืช)", "soil", "flat"),
+    ("tile_soil_wet", "farm", "tile_soil_wet_01", 256, 256, "แปลงปลูก", "ดินแปลง สีเข้ม (เปียก ดินล้วน ห้ามมีพืช)", "soil", "flat"),
 ]
 for _crop, _clabel in (("wheat", "ข้าวสาลี"), ("tomato", "มะเขือเทศ"), ("cabbage", "กะหล่ำปลี")):
     for _stage, _slabel in ((1, "ต้นอ่อน"), (2, "กำลังโต"), (3, "ใกล้สุก"), (4, "สุก เก็บเกี่ยวได้")):
-        ITEMS.append((f"crop_{_crop}_s{_stage}", "farm", f"crop_{_crop}_s{_stage}", 256, 256, "พืช", f"{_clabel} {_slabel}", f"crop{_stage}", ""))
+        ITEMS.append((f"crop_{_crop}_s{_stage}", "farm", f"crop_{_crop}_s{_stage}", 256, 256, "พืช", f"{_clabel} {_slabel} (พื้นโปร่งใส ไม่มีดิน)", f"crop{_stage}", ""))
 ITEMS += [
     ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
     ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
@@ -90,12 +92,6 @@ ITEMS += [
     ("icon_coin", "icons", "icon_coin_01", 128, 128, "ไอคอน", "เหรียญ", "icon", ""),
     # characters (not used by the game yet): one cell wide, two cells (blocks) tall; the right side is the left side mirrored by the game
 ]
-
-for _kind, _label in (("grass", "หญ้า"), ("dirt", "ดิน")):
-    for _side, _where in (("n", "ด้านบน"), ("e", "ด้านขวา"), ("s", "ด้านล่าง"), ("w", "ด้านซ้าย")):
-        ITEMS.append((f"edge_{_kind}_{_side}", "tiles", f"edge_{_kind}_{_side}_01", 128, 128, "พื้นกลางแจ้ง", f"ขอบ{_label} {_where}", f"edge_{_side}", ""))
-    for _corner, _where in (("ne", "บนขวา"), ("se", "ล่างขวา"), ("sw", "ล่างซ้าย"), ("nw", "บนซ้าย")):
-        ITEMS.append((f"corner_{_kind}_{_corner}", "tiles", f"corner_{_kind}_{_corner}_01", 128, 128, "พื้นกลางแจ้ง", f"มุม{_label} {_where}", f"corner_{_corner}", ""))
 
 for _who, _wlabel in (("player", "ผู้เล่น"), ("customer_a", "ลูกค้า A"), ("customer_b", "ลูกค้า B"), ("customer_c", "ลูกค้า C")):
     for _dir, _dlabel in (("front", "หน้า"), ("back", "หลัง"), ("side", "ข้างซ้าย")):
