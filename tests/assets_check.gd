@@ -85,9 +85,9 @@ func _check_topdown() -> void:
 				elif f.begins_with("wall_low"):
 					want = Vector2i(128, 64)
 				elif f.begins_with("wall_side"):
-					want = Vector2i(32, 256)
+					want = Vector2i(32, 384)
 				else:
-					want = Vector2i(128, 256)
+					want = Vector2i(128, 384)   # a wall is three blocks tall
 			if want != Vector2i.ZERO:
 				if img.get_size() != want:
 					problems.append("%s: must be %dx%d, is %dx%d" % [path, want.x, want.y, img.get_width(), img.get_height()])

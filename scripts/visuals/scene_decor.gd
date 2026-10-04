@@ -4,9 +4,9 @@ extends Node2D
 # Drawn from a scene's SceneLayout and the player's land (GameState): the ground kinds the owner painted
 # (road, pavement, floor, sand, dirt), floor built over bought land, the walls on cell edges, and the build grid
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
-const WALL_H := 128.0      # a wall is two cells tall (art: 128x256 for one cell wide)
+const WALL_H := 192.0      # a wall is three blocks (cells) tall (art: 128x384 for one cell wide); a door is two, a counter one
 const LOW_H := 32.0
-const SIDE_W := 16.0       # thickness of a wall seen from the side (art: 32x256)
+const SIDE_W := 16.0       # thickness of a wall seen from the side (art: 32x384)
 const FLOOR_A := Color("ead3a8")
 const FLOOR_B := Color("d9bb8b")
 const ROAD := Color("b79a6a")
@@ -24,7 +24,7 @@ const GRID := Color(1, 1, 1, 0.34)
 
 # Art ids tried first; when no such file is in assets/td, the code-drawn colours below are used instead.
 # Ground tiles are 128x128 (drawn at 64 px), each ground kind can have several variants (_01, _02 ...) picked per
-# cell. Walls: plain wall 128x256, low wall 128x64, side wall 32x256; windows, doors, lamps and paintings are
+# cell. Walls: plain wall 128x384, low wall 128x64, side wall 32x384; windows, doors, lamps and paintings are
 # separate overlays on a plain wall (docs/ART_TOPDOWN.md).
 const TILE_ART := {
 	SceneLayout.Tile.SAND: ["tile_sand_01"],
@@ -271,20 +271,20 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_rect(Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, 7 if kind != "low" else 5)), TRIM)
 	var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
 	if overlay != null:
-		# art anchor: the base line is 24 px (source) above the canvas bottom; a window's base sits 70 px up the wall, a door's on the floor line
+		# art anchor: the base line is 24 px (source) above the canvas bottom; a window's base sits 84 px up the wall (above a counter, which is 64 px tall), a door's on the floor line
 		var size := overlay.get_size() * (Iso.TILE_W / overlay.get_width())
-		var base_y := a.y - (70.0 if kind == "window" else 0.0)
+		var base_y := a.y - (84.0 if kind == "window" else 0.0)
 		var drop := 24.0 * Iso.TILE_W / overlay.get_width()
 		draw_texture_rect(overlay, Rect2(Vector2(a.x, base_y + drop - size.y), size), false)
 	elif kind == "window":
-		draw_rect(Rect2(a + Vector2(10, -96), Vector2(44, 52)), WHITE_FRAME)
-		draw_rect(Rect2(a + Vector2(14, -92), Vector2(36, 44)), GLASS)
-		draw_rect(Rect2(a + Vector2(31, -92), Vector2(2, 44)), WHITE_FRAME)
-		draw_rect(Rect2(a + Vector2(14, -71), Vector2(36, 2)), WHITE_FRAME)
+		draw_rect(Rect2(a + Vector2(10, -142), Vector2(44, 56)), WHITE_FRAME)
+		draw_rect(Rect2(a + Vector2(14, -138), Vector2(36, 48)), GLASS)
+		draw_rect(Rect2(a + Vector2(31, -138), Vector2(2, 48)), WHITE_FRAME)
+		draw_rect(Rect2(a + Vector2(14, -116), Vector2(36, 2)), WHITE_FRAME)
 	elif kind == "door":
-		draw_rect(Rect2(a + Vector2(8, -104), Vector2(48, 106)), TRIM)
-		draw_rect(Rect2(a + Vector2(13, -98), Vector2(38, 100)), Color("5b3a22"))
-		draw_circle(a + Vector2(44, -48), 2.5, Color("e8c98a"))
+		draw_rect(Rect2(a + Vector2(8, -130), Vector2(48, 132)), TRIM)   # a door is two blocks (128 px) tall
+		draw_rect(Rect2(a + Vector2(13, -124), Vector2(38, 126)), Color("5b3a22"))
+		draw_circle(a + Vector2(44, -60), 2.5, Color("e8c98a"))
 
 # A wall along the left edge of cell (x, y). Seen from the front it is a thin band; its cap sits a wall height up.
 # Consecutive cells of the same kind are drawn as ONE continuous strip, so no seams show between cells.

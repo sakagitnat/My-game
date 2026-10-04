@@ -8,9 +8,9 @@ ITEMS = [
     ("tile_floor_kitchen", "tiles", "tile_floor_03", 128, 128, "พื้น", "พื้นครัว (เกมยังไม่ใช้ ทำไว้ล่วงหน้า)", "tile", "tile"),
     ("tile_pavement", "tiles", "tile_pavement_01", 128, 128, "พื้น", "ลานหน้าร้าน", "tile", "tile"),
     # walls
-    ("wall_plain", "walls", "wall_plain_01", 128, 256, "ผนัง", "ผนังหลัง (สูง 2 ช่อง)", "wallplain", "flush"),
+    ("wall_plain", "walls", "wall_plain_01", 128, 384, "ผนัง", "ผนังหลัง (สูง 3 บล็อก)", "wallplain", "flush"),
     ("wall_low", "walls", "wall_low_01", 128, 64, "ผนัง", "ผนังเตี้ย / ราว", "walllow", "flush"),
-    ("wall_side", "walls", "wall_side_01", 32, 256, "ผนัง", "ผนังข้าง (แถบบาง)", "wallside", ""),
+    ("wall_side", "walls", "wall_side_01", 32, 384, "ผนัง", "ผนังข้าง (แถบบาง)", "wallside", ""),
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
     ("wdeco_door", "walls", "wdeco_door_01", 128, 256, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
@@ -19,28 +19,28 @@ ITEMS = [
     ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด (เกมยังไม่ใช้)", "painting", ""),
     ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา (เกมยังไม่ใช้)", "hood", ""),
     # kitchen modules (join left-right without a seam)
-    ("mod_counter", "modular", "mod_modern_counter_01", 128, 128, "ครัว", "เคาน์เตอร์ตรง", "module", "flush"),
-    ("mod_sink", "modular", "mod_modern_sink_01", 128, 128, "ครัว", "อ่างล้างจาน", "module", "flush"),
-    ("mod_stove", "modular", "mod_modern_stove_01", 128, 128, "ครัว", "เตา", "module", "flush"),
-    ("mod_oven", "modular", "mod_modern_oven_01", 128, 128, "ครัว", "เตาอบ", "module", "flush"),
-    ("mod_cap_left", "modular", "mod_modern_cap_left_01", 128, 128, "ครัว", "ปิดปลายแถวด้านซ้าย", "module", "flushr"),
-    ("mod_cap_right", "modular", "mod_modern_cap_right_01", 128, 128, "ครัว", "ปิดปลายแถวด้านขวา", "module", "flushl"),
-    ("mod_fridge", "modular", "mod_modern_fridge_01", 128, 256, "ครัว", "ตู้เย็น", "fridge", ""),
-    ("mod_prep", "modular", "mod_modern_prep_table_01", 256, 128, "ครัว", "โต๊ะเตรียม (เกาะกลาง)", "module", "flush"),
+    ("mod_counter", "modular", "mod_modern_counter_01", 128, 192, "ครัว", "เคาน์เตอร์ตรง", "module", "flush"),
+    ("mod_sink", "modular", "mod_modern_sink_01", 128, 192, "ครัว", "อ่างล้างจาน", "module", "flush"),
+    ("mod_stove", "modular", "mod_modern_stove_01", 128, 192, "ครัว", "เตา", "module", "flush"),
+    ("mod_oven", "modular", "mod_modern_oven_01", 128, 192, "ครัว", "เตาอบ", "module", "flush"),
+    ("mod_cap_left", "modular", "mod_modern_cap_left_01", 128, 192, "ครัว", "ปิดปลายแถวด้านซ้าย", "module", "flushr"),
+    ("mod_cap_right", "modular", "mod_modern_cap_right_01", 128, 192, "ครัว", "ปิดปลายแถวด้านขวา", "module", "flushl"),
+    ("mod_fridge", "modular", "mod_modern_fridge_01", 128, 320, "ครัว", "ตู้เย็น", "fridge", ""),
+    ("mod_prep", "modular", "mod_modern_prep_table_01", 256, 192, "ครัว", "โต๊ะเตรียม (เกาะกลาง)", "module", "flush"),
     # customer area
-    ("rest_table_long", "furniture", "rest_table_long_01", 256, 128, "โซนลูกค้า", "โต๊ะยาว", "table", ""),
-    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
-    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
-    ("rest_chair_side", "furniture", "rest_chair_side_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันข้าง (วาดหันซ้าย เกมกลับให้เป็นหันขวาเอง)", "chair", ""),
+    ("rest_table_long", "furniture", "rest_table_long_01", 256, 192, "โซนลูกค้า", "โต๊ะยาว (2x1 ช่อง สูง 1 บล็อก)", "tablelong", ""),
+    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 192, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
+    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 192, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
+    ("rest_chair_side", "furniture", "rest_chair_side_01", 128, 192, "โซนลูกค้า", "เก้าอี้หันข้าง (วาดหันซ้าย)", "chair", ""),
     ("rest_stool", "furniture", "rest_stool_01", 128, 128, "โซนลูกค้า", "สตูล", "stool", ""),
     ("rest_bench", "furniture", "rest_bench_01", 256, 128, "โซนลูกค้า", "ม้านั่งยาว", "table", ""),
-    ("rest_register", "furniture", "rest_register_01", 128, 128, "โซนลูกค้า", "เครื่องคิดเงิน", "register", ""),
-    ("rest_shelf", "furniture", "rest_shelf_01", 128, 256, "โซนลูกค้า", "ชั้นวางของ", "shelf", ""),
-    ("rest_menu_sign", "furniture", "rest_menu_sign_01", 128, 160, "โซนลูกค้า", "ป้ายเมนูตั้งพื้น", "sign", ""),
+    ("rest_register", "furniture", "rest_register_01", 128, 192, "โซนลูกค้า", "เครื่องคิดเงิน", "register", ""),
+    ("rest_shelf", "furniture", "rest_shelf_01", 128, 320, "โซนลูกค้า", "ชั้นวางของ", "shelf", ""),
+    ("rest_menu_sign", "furniture", "rest_menu_sign_01", 128, 192, "โซนลูกค้า", "ป้ายเมนูตั้งพื้น", "sign", ""),
     # decoration
-    ("deco_plant", "deco", "deco_plant_pot_01", 128, 192, "ตกแต่ง", "กระถางต้นไม้", "plant", ""),
+    ("deco_plant", "deco", "deco_plant_pot_01", 128, 256, "ตกแต่ง", "กระถางต้นไม้", "plant", ""),
     ("deco_rug", "deco", "deco_rug_01", 256, 256, "ตกแต่ง", "พรม (ภาพแบนบนพื้น)", "rug", "flat"),
-    ("deco_lamp_floor", "deco", "deco_lamp_floor_01", 128, 256, "ตกแต่ง", "โคมไฟตั้งพื้น", "floorlamp", ""),
+    ("deco_lamp_floor", "deco", "deco_lamp_floor_01", 128, 320, "ตกแต่ง", "โคมไฟตั้งพื้น", "floorlamp", ""),
     ("deco_bin", "deco", "deco_trash_bin_01", 128, 128, "ตกแต่ง", "ถังขยะ", "bin", ""),
     ("deco_crate", "deco", "deco_crate_01", 128, 128, "ตกแต่ง", "ลังไม้", "crate", ""),
     # small things on tables and counters (half a cell)
@@ -70,7 +70,7 @@ for _crop, _clabel in (("wheat", "ข้าวสาลี"), ("tomato", "มะ
         ITEMS.append((f"crop_{_crop}_s{_stage}", "farm", f"crop_{_crop}_s{_stage}", 256, 256, "พืช", f"{_clabel} {_slabel}", f"crop{_stage}", ""))
 ITEMS += [
     ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
-    ("farm_coop", "farm", "farm_coop_01", 384, 384, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง)", "coop", ""),
+    ("farm_coop", "farm", "farm_coop_01", 384, 448, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 2 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
     ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
     ("rest_stove", "furniture", "rest_stove_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา (2x2 ช่อง)", "stove2", ""),
@@ -88,7 +88,7 @@ ITEMS += [
     ("icon_dish_tomato_soup", "icons", "icon_dish_tomato_soup_01", 128, 128, "ไอคอน", "ซุปมะเขือเทศ", "icon", ""),
     ("icon_dish_salad", "icons", "icon_dish_salad_01", 128, 128, "ไอคอน", "สลัดกะหล่ำ", "icon", ""),
     ("icon_coin", "icons", "icon_coin_01", 128, 128, "ไอคอน", "เหรียญ", "icon", ""),
-    # characters (not used by the game yet): one cell wide, a cell and a half tall; the right side is the left side mirrored by the game
+    # characters (not used by the game yet): one cell wide, two cells (blocks) tall; the right side is the left side mirrored by the game
 ]
 
 for _kind, _label in (("grass", "หญ้า"), ("dirt", "ดิน")):
@@ -100,7 +100,7 @@ for _kind, _label in (("grass", "หญ้า"), ("dirt", "ดิน")):
 for _who, _wlabel in (("player", "ผู้เล่น"), ("customer_a", "ลูกค้า A"), ("customer_b", "ลูกค้า B"), ("customer_c", "ลูกค้า C")):
     for _dir, _dlabel in (("front", "หน้า"), ("back", "หลัง"), ("side", "ข้างซ้าย")):
         for _frame, _flabel in (("idle", "ยืน"), ("walk1", "เดิน 1"), ("walk2", "เดิน 2")):
-            ITEMS.append((f"char_{_who}_{_dir}_{_frame}", "chars", f"char_{_who}_{_dir}_{_frame}_01", 128, 192, f"ตัวละคร: {_wlabel}", f"{_wlabel} {_dlabel} {_flabel}", "char", ""))
+            ITEMS.append((f"char_{_who}_{_dir}_{_frame}", "chars", f"char_{_who}_{_dir}_{_frame}_01", 128, 256, f"ตัวละคร: {_wlabel}", f"{_wlabel} {_dlabel} {_flabel}", "char", ""))
 # The template is split into sheets so each one is a size a drawing app (or an image AI) copes with.
 # status: "now" = the game loads these pieces today, "next" = to be added to the game's shop, "later" = the game does not use them yet.
 SHEETS = [
