@@ -717,6 +717,13 @@ func _build_settings() -> void:
 	test.custom_minimum_size = Vector2(0, 60)
 	test.pressed.connect(GameState.grant_test_coins)
 	modal_body.add_child(test)
+	var time_skip := Button.new()
+	time_skip.text = Loc.t("BTN_TEST_TIME") % Loc.t("PHASE_" + GameState.day_clock.phase().to_upper())
+	time_skip.custom_minimum_size = Vector2(0, 60)
+	time_skip.pressed.connect(func() -> void:
+		GameState.day_clock.skip_to_next_phase()
+		time_skip.text = Loc.t("BTN_TEST_TIME") % Loc.t("PHASE_" + GameState.day_clock.phase().to_upper()))
+	modal_body.add_child(time_skip)
 	var reset := Button.new()
 	reset.text = Loc.t("BTN_RESET")
 	reset.custom_minimum_size = Vector2(0, 60)

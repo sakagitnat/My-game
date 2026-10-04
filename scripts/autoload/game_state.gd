@@ -28,6 +28,8 @@ var grids: Dictionary = {}
 var inventory: Inventory = Inventory.new(60)
 # Furniture the player took off the floor and may place again for free (id -> count). Selling is a separate choice made from here.
 var stash: Dictionary = {}
+# Time of day (looks only for now, see DayClock).
+var day_clock := DayClock.new()
 var save_path: String = SAVE_PATH
 var autosave: bool = true
 var clock_override: float = -1.0
@@ -42,6 +44,7 @@ func _ready() -> void:
 	load_game()
 
 func _process(delta: float) -> void:
+	day_clock.tick(delta)
 	if restaurant_active and restaurant.tick(delta):
 		_commit()
 
@@ -55,6 +58,7 @@ func reset() -> void:
 		build_zone(z)
 	inventory = Inventory.new(60)
 	stash.clear()
+	day_clock.reset()
 	player_name = ""
 	restaurant_name = ""
 
@@ -648,7 +652,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "restaurant": restaurant.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "clock": day_clock.to_dict(), "restaurant": restaurant.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -676,6 +680,8 @@ func load_game() -> bool:
 		for id in st:
 			if Catalog.PLACEABLES.has(str(id)) and int(st[id]) > 0:
 				stash[str(id)] = int(st[id])
+	var clk = d.get("clock", {})
+	day_clock.load_dict(clk if clk is Dictionary else {})
 	var rest = d.get("restaurant", {})
 	if rest is Dictionary:
 		restaurant.load_dict(rest)
