@@ -5,6 +5,7 @@ python3 tools/workshop/cut_sheet.py SHEET.png --sheet N [--skip id,id] [--report
   --report    print a line for every piece: empty / ok / what is off (size, standing on the bottom edge, filling the cell, tile edges)
   --dry       check only, write nothing"""
 import sys, os, json
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image
 lay = json.load(open('assets/td/art_workshop/set_template_layout.json'))
 arg = lambda name, default=None: sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
@@ -14,25 +15,7 @@ sheet = Image.open(sys.argv[1]).convert('RGBA')
 skip = set(arg('--skip', '').split(',')) - {''}
 k = sheet.width // sh['sheetW']
 assert k >= 1 and sheet.size == (sh['sheetW'] * k, sh['sheetH'] * k), f"sheet size {sheet.size} does not match sheet {n_sheet} ({sh['sheetW']}x{sh['sheetH']} or a multiple)"
-FLOOR = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'floorlamp', 'bin', 'crate', 'table2', 'stove2', 'tree', 'treesmall', 'rock', 'bush', 'fence', 'coop', 'vase', 'prop')
-
-def check(it, c):
-    """Problems of one cut piece, judged on the pixels (c is already at the piece's own size)."""
-    a = c.getchannel('A'); bbox = a.point(lambda v: 255 if v > 24 else 0).getbbox()
-    if bbox is None:
-        return None
-    w, h = c.size; x0, y0, x1, y1 = bbox; out = []
-    opaque = sum(1 for v in a.tobytes() if v > 250) / (w * h)
-    if it['flags'] in ('tile', 'flat') :
-        if opaque < 0.99: out.append(f'ground must fill the whole frame ({opaque*100:.0f}% filled)')
-    elif it['hint'].startswith(('edge_', 'corner_')):
-        if opaque > 0.9: out.append('an edge piece must be mostly transparent: only the neighbouring ground near that side')
-    else:
-        if x0 <= 1 or y0 <= 1 or x1 >= w - 1: out.append('the picture touches or crosses the frame (it may be cut off)')
-        if it['hint'] in FLOOR and y1 < h - 8: out.append(f'does not stand on the bottom edge: it ends {h - y1} px above it (things on the floor sit on the bottom edge)')
-        if it['hint'] in ('table', 'table2', 'stove2', 'module', 'coop', 'fence') and x1 - x0 < w * 0.8: out.append(f'too narrow for the cells it takes: {x1 - x0} of {w} px wide (it should fill them)')
-        if it['hint'] in ('char',) and (y1 - y0) < h * 0.6: out.append('character looks too small in its frame')
-    return out
+from piece_check import check
 
 done = bad = empty = 0
 for it in lay['items']:
