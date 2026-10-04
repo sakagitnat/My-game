@@ -45,7 +45,7 @@ static func facing_art(id: String, facing: int) -> Dictionary:
 
 # How tall a thing is, in blocks (one block is one cell, 64 game px): a counter or table 1, a fridge or door 2, a wall 3.
 # The art follows it: a thing's canvas is 128 x blocks px of height plus 64 px for every cell of depth (the top surface seen at an angle).
-const HEIGHT_BLOCKS := {"rest_table_small_01": 1.0, "rest_stove_01": 1.0, "farm_coop_01": 2.0, "farm_fence_01": 0.75, "rest_vase_small_01": 0.5, "rest_vase_large_01": 0.9}
+const HEIGHT_BLOCKS := {"rest_table_small_01": 1.0, "rest_stove_01": 1.0, "farm_coop_01": 3.0, "farm_fence_01": 0.75, "rest_vase_small_01": 0.5, "rest_vase_large_01": 0.9}
 
 static func height_blocks(id: String) -> float:
 	return HEIGHT_BLOCKS.get(id, 1.0)

@@ -6,7 +6,7 @@
    "status": "now",
    "note": "ใช้ในเกมตอนนี้",
    "sheetW": 1920,
-   "sheetH": 3066,
+   "sheetH": 3194,
    "categories": [
     "พื้นกลางแจ้ง",
     "ต้นไม้ หิน พุ่ม",
@@ -783,16 +783,16 @@
    "folder": "farm",
    "file": "farm_coop_01",
    "w": 384,
-   "h": 448,
+   "h": 576,
    "x": 244,
    "y": 2558,
    "category": "ฟาร์ม",
-   "label": "เล้าไก่ (3x3 ช่อง สูง 2 บล็อก)",
+   "label": "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)",
    "hint": "coop",
    "flags": "",
    "anchor": [
     192,
-    448
+    576
    ],
    "sheet": "now_outdoor",
    "status": "now"
