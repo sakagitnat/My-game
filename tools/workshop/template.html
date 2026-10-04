@@ -60,23 +60,18 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
 <main>
 
 <section id="tpl" class="page active">
-  <h1>แม่แบบทั้งชุด (64 ชิ้นในภาพเดียว)</h1>
+  <h1 id="tplTitle">แม่แบบ</h1>
   <div class="panel">
     <ol class="steps">
-      <li>ดาวน์โหลดแม่แบบ แล้วเปิดในแอปวาดรูปบน iPad (Procreate, Ibis Paint ฯลฯ) ใช้เป็นเลเยอร์ล่างสุด</li>
-      <li>สร้างเลเยอร์ใหม่ วาดของแต่ละชิ้นลงในกรอบของมัน ให้ฐานของวัตถุตรงเส้นชมพู</li>
+      <li>เลือกแผ่นที่ต้องการ ดาวน์โหลดแม่แบบ แล้วเปิดในแอปวาดรูปบน iPad (Procreate, Ibis Paint ฯลฯ) ใช้เป็นเลเยอร์ล่างสุด หรือส่งให้ GPT พร้อมคำสั่งที่ให้ไว้ในแต่ละแผ่น</li>
+      <li>วาดของแต่ละชิ้นลงในกรอบของมัน ให้ฐานของวัตถุตรงเส้นชมพู ของที่ตั้งบนพื้นต้องเต็มช่องที่กิน (เส้นประเขียว)</li>
       <li>เสร็จแล้ว <b>ซ่อนเลเยอร์แม่แบบ</b> ส่งออกเป็น PNG ขนาดเดิม (หรือใหญ่กว่าเท่าตัว) พื้นหลังโปร่งใส</li>
-      <li>ไปแท็บ "ตัดภาพ" อัปโหลด เว็บจะตัดและตรวจให้ แล้วไปแท็บ "จัดฉาก" ดูว่าทั้งชุดเข้ากันไหม</li>
+      <li>ไปแท็บ "ตัดภาพ" เลือกแผ่นให้ตรง อัปโหลด เว็บจะตัดและตรวจขนาดให้ แล้วส่ง ZIP หรือไฟล์ให้ Claude ตรวจอีกรอบ</li>
     </ol>
-    <div class="row">
-      <a class="primary" id="dlGuide" download="salvora_set_template_guide.png">ดาวน์โหลดแม่แบบ (1920 px)</a>
-      <a class="primary" id="dlGuide2" download="salvora_set_template_guide_2x.png">ดาวน์โหลดแม่แบบละเอียด (3840 px)</a>
-      <a class="ghost" id="dlBlank" download="salvora_set_template_blank.png">ผืนโปร่งใสเปล่า</a>
-      <a class="ghost" id="dlLayout" download="salvora_set_template_layout.json">ผังตำแหน่ง (JSON)</a>
-    </div>
-    <p class="muted">แม่แบบเป็นภาพทึบพื้นอ่อนเพื่อให้เห็นเส้นชัด ห้ามส่งออกพร้อมแม่แบบ ต้องซ่อนเลเยอร์นี้ก่อนทุกครั้ง</p>
+    <p class="muted">ทำทีละแผ่นได้ แผ่นที่ "ใช้ในเกมตอนนี้" ควรทำก่อน เพราะเกมโหลดภาพชื่อนี้ทันที แผ่น "จะเพิ่มเข้าเกมต่อ" และ "เกมยังไม่ใช้" ทำไว้ล่วงหน้าตามชื่อและขนาดเดียวกัน แม่แบบเป็นภาพทึบพื้นอ่อนเพื่อให้เห็นเส้นชัด ห้ามส่งออกพร้อมแม่แบบ ต้องซ่อนเลเยอร์นี้ก่อนทุกครั้ง</p>
+    <div class="row"><a class="ghost" id="dlLayout" download="salvora_set_template_layout.json">ผังตำแหน่งทุกแผ่น (JSON)</a></div>
   </div>
-  <div class="panel"><h2>ภาพแม่แบบ</h2><div class="sheetwrap"><img id="guideImg" alt="แม่แบบทั้งชุด"></div></div>
+  <div id="sheetCards"></div>
 </section>
 
 <section id="cut" class="page">
@@ -86,6 +81,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
       <div><b>ลากไฟล์ PNG ที่วาดมาวางที่นี่</b> หรือ</div>
       <div><button class="primary" id="pick">เลือกไฟล์</button><input id="file" type="file" accept="image/png,image/webp,image/jpeg" hidden></div>
       <div class="muted" id="fileInfo">ยังไม่ได้เลือกไฟล์ (ต้องเป็นแผ่นเดียวกับแม่แบบ ขนาด 1920 px หรือ 3840 px)</div>
+      <div style="margin-top:8px">อัปโหลดแผ่นที่: <select id="sheetSel"></select></div>
     </div>
     <div class="row flags" style="margin-top:12px">
       <label class="field"><input type="checkbox" id="rmbg"> ภาพมีพื้นหลังทึบ ให้ลบสีพื้นหลัง (สีที่มุมซ้ายบน)</label>
@@ -155,15 +151,25 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
 
 <script>
 const LAYOUT=__LAYOUT__;
-const GUIDE1="__GUIDE1__", GUIDE2="__GUIDE2__", BLANK="__BLANK__";
+const IMAGES=__IMAGES__;
 const $=id=>document.getElementById(id);
-const BASE=LAYOUT.sheetW, BASEH=LAYOUT.sheetH;
+const SHEETS=LAYOUT.sheets;
 const ITEMS=LAYOUT.items; const byId={}; ITEMS.forEach(i=>byId[i.id]=i);
 // ---------------- tabs ----------------
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function showTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===t));if(t==='scene')renderScene();}
 // ---------------- template page ----------------
-$('guideImg').src=GUIDE1;$('dlGuide').href=GUIDE1;$('dlGuide2').href=GUIDE2;$('dlBlank').href=BLANK;
+const STATUS_TH={now:'ใช้ในเกมตอนนี้',next:'จะเพิ่มเข้าเกมต่อ',later:'เกมยังไม่ใช้'};
+$('tplTitle').textContent=`แม่แบบทั้งชุด (${ITEMS.length} ชิ้น ${SHEETS.length} แผ่น)`;
+SHEETS.forEach((sh,n)=>{
+  const count=ITEMS.filter(i=>i.sheet===sh.id).length,im=IMAGES[n],div=document.createElement('div');div.className='panel';
+  div.innerHTML=`<h2>${sh.title} <span class="badge ${sh.status==='now'?'b-ok':sh.status==='next'?'b-warn':'b-empty'}">${STATUS_TH[sh.status]}</span></h2><p class="muted">${count} ชิ้น · ภาพ ${sh.sheetW}×${sh.sheetH} px · ${sh.note}</p>
+  <div class="row"><a class="primary" download="${sh.stem}_guide.png" href="${im.g1}">ดาวน์โหลดแม่แบบ (${sh.sheetW} px)</a><a class="primary" download="${sh.stem}_guide_2x.png" href="${im.g2}">ดาวน์โหลดแม่แบบละเอียด (${sh.sheetW*2} px)</a><a class="ghost" download="${sh.stem}_blank.png" href="${im.blank}">ผืนโปร่งใสเปล่า</a><button class="ghost" data-copy="${n}">คัดลอกคำสั่งสำหรับ GPT</button><a class="ghost" download="${sh.stem}_prompt.txt" href="data:text/plain;charset=utf-8,${encodeURIComponent(im.prompt)}">คำสั่ง GPT (ไฟล์ข้อความ)</a></div>
+  <details><summary>ดูภาพแม่แบบแผ่นนี้</summary><div class="sheetwrap"><img alt="${sh.title}" src="${im.g1}"></div></details>`;
+  $('sheetCards').appendChild(div);
+});
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const t=IMAGES[Number(b.dataset.copy)].prompt;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>{b.textContent='คัดลอกแล้ว';setTimeout(()=>b.textContent='คัดลอกคำสั่งสำหรับ GPT',1800);});else prompt('คัดลอกข้อความนี้',t);});
+SHEETS.forEach((sh,n)=>{const o=document.createElement('option');o.value=n;o.textContent=sh.title;$('sheetSel').appendChild(o);});
 $('dlLayout').href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(LAYOUT,null,1));
 // ---------------- cutting ----------------
 let pieces={}, report={}, scale=1;
@@ -174,6 +180,7 @@ function srcSlot(id){const cat=byId[id].category,sel=document.querySelector(`sel
 function getP(id){const sl=slots[srcSlot(id)],r=sl.report[id];return r&&r.status!=='empty'?sl.pieces[id]:null;}
 function getR(id){return slots[srcSlot(id)].report[id];}
 $('slotSel').onchange=()=>{slotNow=$('slotSel').value;pieces=slots[slotNow].pieces;report=slots[slotNow].report;lastImg=null;$('fileInfo').textContent='ชุด '+slotNow+(Object.keys(pieces).length?' มีภาพแล้ว (เลือกไฟล์ใหม่เพื่อแทนที่)':' ยังไม่มีภาพ');render();};
+$('sheetSel').onchange=()=>{if(lastImg)process();};
 $('tol').oninput=()=>{$('tolv').textContent=$('tol').value;if(lastImg)process();};
 $('rmbg').onchange=()=>{if(lastImg)process();};
 $('hires').onchange=()=>{if(lastImg)process();};
@@ -186,15 +193,14 @@ drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])loadFile(e.dataTrans
 let lastImg=null;
 function loadFile(f){const url=URL.createObjectURL(f);const im=new Image();im.onload=()=>{lastImg=im;process();URL.revokeObjectURL(url);};im.onerror=()=>{$('fileInfo').textContent='เปิดไฟล์นี้ไม่ได้';};im.src=url;}
 function process(){
-  const im=lastImg;
+  const im=lastImg,sh=SHEETS[Number($('sheetSel').value)],BASE=sh.sheetW,BASEH=sh.sheetH;
   scale=im.width/BASE;
   const okScale=Number.isInteger(scale)&&scale>=1&&scale<=4&&im.height===BASEH*scale;
-  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับแม่แบบ (ต้องเป็น ${BASE}×${BASEH} หรือเท่าตัวของมัน เช่น ${BASE*2}×${BASEH*2}) อย่าย่อหรือตัดขอบภาพ`;pieces={};report={};saveSlot();render();return;}
-  $('fileInfo').textContent=`ไฟล์ ${im.width}×${im.height} px (ขยาย ${scale} เท่า)`;
+  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับ "${sh.title}" (ต้องเป็น ${BASE}×${BASEH} หรือเท่าตัวของมัน เช่น ${BASE*2}×${BASEH*2}) อย่าย่อหรือตัดขอบภาพ ถ้าเลือกแผ่นผิด ให้เลือกแผ่นที่ถูกในช่อง "อัปโหลดแผ่นที่"`;saveSlot();render();return;}
+  $('fileInfo').textContent=`${sh.title}: ไฟล์ ${im.width}×${im.height} px (ขยาย ${scale} เท่า)`;
   const sheet=document.createElement('canvas');sheet.width=im.width;sheet.height=im.height;const sc=sheet.getContext('2d',{willReadFrequently:true});sc.drawImage(im,0,0);
   if($('rmbg').checked)removeBackground(sc,sheet.width,sheet.height);
-  pieces={};report={};
-  ITEMS.forEach(it=>{
+  ITEMS.filter(i=>i.sheet===sh.id).forEach(it=>{
     const s=scale,x=it.x*s,y=it.y*s,w=it.w*s,h=it.h*s;
     const raw=document.createElement('canvas');raw.width=w;raw.height=h;raw.getContext('2d').drawImage(sheet,x,y,w,h,0,0,w,h);
     const out=document.createElement('canvas');
@@ -241,10 +247,12 @@ function render(){
   const cards=$('cards');cards.innerHTML='';
   const has=Object.keys(pieces).length>0;$('summary').hidden=!has;
   if(!has)return;
-  let ok=0,warn=0,empty=0;
+  let ok=0,warn=0,empty=0,notYet=0;
   LAYOUT.categories.forEach(cat=>{
+    const inCat=ITEMS.filter(i=>i.category===cat&&report[i.id]);
+    if(!inCat.length){notYet+=ITEMS.filter(i=>i.category===cat).length;return;}
     const h=document.createElement('h2');h.textContent=cat;h.style.gridColumn='1/-1';cards.appendChild(h);
-    ITEMS.filter(i=>i.category===cat).forEach(it=>{
+    inCat.forEach(it=>{
       const r=report[it.id],cv=pieces[it.id];
       const card=document.createElement('div');card.className='card '+(r.status==='empty'?'empty':r.status==='warn'?'warn':'ok');
       const th=document.createElement('div');th.className='thumb';const c2=document.createElement('canvas');c2.width=cv.width;c2.height=cv.height;c2.getContext('2d').drawImage(cv,0,0);th.appendChild(c2);card.appendChild(th);
@@ -257,7 +265,7 @@ function render(){
       if(r.status==='ok')ok++;else if(r.status==='warn')warn++;else empty++;
     });
   });
-  $('sumText').textContent=`ผ่าน ${ok} ชิ้น · ควรแก้ ${warn} ชิ้น · ยังว่าง ${empty} ชิ้น (จากทั้งหมด ${ITEMS.length})`;
+  $('sumText').textContent=`ผ่าน ${ok} ชิ้น · ควรแก้ ${warn} ชิ้น · ยังว่าง ${empty} ชิ้น (ของแผ่นที่อัปโหลดแล้ว) · ยังไม่ได้อัปโหลดแผ่นของอีก ${notYet} ชิ้น (จากทั้งหมด ${ITEMS.length})`;
   $('zip').disabled=ok+warn===0;$('zipReady').disabled=ok===0;
 }
 function downloadPng(it,cv){cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=it.file+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});}
@@ -294,12 +302,12 @@ const SCENE=[
   // [id, col, row, cols, rows, layer, dx, dy]  (dx, dy nudge a piece in pixels so chairs tuck under the table edge)
   ['mod_fridge',0,0,1,2,'kitchen'],['mod_cap_left',1,0,1,1,'kitchen'],['mod_counter',2,0,1,1,'kitchen'],['mod_sink',3,0,1,1,'kitchen'],['mod_stove',4,0,1,1,'kitchen'],['mod_oven',5,0,1,1,'kitchen'],['mod_cap_right',6,0,1,1,'kitchen'],['mod_prep',3,2,2,1,'kitchen'],
   ['rest_bench',0,2,2,1,'dining'],
-  ['rest_table_small',2,3,1,1,'dining'],['rest_chair_down',2,2,1,1,'dining',0,20],['rest_chair_side',1,3,1,1,'dining',26,0,1],['rest_chair_side',3,3,1,1,'dining',-26,0],['rest_chair_up',2,4,1,1,'dining',0,-22],
+  ['rest_table_small',2,3,2,2,'dining'],['rest_chair_down',2,2,1,1,'dining',0,20],['rest_chair_down',3,2,1,1,'dining',0,20],['rest_chair_side',1,3,1,1,'dining',26,0,1],['rest_chair_side',4,4,1,1,'dining',-26,0],['rest_chair_up',2,5,1,1,'dining',0,-22],['rest_chair_up',3,5,1,1,'dining',0,-22],
   ['rest_table_long',5,3,2,1,'dining'],['rest_chair_down',5,2,1,1,'dining',0,20],['rest_chair_down',6,2,1,1,'dining',0,20],['rest_chair_up',5,4,1,1,'dining',0,-22],['rest_chair_up',6,4,1,1,'dining',0,-22],
-  ['rest_stool',7,3,1,1,'dining'],['rest_register',7,2,1,1,'dining'],['rest_shelf',7,4,1,2,'dining'],['rest_menu_sign',2,5,1,1,'dining'],
+  ['rest_stool',7,3,1,1,'dining'],['rest_register',7,2,1,1,'dining'],['rest_shelf',7,4,1,2,'dining'],['rest_menu_sign',5,5,1,1,'dining'],
   ['deco_plant',0,5,1,1,'decor'],['deco_lamp_floor',0,3,1,1,'decor'],['deco_bin',7,1,1,1,'decor'],['deco_crate',6,1,1,1,'decor'],
 ];
-const PROPS=[['prop_board',2,0,0.5,46],['prop_pot',4,0,0.5,46],['prop_pan',5,0,0.5,46],['prop_bowl',3.0,2,0.3,46],['prop_knife',4.0,2,0.7,46],['prop_plate',2,3,0.5,58],['prop_cup',5,3,0.3,58],['prop_vase',6,3,0.6,58],['prop_bottle',7,2,0.5,44]];
+const PROPS=[['prop_board',2,0,0.5,46],['prop_pot',4,0,0.5,46],['prop_pan',5,0,0.5,46],['prop_bowl',3.0,2,0.3,46],['prop_knife',4.0,2,0.7,46],['prop_plate',2,3,0.5,58],['rest_vase_small',3,3.2,0.5,50],['rest_vase_large',2,3,0.6,40],['prop_cup',5,3,0.3,58],['prop_vase',6,3,0.6,58],['prop_bottle',7,2,0.5,44]];
 const WALLDECO=[['wdeco_painting',2,70],['wdeco_window',3,70],['wdeco_hood',4,60],['wdeco_lamp',5,70],['wdeco_window',6,70]]; // [id, column, height of the base line above the wall foot, in game px]
 function renderScene(){
   const cv=$('sceneCanvas');cv.width=CW;cv.height=CH;const c=cv.getContext('2d');
