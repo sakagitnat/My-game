@@ -138,6 +138,9 @@ def draw_guide(items, heads, H, S, title, background=True):
             for t in range(0, int(fy1 - fy0), 2 * seg):
                 d.line([(fx0, fy0 + t), (fx0, min(fy0 + t + seg, fy1))], fill=GN, width=S)
                 d.line([(fx1 - 1, fy0 + t), (fx1 - 1, min(fy0 + t + seg, fy1))], fill=GN, width=S)
+        if it['hint'] == 'char':
+            ty = y + h - int(1.8 * 128 * S)   # the top of the figure: 1.8 blocks tall (the frame is 2 blocks)
+            for t in range(0, w, 12 * S): d.line([(x + t, ty), (x + min(t + 6 * S, w), ty)], fill=(224, 88, 120, 255), width=S)
         fl = it['flags']
         if 'flush' in fl or 'flushl' in fl:
             None
