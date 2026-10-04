@@ -58,6 +58,38 @@ func run() -> void:
 	var tree_key := Iso.depth_key(Vector2(3 * Iso.SUB, (3 + 1) * Iso.SUB))
 	check(Iso.footprint_depth(Vector2i(6, 6), Vector2i(2, 2)) == tree_key, "a tree and a 1-cell thing in the same cell have the same key")
 
+	# turning about the middle
+	var mid := func(o: Vector2i, sz: Vector2i) -> Vector2: return Vector2(o) + Vector2(sz) * 0.5
+	for sz in [Vector2i(4, 2), Vector2i(6, 2), Vector2i(2, 4), Vector2i(3, 2), Vector2i(1, 2), Vector2i(4, 4)]:
+		var sh := Catalog.shift_for_size(sz)
+		var o := Vector2i(20, 20)
+		var turned_sz := Vector2i(sz.y, sz.x)
+		var o2 := o + sh
+		var drift: Vector2 = mid.call(o2, turned_sz) - mid.call(o, sz)
+		var even: bool = (sz.x - sz.y) % 2 == 0
+		check((even and drift == Vector2.ZERO) or (not even and absf(drift.x) <= 0.5 and absf(drift.y) <= 0.5), "turning %s keeps the middle (drift %s)" % [sz, drift])
+		check(o2 - sh == o, "turning back undoes the shift for %s (four turns never drift)" % sz)
+
+	var gt := WorldGrid.new(Vector2i(40, 40))
+	gt.owned_parcels = {}
+	for y in range(0, 5):
+		for x in range(0, 5):
+			gt.owned_parcels[Vector2i(x, y)] = true
+	gt.objects[Vector2i(20, 20)] = "rest_stove_01"
+	gt.footprints[Vector2i(20, 20)] = Vector2i(4, 2)
+	for c in gt.cells_of(Vector2i(20, 20), Vector2i(4, 2)):
+		gt.occupied[c] = Vector2i(20, 20)
+	gt.states[Vector2i(20, 20)] = {"dish": "omelet"}
+	check(gt.turn(Vector2i(20, 20), Vector2i(2, 4), Vector2i(21, 19)), "a stand-in 4x2 thing turns into the 2x4 footprint about its middle")
+	check(gt.objects.has(Vector2i(21, 19)) and not gt.objects.has(Vector2i(20, 20)) and gt.states.has(Vector2i(21, 19)) and not gt.states.has(Vector2i(20, 20)), "the thing and its state move to the new top-left unit")
+	check(gt.facing_at(Vector2i(21, 19)) == 1 and gt.origin_at(Vector2i(22, 22)) == Vector2i(21, 19) and gt.origin_at(Vector2i(20, 20)) == WorldGrid.NONE, "facing and the covered units follow")
+	gt.objects[Vector2i(23, 20)] = "rest_stove_01"   # another thing where the 4x2 would reach
+	gt.footprints[Vector2i(23, 20)] = Vector2i(2, 2)
+	for c in gt.cells_of(Vector2i(23, 20), Vector2i(2, 2)):
+		gt.occupied[c] = Vector2i(23, 20)
+	var before := gt.objects.duplicate()
+	check(not gt.turn(Vector2i(21, 19), Vector2i(4, 2), Vector2i(20, 20)) and gt.objects == before, "a turn into an occupied unit changes nothing")
+
 	if failures == 0:
 		print("PASS: footprint (block rectangle, walking, picture box, draw order)")
 		quit(0)

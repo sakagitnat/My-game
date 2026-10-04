@@ -234,24 +234,37 @@ func move_top(origin: Vector2i, new_origin: Vector2i) -> bool:
 func facing_at(origin: Vector2i) -> int:
 	return int(facings.get(origin, 0))
 
-# Turns the object at `origin` a quarter turn (0 front, 1 left, 2 back, 3 right) keeping its top-left cell and its state.
-# `new_sz` is the footprint after the turn. False, changing nothing, if it does not fit.
-func turn(origin: Vector2i, new_sz: Vector2i) -> bool:
+# Turns the object at `origin` a quarter turn (0 front, 1 left, 2 back, 3 right) keeping its state. `new_sz` is the footprint after
+# the turn and `new_origin` its top-left unit (default: the same one; Catalog.origin_after_turn gives the one that turns it about
+# its middle). Things standing on it (tops) stay where they are, so a thing with tops cannot be turned. False, changing nothing,
+# if it does not fit.
+func turn(origin: Vector2i, new_sz: Vector2i, new_origin: Vector2i = NONE) -> bool:
 	if not objects.has(origin):
 		return false
-	for c in cells_of(origin, new_sz):
+	if new_origin == NONE:
+		new_origin = origin
+	if not tops_over(origin).is_empty():
+		return false
+	for c in cells_of(new_origin, new_sz):
 		if not _unit_usable(c) or (occupied.has(c) and occupied[c] != origin):
 			return false
+	var id: String = objects[origin]
+	var st = states.get(origin)
+	var f := (facing_at(origin) + 1) % 4
 	for c in cells_of(origin, footprints[origin]):
 		occupied.erase(c)
-	footprints[origin] = new_sz
-	for c in cells_of(origin, new_sz):
-		occupied[c] = origin
-	var f := (facing_at(origin) + 1) % 4
-	if f == 0:
-		facings.erase(origin)
-	else:
-		facings[origin] = f
+	objects.erase(origin)
+	footprints.erase(origin)
+	states.erase(origin)
+	facings.erase(origin)
+	objects[new_origin] = id
+	footprints[new_origin] = new_sz
+	for c in cells_of(new_origin, new_sz):
+		occupied[c] = new_origin
+	if f != 0:
+		facings[new_origin] = f
+	if st != null:
+		states[new_origin] = st
 	return true
 
 # Origin of the object covering cell `c`, or NONE.

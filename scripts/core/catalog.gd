@@ -105,6 +105,20 @@ static func turn_rect(r: Rect2i, sz: Vector2i, facing: int) -> Rect2i:
 		sz = Vector2i(sz.y, sz.x)
 	return r
 
+# A turn keeps the middle of the thing where it is, so a thing can be turned in place. Footprints are counted in units, so when the
+# width and depth differ by an odd number the middle falls between units and is rounded towards the top-left. To make four turns
+# come back exactly (no drift), the top-left corner moves by +shift when turning to a left/right facing and by -shift back.
+static func turn_shift(id: String) -> Vector2i:
+	return shift_for_size(PLACEABLES[id].size)
+
+static func shift_for_size(sz: Vector2i) -> Vector2i:
+	return Vector2i(floori((sz.x - sz.y) / 2.0), floori((sz.y - sz.x) / 2.0))
+
+# Top-left unit of `id` after it is turned to `new_facing` (the previous facing is `new_facing - 1`), from its top-left unit `origin`.
+static func origin_after_turn(id: String, origin: Vector2i, new_facing: int) -> Vector2i:
+	var shift := turn_shift(id)
+	return origin + (shift if new_facing % 2 == 1 else -shift)
+
 static func placeables_for(area: String) -> Array[String]:
 	var out: Array[String] = []
 	for id in PLACEABLES:
