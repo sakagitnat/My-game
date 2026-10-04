@@ -13,8 +13,8 @@ ITEMS = [
     ("wall_side", "walls", "wall_side_01", 32, 384, "ผนัง", "ผนังข้าง (แถบบาง)", "wallside", ""),
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
-    ("wdeco_door", "walls", "wdeco_door_01", 128, 256, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
-    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 256, "ของติดผนัง", "ประตู (เปิด) (เกมยังไม่ใช้)", "dooropen", ""),
+    ("wdeco_door", "walls", "wdeco_door_01", 128, 280, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
+    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 280, "ของติดผนัง", "ประตู (เปิด) (เกมยังไม่ใช้)", "dooropen", ""),
     ("wdeco_lamp", "walls", "wdeco_lamp_01", 128, 128, "ของติดผนัง", "โคมไฟติดผนัง (เกมยังไม่ใช้)", "lamp", ""),
     ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด (เกมยังไม่ใช้)", "painting", ""),
     ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา (เกมยังไม่ใช้)", "hood", ""),
@@ -60,7 +60,7 @@ ITEMS = [
     ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
     # trees, rocks and bushes the player clears (the base of the trunk / rock sits on the bottom edge of the cell)
     ("obs_tree", "obstacles", "obs_tree_01", 256, 512, "ต้นไม้ หิน พุ่ม", "ต้นไม้ใหญ่ (สูง 3 บล็อก ฐานลำต้นอยู่กลางภาพชิดขอบล่าง)", "tree", ""),
-    ("obs_tree_small", "obstacles", "obs_tree_02", 128, 256, "ต้นไม้ หิน พุ่ม", "ต้นไม้เล็ก (สูง 2 บล็อก เท่าตัวละคร)", "treesmall", ""),
+    ("obs_tree_small", "obstacles", "obs_tree_02", 128, 256, "ต้นไม้ หิน พุ่ม", "ต้นไม้เล็ก (กรอบสูง 2 ช่อง เท่าตัวละคร วาดให้ยอดถึงขอบบนกรอบ)", "treesmall", ""),
     ("obs_bush", "obstacles", "obs_bush_01", 128, 128, "ต้นไม้ หิน พุ่ม", "พุ่มไม้ (สูง 1 บล็อก)", "bush", ""),
     ("obs_rock", "obstacles", "obs_rock_01", 128, 96, "ต้นไม้ หิน พุ่ม", "ก้อนหิน (สูงครึ่งบล็อก)", "rock", ""),
     # farm plot (2 x 2 cells), what grows on it, and the farm things
@@ -75,7 +75,9 @@ ITEMS += [
     ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
     ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
-    ("rest_stove", "furniture", "rest_stove_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา (2x2 ช่อง)", "stove2", ""),
+    ("rest_stove", "furniture", "rest_stove_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (2x2 ช่อง)", "stove2", ""),
+    ("rest_stove_side", "furniture", "rest_stove_side_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว)", "stove2", ""),
+    ("rest_stove_back", "furniture", "rest_stove_back_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว)", "stove2", ""),
     ("rest_vase_small", "furniture", "rest_vase_small_01", 64, 64, "ร้าน (ในเกมตอนนี้)", "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)", "prop", ""),
     ("rest_vase_large", "furniture", "rest_vase_large_01", 128, 128, "ร้าน (ในเกมตอนนี้)", "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)", "vase", ""),
     # icons (not used by the game yet; one cell, seen straight on)

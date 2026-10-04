@@ -37,8 +37,8 @@ SHAPES = {
     'walllow': [('r', 0, 8, 127, 56)],
     'wallside': [('r', 3, 3, 28, 380)],
     'window': [('r', 16, 40, 112, 100), ('l', 64, 40, 64, 100), ('l', 16, 70, 112, 70)],
-    'door': [('r', 14, 20, 114, 232), ('r', 24, 32, 104, 220)],
-    'dooropen': [('r', 14, 20, 114, 232), ('r', 24, 32, 104, 220), ('l', 24, 32, 44, 40), ('l', 44, 40, 44, 212), ('l', 44, 212, 24, 220)],
+    'door': [('r', 14, 20, 114, 256), ('r', 24, 32, 104, 244)],
+    'dooropen': [('r', 14, 20, 114, 256), ('r', 24, 32, 104, 244), ('l', 24, 32, 44, 40), ('l', 44, 40, 44, 236), ('l', 44, 236, 24, 244)],
     'lamp': [('r', 48, 44, 80, 100), ('l', 64, 30, 64, 44)],
     'painting': [('r', 20, 36, 108, 100), ('r', 28, 44, 100, 92)],
     'hood': [('r', 20, 30, 108, 96), ('r', 40, 50, 88, 96)],
@@ -138,6 +138,9 @@ def draw_guide(items, heads, H, S, title, background=True):
             for t in range(0, int(fy1 - fy0), 2 * seg):
                 d.line([(fx0, fy0 + t), (fx0, min(fy0 + t + seg, fy1))], fill=GN, width=S)
                 d.line([(fx1 - 1, fy0 + t), (fx1 - 1, min(fy0 + t + seg, fy1))], fill=GN, width=S)
+        if it['hint'] == 'char':
+            ty = y + h - int(1.8 * 128 * S)   # the top of the figure: 1.8 blocks tall (the frame is 2 blocks)
+            for t in range(0, w, 12 * S): d.line([(x + t, ty), (x + min(t + 6 * S, w), ty)], fill=(224, 88, 120, 255), width=S)
         fl = it['flags']
         if 'flush' in fl or 'flushl' in fl:
             None

@@ -22,7 +22,7 @@
    "status": "now",
    "note": "ใช้ในเกมตอนนี้",
    "sheetW": 1920,
-   "sheetH": 1710,
+   "sheetH": 1734,
    "categories": [
     "พื้น",
     "ผนัง",
@@ -179,7 +179,7 @@
    "x": 344,
    "y": 478,
    "category": "ต้นไม้ หิน พุ่ม",
-   "label": "ต้นไม้เล็ก (สูง 2 บล็อก เท่าตัวละคร)",
+   "label": "ต้นไม้เล็ก (กรอบสูง 2 ช่อง เท่าตัวละคร วาดให้ยอดถึงขอบบนกรอบ)",
    "hint": "treesmall",
    "flags": "",
    "anchor": [
@@ -688,7 +688,7 @@
    "folder": "walls",
    "file": "wdeco_door_01",
    "w": 128,
-   "h": 256,
+   "h": 280,
    "x": 272,
    "y": 1000,
    "category": "ของติดผนัง",
@@ -697,7 +697,7 @@
    "flags": "",
    "anchor": [
     64,
-    232
+    256
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -707,7 +707,7 @@
    "folder": "walls",
    "file": "wdeco_door_open_01",
    "w": 128,
-   "h": 256,
+   "h": 280,
    "x": 484,
    "y": 1000,
    "category": "ของติดผนัง",
@@ -716,7 +716,7 @@
    "flags": "",
    "anchor": [
     64,
-    232
+    256
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -785,7 +785,7 @@
    "w": 256,
    "h": 256,
    "x": 32,
-   "y": 1394,
+   "y": 1418,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)",
    "hint": "table2",
@@ -804,9 +804,47 @@
    "w": 256,
    "h": 256,
    "x": 316,
-   "y": 1394,
+   "y": 1418,
    "category": "ร้าน (ในเกมตอนนี้)",
-   "label": "เตา (2x2 ช่อง)",
+   "label": "เตา ด้านหน้า (2x2 ช่อง)",
+   "hint": "stove2",
+   "flags": "",
+   "anchor": [
+    128,
+    256
+   ],
+   "sheet": "now_shop",
+   "status": "now"
+  },
+  {
+   "id": "rest_stove_side",
+   "folder": "furniture",
+   "file": "rest_stove_side_01",
+   "w": 256,
+   "h": 256,
+   "x": 600,
+   "y": 1418,
+   "category": "ร้าน (ในเกมตอนนี้)",
+   "label": "เตา ด้านข้างซ้าย (หมุนแล้ว)",
+   "hint": "stove2",
+   "flags": "",
+   "anchor": [
+    128,
+    256
+   ],
+   "sheet": "now_shop",
+   "status": "now"
+  },
+  {
+   "id": "rest_stove_back",
+   "folder": "furniture",
+   "file": "rest_stove_back_01",
+   "w": 256,
+   "h": 256,
+   "x": 884,
+   "y": 1418,
+   "category": "ร้าน (ในเกมตอนนี้)",
+   "label": "เตา ด้านหลัง (หมุนแล้ว)",
    "hint": "stove2",
    "flags": "",
    "anchor": [
@@ -822,8 +860,8 @@
    "file": "rest_vase_small_01",
    "w": 64,
    "h": 64,
-   "x": 660,
-   "y": 1394,
+   "x": 1228,
+   "y": 1418,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)",
    "hint": "prop",
@@ -841,8 +879,8 @@
    "file": "rest_vase_large_01",
    "w": 128,
    "h": 128,
-   "x": 840,
-   "y": 1394,
+   "x": 1408,
+   "y": 1418,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)",
    "hint": "vase",

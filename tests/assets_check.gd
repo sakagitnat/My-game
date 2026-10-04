@@ -79,7 +79,7 @@ func _check_topdown() -> void:
 				want = Vector2i(64, 64)
 			elif sub == "walls":
 				if f.begins_with("wdeco_door"):
-					want = Vector2i(128, 256)
+					want = Vector2i(128, 280)   # two blocks above the base line (24 px up from the bottom) plus the 24 px below it
 				elif f.begins_with("wdeco_"):
 					want = Vector2i(128, 128)
 				elif f.begins_with("wall_low"):
