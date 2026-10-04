@@ -27,6 +27,7 @@ var menu_button: Button
 var shop_button: Button
 var barn_button: Button
 var storage_button: Button
+var hours_label: Label
 var message_label: Label
 var message_key := "HINT_START"
 var message_arg = null
@@ -327,6 +328,19 @@ func _customer_action(c: Dictionary) -> Dictionary:
 		"level": text = Loc.t("COOK_LEVEL") % int(Catalog.RECIPES[c.dish].level)
 	return {"text": text, "enabled": false, "action": ""}
 
+# "14:30" for a game-clock hour.
+static func clock_text(hour: float) -> String:
+	var h := floori(hour)
+	var m := floori((hour - float(h)) * 60.0)
+	return "%d:%02d" % [h, m - m % 5]
+
+func _update_hours_label() -> void:
+	if hours_label == null or not is_instance_valid(hours_label):
+		return
+	var now := clock_text(GameState.day_clock.hour())
+	hours_label.text = Loc.t("SHOP_OPEN_NOW" if GameState.shop_open() else "SHOP_CLOSED_NOW") % now
+	hours_label.add_theme_color_override("font_color", UiTheme.GOOD if GameState.shop_open() else UiTheme.MUTED)
+
 func _refresh_restaurant(force: bool) -> void:
 	if rest_panel == null:
 		return
@@ -334,10 +348,12 @@ func _refresh_restaurant(force: bool) -> void:
 	rest_panel.visible = zone == "restaurant"
 	if not rest_panel.visible:
 		return
-	var sig := "%d|%d|%d|%s" % [r.reputation, r.counter.size(), GameState.level, ",".join(r.counter)]
+	var is_open := GameState.shop_open()
+	var sig := "%d|%d|%d|%s|%s" % [r.reputation, r.counter.size(), GameState.level, ",".join(r.counter), is_open]
 	for c in r.customers:
 		sig += "|%d:%s:%s" % [c.id, c.dish, _customer_action(c).text]
 	if not force and sig == _rest_sig:
+		_update_hours_label()
 		for c in r.customers:
 			if _rest_bars.has(c.id):
 				_rest_bars[c.id].value = 100.0 * clampf(c.patience / c.max_patience, 0.0, 1.0)
@@ -353,6 +369,19 @@ func _refresh_restaurant(force: bool) -> void:
 	head.add_theme_font_size_override("font_size", 18)
 	head.add_theme_color_override("font_color", UiTheme.GOLD)
 	rest_body.add_child(head)
+	var hours_row := HBoxContainer.new()
+	hours_row.add_theme_constant_override("separation", 10)
+	hours_label = Label.new()
+	hours_label.add_theme_font_size_override("font_size", 16)
+	hours_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hours_row.add_child(hours_label)
+	var hours_btn := Button.new()
+	hours_btn.text = Loc.t("BTN_HOURS")
+	hours_btn.custom_minimum_size = Vector2(120, 44)
+	hours_btn.pressed.connect(open_modal.bind("hours"))
+	hours_row.add_child(hours_btn)
+	rest_body.add_child(hours_row)
+	_update_hours_label()
 	if not r.has_service():
 		var setup := Label.new()
 		setup.text = Loc.t("REST_NEEDS_SETUP")
@@ -371,7 +400,7 @@ func _refresh_restaurant(force: bool) -> void:
 		rest_body.add_child(ready)
 	if r.customers.is_empty():
 		var wait := Label.new()
-		wait.text = Loc.t("REST_WAITING")
+		wait.text = Loc.t("REST_WAITING") if is_open else Loc.t("REST_CLOSED_WAIT")
 		wait.add_theme_color_override("font_color", UiTheme.MUTED)
 		rest_body.add_child(wait)
 	for c in r.customers:
@@ -578,6 +607,7 @@ func _build_modal() -> void:
 		"shop": _build_shop()
 		"barn": _build_barn()
 		"storage": _build_storage()
+		"hours": _build_hours()
 		"settings": _build_settings()
 		"confirm": _build_confirm()
 		"names": _build_names()
@@ -651,6 +681,54 @@ func _build_storage() -> void:
 				open_modal("storage")))
 		row.add_child(sell)
 		list.add_child(row)
+
+# Opening hours: the player's opening and closing hour, and open/close now.
+func _build_hours() -> void:
+	_modal_header(Loc.t("HOURS_TITLE"))
+	var h := GameState.shop_hours
+	var status := Label.new()
+	status.text = Loc.t("SHOP_OPEN_NOW" if GameState.shop_open() else "SHOP_CLOSED_NOW") % clock_text(GameState.day_clock.hour())
+	status.add_theme_color_override("font_color", UiTheme.GOOD if GameState.shop_open() else UiTheme.MUTED)
+	modal_body.add_child(status)
+	for kind in ["open", "close"]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var name_l := Label.new()
+		name_l.text = Loc.t("HOURS_OPENS" if kind == "open" else "HOURS_CLOSES")
+		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name_l)
+		var value: int = h.open_hour if kind == "open" else h.close_hour
+		for step in [-1, 1]:
+			var b := Button.new()
+			b.text = "-" if step < 0 else "+"
+			b.custom_minimum_size = Vector2(64, 56)
+			b.pressed.connect(func() -> void:
+				var o: int = h.open_hour + (step if kind == "open" else 0)
+				var c: int = h.close_hour + (step if kind == "close" else 0)
+				GameState.set_shop_hours(o, c)
+				_build_modal())
+			row.add_child(b)
+			if step < 0:
+				var v := Label.new()
+				v.text = "%d:00" % value
+				v.custom_minimum_size = Vector2(80, 0)
+				v.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				row.add_child(v)
+		modal_body.add_child(row)
+	var now_btn := Button.new()
+	now_btn.text = Loc.t("BTN_CLOSE_NOW") if GameState.shop_open() else Loc.t("BTN_OPEN_NOW")
+	now_btn.custom_minimum_size = Vector2(0, 60)
+	now_btn.pressed.connect(func() -> void:
+		GameState.force_shop(not GameState.shop_open())
+		_build_modal()
+		refresh())
+	modal_body.add_child(now_btn)
+	var note := Label.new()
+	note.text = Loc.t("HOURS_NOTE")
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_font_size_override("font_size", 15)
+	note.add_theme_color_override("font_color", UiTheme.MUTED)
+	modal_body.add_child(note)
 
 func _build_barn() -> void:
 	_modal_header(Loc.t("BARN_TITLE"))

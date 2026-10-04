@@ -26,6 +26,12 @@ func reset() -> void:
 	t = 0.0
 	days = 0
 
+# A new game begins at 9:00 (the restaurant's default opening hour), not at the start of the morning.
+const NEW_GAME_HOUR := 9.0
+
+func start_new_game() -> void:
+	t = (NEW_GAME_HOUR - START_HOUR) / 24.0 + 0.0005
+
 func tick(delta: float) -> void:
 	t += delta * speed / DAY_SECONDS
 	while t >= 1.0:
