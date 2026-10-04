@@ -27,6 +27,7 @@ func run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	gs.autosave = false
 	gs.reset()
+	gs.day_clock.t = 3.5 / 24.0   # 9:30: the restaurant is open (it opens at 9:00)
 	gs.level = 10
 	gs.coins = 5000
 	gs.clock_override = 1000.0

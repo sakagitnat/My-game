@@ -75,7 +75,6 @@ func reset() -> void:
 	inventory = Inventory.new(60)
 	stash.clear()
 	day_clock.reset()
-	day_clock.start_new_game()
 	shop_hours.reset()
 	player_name = ""
 	restaurant_name = ""

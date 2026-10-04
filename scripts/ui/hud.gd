@@ -400,7 +400,7 @@ func _refresh_restaurant(force: bool) -> void:
 		rest_body.add_child(ready)
 	if r.customers.is_empty():
 		var wait := Label.new()
-		wait.text = Loc.t("REST_WAITING") if is_open else Loc.t("REST_CLOSED_WAIT")
+		wait.text = Loc.t("REST_WAITING") if is_open else Loc.t("REST_CLOSED_WAIT") % ("%d:00" % GameState.shop_hours.open_hour)
 		wait.add_theme_color_override("font_color", UiTheme.MUTED)
 		rest_body.add_child(wait)
 	for c in r.customers:
