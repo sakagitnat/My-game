@@ -14,6 +14,8 @@ var signs: Terrain
 var coast: Node2D
 var sea: ColorRect
 var _timer := 0.0
+var _sun_timer: float = 0.0
+var daylight: ShaderMaterial   # the time-of-day tint (shaders/daylight.gdshader)
 
 func setup(view_state: ViewState, cam: Camera2D) -> void:
 	view = view_state
@@ -37,6 +39,13 @@ func _process(delta: float) -> void:
 	if sea == null:
 		return
 	_update_sea()
+	# the light follows the time of day (white while editing the map, so what is painted can be judged)
+	daylight.set_shader_parameter("tint", Color.WHITE if view.edit_mode else GameState.day_clock.tint())
+	# shadows lean and shorten with the sun: redraw about once a second
+	_sun_timer += delta
+	if _sun_timer >= 1.0:
+		_sun_timer = 0.0
+		queue_redraw()
 	# Growth bars and ready markers change with time even when nothing else does.
 	if not GameState.grid(view.zone).states.is_empty():
 		_timer += delta
@@ -68,7 +77,7 @@ func _build_backdrop() -> void:
 	var light_layer := CanvasLayer.new()
 	light_layer.layer = 5
 	add_child(light_layer)
-	for shader_path in ["res://shaders/sunlight.gdshader", "res://shaders/vignette.gdshader"]:
+	for shader_path in ["res://shaders/sunlight.gdshader", "res://shaders/daylight.gdshader", "res://shaders/vignette.gdshader"]:
 		var r := ColorRect.new()
 		r.set_anchors_preset(Control.PRESET_FULL_RECT)
 		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -76,6 +85,8 @@ func _build_backdrop() -> void:
 		m.shader = load(shader_path)
 		r.material = m
 		light_layer.add_child(r)
+		if shader_path.ends_with("daylight.gdshader"):
+			daylight = m
 
 func _update_sea() -> void:
 	var m := sea.material as ShaderMaterial
@@ -116,12 +127,17 @@ func _draw() -> void:
 	if view.ghost_id != "":
 		_draw_ghost()
 
+# Soft ellipse under a thing. It leans away from the sun (right in the morning, left in the evening), is long at dawn and
+# dusk, short and darker at noon and faint at night (DayClock.sun).
 func _draw_shadow(center: Vector2, rx: float) -> void:
+	var sun := GameState.day_clock.sun()
+	var rl := rx * float(sun.length)
+	var c := center + Vector2(float(sun.dir) * rx * 0.55, 0.0)
 	var pts := PackedVector2Array()
 	for i in range(16):
 		var a := TAU * i / 16.0
-		pts.append(center + Vector2(cos(a) * rx, sin(a) * rx * 0.5))
-	draw_colored_polygon(pts, Color(0.05, 0.14, 0.05, 0.28))
+		pts.append(c + Vector2(cos(a) * rl, sin(a) * rl * 0.5))
+	draw_colored_polygon(pts, Color(0.05, 0.14, 0.05, float(sun.alpha)))
 
 func _draw_obstacle(c: Vector2i, kind: String) -> void:
 	var art := ArtCatalog.obstacle(kind)
