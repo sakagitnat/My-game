@@ -6,7 +6,7 @@
 - **จะเพิ่มเข้าเกมต่อ**: ชิ้นของชุดตกแต่งร้าน ยังไม่มีในร้านค้า ผมจะเพิ่มรายการสินค้าให้ตรงกับภาพที่ได้
 - **เกมยังไม่ใช้**: ไอคอนและตัวละคร ทำภาพไว้ล่วงหน้าตามชื่อและขนาดนี้
 
-## แผ่น 1: พื้นกลางแจ้งและฟาร์ม (ใช้ในเกมตอนนี้, แม่แบบ 1920x3002 px)
+## แผ่น 1: พื้นกลางแจ้งและฟาร์ม (ใช้ในเกมตอนนี้, แม่แบบ 1920x3066 px)
 
 | หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |
 |---|---|---|---|---|---|
@@ -47,9 +47,9 @@
 | พืช | กะหล่ำปลี ใกล้สุก | `farm` | `crop_cabbage_s3.png` | 256x256 |  |
 | พืช | กะหล่ำปลี สุก เก็บเกี่ยวได้ | `farm` | `crop_cabbage_s4.png` | 256x256 |  |
 | ฟาร์ม | รั้ว (1 ช่อง ต่อกันเป็นแถว) | `farm` | `farm_fence_01.png` | 128x160 |  |
-| ฟาร์ม | เล้าไก่ (3x3 ช่อง) | `farm` | `farm_coop_01.png` | 384x384 |  |
+| ฟาร์ม | เล้าไก่ (3x3 ช่อง สูง 2 บล็อก) | `farm` | `farm_coop_01.png` | 384x448 |  |
 
-## แผ่น 2: ร้านและผนัง (ใช้ในเกมตอนนี้, แม่แบบ 1920x1582 px)
+## แผ่น 2: ร้านและผนัง (ใช้ในเกมตอนนี้, แม่แบบ 1920x1710 px)
 
 | หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |
 |---|---|---|---|---|---|
@@ -57,9 +57,9 @@
 | พื้น | พื้นร้าน B (สลับ A) | `tiles` | `tile_floor_02.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
 | พื้น | พื้นครัว (เกมยังไม่ใช้ ทำไว้ล่วงหน้า) | `tiles` | `tile_floor_03.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
 | พื้น | ลานหน้าร้าน | `tiles` | `tile_pavement_01.png` | 128x128 | ทึบ ต่อกันทุกทิศ |
-| ผนัง | ผนังหลัง (สูง 2 ช่อง) | `walls` | `wall_plain_01.png` | 128x256 | ปลายซ้ายขวาชนขอบภาพ |
+| ผนัง | ผนังหลัง (สูง 3 บล็อก) | `walls` | `wall_plain_01.png` | 128x384 | ปลายซ้ายขวาชนขอบภาพ |
 | ผนัง | ผนังเตี้ย / ราว | `walls` | `wall_low_01.png` | 128x64 | ปลายซ้ายขวาชนขอบภาพ |
-| ผนัง | ผนังข้าง (แถบบาง) | `walls` | `wall_side_01.png` | 32x256 |  |
+| ผนัง | ผนังข้าง (แถบบาง) | `walls` | `wall_side_01.png` | 32x384 |  |
 | ของติดผนัง | หน้าต่าง | `walls` | `wdeco_window_01.png` | 128x128 |  |
 | ของติดผนัง | ประตู (ปิด) | `walls` | `wdeco_door_01.png` | 128x256 |  |
 | ของติดผนัง | ประตู (เปิด) (เกมยังไม่ใช้) | `walls` | `wdeco_door_open_01.png` | 128x256 |  |
@@ -71,30 +71,30 @@
 | ร้าน (ในเกมตอนนี้) | แจกันเล็ก (บนโต๊ะ ครึ่งช่อง) | `furniture` | `rest_vase_small_01.png` | 64x64 |  |
 | ร้าน (ในเกมตอนนี้) | แจกันใหญ่ (บนโต๊ะ 1 ช่อง) | `furniture` | `rest_vase_large_01.png` | 128x128 |  |
 
-## แผ่น 3: ชุดตกแต่งร้าน (จะเพิ่มเข้าเกมต่อ, แม่แบบ 1920x1914 px)
+## แผ่น 3: ชุดตกแต่งร้าน (จะเพิ่มเข้าเกมต่อ, แม่แบบ 1920x2138 px)
 
 | หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |
 |---|---|---|---|---|---|
-| ครัว | เคาน์เตอร์ตรง | `modular` | `mod_modern_counter_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
-| ครัว | อ่างล้างจาน | `modular` | `mod_modern_sink_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
-| ครัว | เตา | `modular` | `mod_modern_stove_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
-| ครัว | เตาอบ | `modular` | `mod_modern_oven_01.png` | 128x128 | ปลายซ้ายขวาชนขอบภาพ |
-| ครัว | ปิดปลายแถวด้านซ้าย | `modular` | `mod_modern_cap_left_01.png` | 128x128 | ปลายซ้ายชนขอบ |
-| ครัว | ปิดปลายแถวด้านขวา | `modular` | `mod_modern_cap_right_01.png` | 128x128 | ปลายขวาชนขอบ |
-| ครัว | ตู้เย็น | `modular` | `mod_modern_fridge_01.png` | 128x256 |  |
-| ครัว | โต๊ะเตรียม (เกาะกลาง) | `modular` | `mod_modern_prep_table_01.png` | 256x128 | ปลายซ้ายขวาชนขอบภาพ |
-| โซนลูกค้า | โต๊ะยาว | `furniture` | `rest_table_long_01.png` | 256x128 |  |
-| โซนลูกค้า | เก้าอี้หันขึ้น (ใต้โต๊ะ) | `furniture` | `rest_chair_up_01.png` | 128x160 |  |
-| โซนลูกค้า | เก้าอี้หันลง (เหนือโต๊ะ) | `furniture` | `rest_chair_down_01.png` | 128x160 |  |
-| โซนลูกค้า | เก้าอี้หันข้าง (วาดหันซ้าย เกมกลับให้เป็นหันขวาเอง) | `furniture` | `rest_chair_side_01.png` | 128x160 |  |
+| ครัว | เคาน์เตอร์ตรง | `modular` | `mod_modern_counter_01.png` | 128x192 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | อ่างล้างจาน | `modular` | `mod_modern_sink_01.png` | 128x192 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | เตา | `modular` | `mod_modern_stove_01.png` | 128x192 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | เตาอบ | `modular` | `mod_modern_oven_01.png` | 128x192 | ปลายซ้ายขวาชนขอบภาพ |
+| ครัว | ปิดปลายแถวด้านซ้าย | `modular` | `mod_modern_cap_left_01.png` | 128x192 | ปลายซ้ายชนขอบ |
+| ครัว | ปิดปลายแถวด้านขวา | `modular` | `mod_modern_cap_right_01.png` | 128x192 | ปลายขวาชนขอบ |
+| ครัว | ตู้เย็น | `modular` | `mod_modern_fridge_01.png` | 128x320 |  |
+| ครัว | โต๊ะเตรียม (เกาะกลาง) | `modular` | `mod_modern_prep_table_01.png` | 256x192 | ปลายซ้ายขวาชนขอบภาพ |
+| โซนลูกค้า | โต๊ะยาว (2x1 ช่อง สูง 1 บล็อก) | `furniture` | `rest_table_long_01.png` | 256x192 |  |
+| โซนลูกค้า | เก้าอี้หันขึ้น (ใต้โต๊ะ) | `furniture` | `rest_chair_up_01.png` | 128x192 |  |
+| โซนลูกค้า | เก้าอี้หันลง (เหนือโต๊ะ) | `furniture` | `rest_chair_down_01.png` | 128x192 |  |
+| โซนลูกค้า | เก้าอี้หันข้าง (วาดหันซ้าย) | `furniture` | `rest_chair_side_01.png` | 128x192 |  |
 | โซนลูกค้า | สตูล | `furniture` | `rest_stool_01.png` | 128x128 |  |
 | โซนลูกค้า | ม้านั่งยาว | `furniture` | `rest_bench_01.png` | 256x128 |  |
-| โซนลูกค้า | เครื่องคิดเงิน | `furniture` | `rest_register_01.png` | 128x128 |  |
-| โซนลูกค้า | ชั้นวางของ | `furniture` | `rest_shelf_01.png` | 128x256 |  |
-| โซนลูกค้า | ป้ายเมนูตั้งพื้น | `furniture` | `rest_menu_sign_01.png` | 128x160 |  |
-| ตกแต่ง | กระถางต้นไม้ | `deco` | `deco_plant_pot_01.png` | 128x192 |  |
+| โซนลูกค้า | เครื่องคิดเงิน | `furniture` | `rest_register_01.png` | 128x192 |  |
+| โซนลูกค้า | ชั้นวางของ | `furniture` | `rest_shelf_01.png` | 128x320 |  |
+| โซนลูกค้า | ป้ายเมนูตั้งพื้น | `furniture` | `rest_menu_sign_01.png` | 128x192 |  |
+| ตกแต่ง | กระถางต้นไม้ | `deco` | `deco_plant_pot_01.png` | 128x256 |  |
 | ตกแต่ง | พรม (ภาพแบนบนพื้น) | `deco` | `deco_rug_01.png` | 256x256 | ภาพแบนบนพื้น |
-| ตกแต่ง | โคมไฟตั้งพื้น | `deco` | `deco_lamp_floor_01.png` | 128x256 |  |
+| ตกแต่ง | โคมไฟตั้งพื้น | `deco` | `deco_lamp_floor_01.png` | 128x320 |  |
 | ตกแต่ง | ถังขยะ | `deco` | `deco_trash_bin_01.png` | 128x128 |  |
 | ตกแต่ง | ลังไม้ | `deco` | `deco_crate_01.png` | 128x128 |  |
 | ของเล็ก | จาน | `props` | `prop_plate_01.png` | 64x64 |  |
@@ -123,45 +123,45 @@
 | ไอคอน | สลัดกะหล่ำ | `icons` | `icon_dish_salad_01.png` | 128x128 |  |
 | ไอคอน | เหรียญ | `icons` | `icon_coin_01.png` | 128x128 |  |
 
-## แผ่น 5: ตัวละคร (เกมยังไม่ใช้, แม่แบบ 1920x1454 px)
+## แผ่น 5: ตัวละคร (เกมยังไม่ใช้, แม่แบบ 1920x1710 px)
 
 | หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |
 |---|---|---|---|---|---|
-| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า ยืน | `chars` | `char_player_front_idle_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า เดิน 1 | `chars` | `char_player_front_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า เดิน 2 | `chars` | `char_player_front_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง ยืน | `chars` | `char_player_back_idle_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง เดิน 1 | `chars` | `char_player_back_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง เดิน 2 | `chars` | `char_player_back_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย ยืน | `chars` | `char_player_side_idle_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย เดิน 1 | `chars` | `char_player_side_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย เดิน 2 | `chars` | `char_player_side_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า ยืน | `chars` | `char_customer_a_front_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า เดิน 1 | `chars` | `char_customer_a_front_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า เดิน 2 | `chars` | `char_customer_a_front_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง ยืน | `chars` | `char_customer_a_back_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง เดิน 1 | `chars` | `char_customer_a_back_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง เดิน 2 | `chars` | `char_customer_a_back_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย ยืน | `chars` | `char_customer_a_side_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย เดิน 1 | `chars` | `char_customer_a_side_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย เดิน 2 | `chars` | `char_customer_a_side_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า ยืน | `chars` | `char_customer_b_front_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า เดิน 1 | `chars` | `char_customer_b_front_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า เดิน 2 | `chars` | `char_customer_b_front_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง ยืน | `chars` | `char_customer_b_back_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง เดิน 1 | `chars` | `char_customer_b_back_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง เดิน 2 | `chars` | `char_customer_b_back_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย ยืน | `chars` | `char_customer_b_side_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย เดิน 1 | `chars` | `char_customer_b_side_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย เดิน 2 | `chars` | `char_customer_b_side_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า ยืน | `chars` | `char_customer_c_front_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า เดิน 1 | `chars` | `char_customer_c_front_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า เดิน 2 | `chars` | `char_customer_c_front_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง ยืน | `chars` | `char_customer_c_back_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง เดิน 1 | `chars` | `char_customer_c_back_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง เดิน 2 | `chars` | `char_customer_c_back_walk2_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย ยืน | `chars` | `char_customer_c_side_idle_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย เดิน 1 | `chars` | `char_customer_c_side_walk1_01.png` | 128x192 |  |
-| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย เดิน 2 | `chars` | `char_customer_c_side_walk2_01.png` | 128x192 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า ยืน | `chars` | `char_player_front_idle_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า เดิน 1 | `chars` | `char_player_front_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หน้า เดิน 2 | `chars` | `char_player_front_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง ยืน | `chars` | `char_player_back_idle_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง เดิน 1 | `chars` | `char_player_back_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น หลัง เดิน 2 | `chars` | `char_player_back_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย ยืน | `chars` | `char_player_side_idle_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย เดิน 1 | `chars` | `char_player_side_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ผู้เล่น | ผู้เล่น ข้างซ้าย เดิน 2 | `chars` | `char_player_side_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า ยืน | `chars` | `char_customer_a_front_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า เดิน 1 | `chars` | `char_customer_a_front_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หน้า เดิน 2 | `chars` | `char_customer_a_front_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง ยืน | `chars` | `char_customer_a_back_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง เดิน 1 | `chars` | `char_customer_a_back_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A หลัง เดิน 2 | `chars` | `char_customer_a_back_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย ยืน | `chars` | `char_customer_a_side_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย เดิน 1 | `chars` | `char_customer_a_side_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า A | ลูกค้า A ข้างซ้าย เดิน 2 | `chars` | `char_customer_a_side_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า ยืน | `chars` | `char_customer_b_front_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า เดิน 1 | `chars` | `char_customer_b_front_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หน้า เดิน 2 | `chars` | `char_customer_b_front_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง ยืน | `chars` | `char_customer_b_back_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง เดิน 1 | `chars` | `char_customer_b_back_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B หลัง เดิน 2 | `chars` | `char_customer_b_back_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย ยืน | `chars` | `char_customer_b_side_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย เดิน 1 | `chars` | `char_customer_b_side_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า B | ลูกค้า B ข้างซ้าย เดิน 2 | `chars` | `char_customer_b_side_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า ยืน | `chars` | `char_customer_c_front_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า เดิน 1 | `chars` | `char_customer_c_front_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หน้า เดิน 2 | `chars` | `char_customer_c_front_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง ยืน | `chars` | `char_customer_c_back_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง เดิน 1 | `chars` | `char_customer_c_back_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C หลัง เดิน 2 | `chars` | `char_customer_c_back_walk2_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย ยืน | `chars` | `char_customer_c_side_idle_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย เดิน 1 | `chars` | `char_customer_c_side_walk1_01.png` | 128x256 |  |
+| ตัวละคร: ลูกค้า C | ลูกค้า C ข้างซ้าย เดิน 2 | `chars` | `char_customer_c_side_walk2_01.png` | 128x256 |  |
 
 ของบนพื้น (เฟอร์นิเจอร์ ครัว ตกแต่ง ของเล็ก ฟาร์ม): ขอบล่างของภาพคือขอบล่างของช่องที่ของกิน ตัวของต้องเต็มช่อง (ท็อปเคาน์เตอร์ต่อถึงผนังด้านหลัง) ภาพสูงกว่าช่องได้เพื่อทำของสูง ของติดผนัง (หน้าต่าง ประตู โคมไฟ ภาพวาด ฮู้ด): เส้นฐานสูงจากขอบล่างของภาพ 24 px หน้าต่างติดสูงจากพื้นผนัง 70 px (ในเกม) ประตูอยู่บนพื้น เกมวาดเงาแนบพื้นใต้ของให้เอง

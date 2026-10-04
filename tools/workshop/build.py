@@ -33,9 +33,9 @@ def layout(sheet):
     return out, heads, y + M
 
 SHAPES = {
-    'wallplain': [('r', 0, 0, 127, 24), ('r', 0, 24, 127, 200), ('r', 0, 200, 127, 255)],
+    'wallplain': [('r', 0, 0, 127, 24), ('r', 0, 24, 127, 330), ('r', 0, 330, 127, 383)],
     'walllow': [('r', 0, 8, 127, 56)],
-    'wallside': [('r', 3, 3, 28, 252)],
+    'wallside': [('r', 3, 3, 28, 380)],
     'window': [('r', 16, 40, 112, 100), ('l', 64, 40, 64, 100), ('l', 16, 70, 112, 70)],
     'door': [('r', 14, 20, 114, 232), ('r', 24, 32, 104, 220)],
     'dooropen': [('r', 14, 20, 114, 232), ('r', 24, 32, 104, 220), ('l', 24, 32, 44, 40), ('l', 44, 40, 44, 212), ('l', 44, 212, 24, 220)],
@@ -43,24 +43,25 @@ SHAPES = {
     'painting': [('r', 20, 36, 108, 100), ('r', 28, 44, 100, 92)],
     'hood': [('r', 20, 30, 108, 96), ('r', 40, 50, 88, 96)],
     # things on the floor fill the cell they stand in: the top surface at the back, the front face down to the floor
-    'module': [('r', 0, 2, 'W', 60), ('r', 0, 60, 'W', 122)],
-    'fridge': [('r', 10, 20, 118, 92), ('r', 10, 92, 118, 250), ('l', 10, 160, 118, 160)],
+    'module': [('r', 0, 2, 'W', 62), ('r', 0, 62, 'W', 188)],
+    'fridge': [('r', 10, 4, 118, 64), ('r', 10, 64, 118, 316), ('l', 10, 150, 118, 150)],
     'table': [('r', 4, 8, 'W-4', 68), ('r', 8, 68, 'W-8', 122)],
-    'chair': [('r', 34, 18, 94, 82), ('r', 30, 82, 98, 124), ('r', 34, 124, 94, 156)],
+    'chair': [('r', 34, 10, 94, 90), ('r', 30, 90, 98, 140), ('r', 34, 140, 94, 188)],
+    'tablelong': [('r', 4, 4, 'W-4', 64), ('r', 8, 64, 'W-8', 188)],
     'stool': [('e', 64, 62, 34, 18), ('l', 40, 76, 34, 122), ('l', 88, 76, 94, 122)],
-    'register': [('r', 10, 50, 118, 122), ('r', 30, 18, 98, 52)],
-    'shelf': [('r', 8, 10, 120, 250), ('l', 8, 90, 120, 90), ('l', 8, 170, 120, 170)],
-    'sign': [('r', 26, 18, 102, 150)],
-    'plant': [('e', 64, 66, 46, 52), ('r', 38, 128, 90, 186)],
+    'register': [('r', 10, 62, 118, 188), ('r', 30, 10, 98, 64)],
+    'shelf': [('r', 8, 10, 120, 316), ('l', 8, 110, 120, 110), ('l', 8, 210, 120, 210)],
+    'sign': [('r', 26, 16, 102, 184)],
+    'plant': [('e', 64, 84, 50, 62), ('r', 38, 160, 90, 250)],
     'rug': [('r', 6, 6, 'W-6', 'H-6'), ('r', 18, 18, 'W-18', 'H-18')],
-    'floorlamp': [('r', 44, 8, 84, 60), ('r', 60, 60, 68, 238), ('e', 64, 244, 30, 8)],
+    'floorlamp': [('r', 44, 8, 84, 60), ('r', 60, 60, 68, 300), ('e', 64, 308, 30, 8)],
     'bin': [('r', 34, 40, 94, 122)],
     'crate': [('r', 14, 34, 114, 122), ('l', 14, 34, 114, 122)],
     'prop': [('e', 'W/2', 'H/2', 18, 12)],
     'vase': [('e', 'W/2', 44, 26, 30), ('r', 44, 72, 84, 122)],
     # the game's table and stove take 2 x 2 cells: top surface at the back (about 6%..55% of the depth), front face down to the floor
-    'table2': [('r', 8, 16, 'W-8', 140), ('r', 16, 140, 'W-16', 244)],
-    'stove2': [('r', 8, 16, 'W-8', 140), ('r', 16, 140, 'W-16', 244), ('e', 80, 78, 22, 14), ('e', 176, 78, 22, 14)],
+    'table2': [('r', 8, 4, 'W-8', 128), ('r', 16, 128, 'W-16', 252)],
+    'stove2': [('r', 8, 4, 'W-8', 128), ('r', 16, 128, 'W-16', 252), ('e', 80, 64, 22, 14), ('e', 176, 64, 22, 14)],
     # outdoors and farm
     'tree': [('e', 'W/2', 130, 100, 100), ('r', 114, 230, 142, 378), ('e', 'W/2', 378, 40, 10)],
     'rock': [('e', 'W/2', 60, 48, 30)],
@@ -69,18 +70,18 @@ SHAPES = {
     'crop1': [('e', 'W/2', 214, 14, 16)], 'crop2': [('e', 'W/2', 200, 30, 36)],
     'crop3': [('e', 'W/2', 188, 44, 56)], 'crop4': [('e', 'W/2', 178, 56, 70)],
     'fence': [('r', 8, 40, 'W-8', 150), ('r', 54, 20, 74, 156)],
-    'coop': [('r', 24, 120, 'W-24', 372), ('r', 8, 40, 'W-8', 130)],
+    'coop': [('r', 8, 20, 'W-8', 170), ('r', 24, 170, 'W-24', 440)],
     'icon': [('e', 'W/2', 'H/2', 46, 46)],
-    'char': [('e', 'W/2', 46, 24, 24), ('r', 42, 72, 86, 150), ('r', 46, 150, 82, 186)],
+    'char': [('e', 'W/2', 50, 26, 26), ('r', 42, 80, 86, 180), ('r', 46, 180, 82, 250)],
     # soft ground edges: the band (or corner) of the neighbouring ground that reaches into the cell; paint it fading out inwards
     'edge_n': [('r', 0, 0, 127, 50)], 'edge_s': [('r', 0, 77, 127, 127)],
     'edge_w': [('r', 0, 0, 50, 127)], 'edge_e': [('r', 77, 0, 127, 127)],
     'corner_nw': [('r', 0, 0, 50, 50)], 'corner_ne': [('r', 77, 0, 127, 50)],
     'corner_sw': [('r', 0, 77, 50, 127)], 'corner_se': [('r', 77, 77, 127, 127)],
 }
-FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'table2', 'stove2', 'vase', 'tree', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
+FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove2', 'vase', 'tree', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
 # how deep (px) and how wide the dashed floor marker is for pieces that are not one cell
-FOOT_DEPTH = {'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 256, 'stove2': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256, 'coop': 384}
+FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 256, 'stove2': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
 FOOT_WIDTH = {'tree': 128, 'rock': 128, 'bush': 128}
 def ev(v, w, h):
     return int(eval(str(v), {}, {'W': w - 1, 'H': h})) if isinstance(v, str) else v
@@ -138,10 +139,10 @@ def draw_guide(items, heads, H, S, title, background=True):
                 d.line([(fx1 - 1, fy0 + t), (fx1 - 1, min(fy0 + t + seg, fy1))], fill=GN, width=S)
         fl = it['flags']
         if 'flush' in fl or 'flushl' in fl:
-            d.line([(x, y + 30 * S), (x, y + h)], fill=MG, width=3 * S) if it['hint'] in ('module',) else None
+            None
         if it['hint'] == 'module':
-            if fl in ('flush', 'flushr'): d.line([(x, y + 30 * S), (x, y + 104 * S)], fill=MG, width=3 * S)
-            if fl in ('flush', 'flushl'): d.line([(x + w - 2 * S, y + 30 * S), (x + w - 2 * S, y + 104 * S)], fill=MG, width=3 * S)
+            if fl in ('flush', 'flushr'): d.line([(x, y + 70 * S), (x, y + 186 * S)], fill=MG, width=3 * S)
+            if fl in ('flush', 'flushl'): d.line([(x + w - 2 * S, y + 70 * S), (x + w - 2 * S, y + 186 * S)], fill=MG, width=3 * S)
         if it['hint'] in ('wallplain', 'walllow'):
             d.line([(x, y), (x, y + h)], fill=MG, width=3 * S); d.line([(x + w - 2 * S, y), (x + w - 2 * S, y + h)], fill=MG, width=3 * S)
     return im

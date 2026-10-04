@@ -6,7 +6,7 @@
    "status": "now",
    "note": "ใช้ในเกมตอนนี้",
    "sheetW": 1920,
-   "sheetH": 3002,
+   "sheetH": 3066,
    "categories": [
     "พื้นกลางแจ้ง",
     "ต้นไม้ หิน พุ่ม",
@@ -22,7 +22,7 @@
    "status": "now",
    "note": "ใช้ในเกมตอนนี้",
    "sheetW": 1920,
-   "sheetH": 1582,
+   "sheetH": 1710,
    "categories": [
     "พื้น",
     "ผนัง",
@@ -37,7 +37,7 @@
    "status": "next",
    "note": "จะเพิ่มเข้าร้านค้าของเกมต่อ",
    "sheetW": 1920,
-   "sheetH": 1914,
+   "sheetH": 2138,
    "categories": [
     "ครัว",
     "โซนลูกค้า",
@@ -64,7 +64,7 @@
    "status": "later",
    "note": "เกมยังไม่ใช้ (ตัวละครยังไม่เดินในแมพ)",
    "sheetW": 1920,
-   "sheetH": 1454,
+   "sheetH": 1710,
    "categories": [
     "ตัวละคร: ผู้เล่น",
     "ตัวละคร: ลูกค้า A",
@@ -783,16 +783,16 @@
    "folder": "farm",
    "file": "farm_coop_01",
    "w": 384,
-   "h": 384,
+   "h": 448,
    "x": 244,
    "y": 2558,
    "category": "ฟาร์ม",
-   "label": "เล้าไก่ (3x3 ช่อง)",
+   "label": "เล้าไก่ (3x3 ช่อง สูง 2 บล็อก)",
    "hint": "coop",
    "flags": "",
    "anchor": [
     192,
-    384
+    448
    ],
    "sheet": "now_outdoor",
    "status": "now"
@@ -878,16 +878,16 @@
    "folder": "walls",
    "file": "wall_plain_01",
    "w": 128,
-   "h": 256,
+   "h": 384,
    "x": 60,
    "y": 478,
    "category": "ผนัง",
-   "label": "ผนังหลัง (สูง 2 ช่อง)",
+   "label": "ผนังหลัง (สูง 3 บล็อก)",
    "hint": "wallplain",
    "flags": "flush",
    "anchor": [
     64,
-    256
+    384
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -916,7 +916,7 @@
    "folder": "walls",
    "file": "wall_side_01",
    "w": 32,
-   "h": 256,
+   "h": 384,
    "x": 532,
    "y": 478,
    "category": "ผนัง",
@@ -925,7 +925,7 @@
    "flags": "",
    "anchor": [
     16,
-    256
+    384
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -937,7 +937,7 @@
    "w": 128,
    "h": 128,
    "x": 60,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "หน้าต่าง",
    "hint": "window",
@@ -956,7 +956,7 @@
    "w": 128,
    "h": 256,
    "x": 272,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "ประตู (ปิด)",
    "hint": "door",
@@ -975,7 +975,7 @@
    "w": 128,
    "h": 256,
    "x": 484,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "ประตู (เปิด) (เกมยังไม่ใช้)",
    "hint": "dooropen",
@@ -994,7 +994,7 @@
    "w": 128,
    "h": 128,
    "x": 696,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "โคมไฟติดผนัง (เกมยังไม่ใช้)",
    "hint": "lamp",
@@ -1013,7 +1013,7 @@
    "w": 128,
    "h": 128,
    "x": 908,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "ภาพวาด (เกมยังไม่ใช้)",
    "hint": "painting",
@@ -1032,7 +1032,7 @@
    "w": 128,
    "h": 128,
    "x": 1120,
-   "y": 872,
+   "y": 1000,
    "category": "ของติดผนัง",
    "label": "ฮู้ดเหนือเตา (เกมยังไม่ใช้)",
    "hint": "hood",
@@ -1051,7 +1051,7 @@
    "w": 256,
    "h": 256,
    "x": 32,
-   "y": 1266,
+   "y": 1394,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)",
    "hint": "table2",
@@ -1070,7 +1070,7 @@
    "w": 256,
    "h": 256,
    "x": 316,
-   "y": 1266,
+   "y": 1394,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "เตา (2x2 ช่อง)",
    "hint": "stove2",
@@ -1089,7 +1089,7 @@
    "w": 64,
    "h": 64,
    "x": 660,
-   "y": 1266,
+   "y": 1394,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)",
    "hint": "prop",
@@ -1108,7 +1108,7 @@
    "w": 128,
    "h": 128,
    "x": 840,
-   "y": 1266,
+   "y": 1394,
    "category": "ร้าน (ในเกมตอนนี้)",
    "label": "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)",
    "hint": "vase",
@@ -1125,7 +1125,7 @@
    "folder": "modular",
    "file": "mod_modern_counter_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 60,
    "y": 212,
    "category": "ครัว",
@@ -1134,7 +1134,7 @@
    "flags": "flush",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1144,7 +1144,7 @@
    "folder": "modular",
    "file": "mod_modern_sink_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 272,
    "y": 212,
    "category": "ครัว",
@@ -1153,7 +1153,7 @@
    "flags": "flush",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1163,7 +1163,7 @@
    "folder": "modular",
    "file": "mod_modern_stove_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 484,
    "y": 212,
    "category": "ครัว",
@@ -1172,7 +1172,7 @@
    "flags": "flush",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1182,7 +1182,7 @@
    "folder": "modular",
    "file": "mod_modern_oven_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 696,
    "y": 212,
    "category": "ครัว",
@@ -1191,7 +1191,7 @@
    "flags": "flush",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1201,7 +1201,7 @@
    "folder": "modular",
    "file": "mod_modern_cap_left_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 908,
    "y": 212,
    "category": "ครัว",
@@ -1210,7 +1210,7 @@
    "flags": "flushr",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1220,7 +1220,7 @@
    "folder": "modular",
    "file": "mod_modern_cap_right_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 1120,
    "y": 212,
    "category": "ครัว",
@@ -1229,7 +1229,7 @@
    "flags": "flushl",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1239,7 +1239,7 @@
    "folder": "modular",
    "file": "mod_modern_fridge_01",
    "w": 128,
-   "h": 256,
+   "h": 320,
    "x": 1332,
    "y": 212,
    "category": "ครัว",
@@ -1248,7 +1248,7 @@
    "flags": "",
    "anchor": [
     64,
-    256
+    320
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1258,7 +1258,7 @@
    "folder": "modular",
    "file": "mod_modern_prep_table_01",
    "w": 256,
-   "h": 128,
+   "h": 192,
    "x": 1516,
    "y": 212,
    "category": "ครัว",
@@ -1267,7 +1267,7 @@
    "flags": "flush",
    "anchor": [
     128,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1277,16 +1277,16 @@
    "folder": "furniture",
    "file": "rest_table_long_01",
    "w": 256,
-   "h": 128,
+   "h": 192,
    "x": 32,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
-   "label": "โต๊ะยาว",
-   "hint": "table",
+   "label": "โต๊ะยาว (2x1 ช่อง สูง 1 บล็อก)",
+   "hint": "tablelong",
    "flags": "",
    "anchor": [
     128,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1296,16 +1296,16 @@
    "folder": "furniture",
    "file": "rest_chair_up_01",
    "w": 128,
-   "h": 160,
+   "h": 192,
    "x": 344,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "เก้าอี้หันขึ้น (ใต้โต๊ะ)",
    "hint": "chair",
    "flags": "",
    "anchor": [
     64,
-    160
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1315,16 +1315,16 @@
    "folder": "furniture",
    "file": "rest_chair_down_01",
    "w": 128,
-   "h": 160,
+   "h": 192,
    "x": 556,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "เก้าอี้หันลง (เหนือโต๊ะ)",
    "hint": "chair",
    "flags": "",
    "anchor": [
     64,
-    160
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1334,16 +1334,16 @@
    "folder": "furniture",
    "file": "rest_chair_side_01",
    "w": 128,
-   "h": 160,
+   "h": 192,
    "x": 768,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
-   "label": "เก้าอี้หันข้าง (วาดหันซ้าย เกมกลับให้เป็นหันขวาเอง)",
+   "label": "เก้าอี้หันข้าง (วาดหันซ้าย)",
    "hint": "chair",
    "flags": "",
    "anchor": [
     64,
-    160
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1355,7 +1355,7 @@
    "w": 128,
    "h": 128,
    "x": 980,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "สตูล",
    "hint": "stool",
@@ -1374,7 +1374,7 @@
    "w": 256,
    "h": 128,
    "x": 1164,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "ม้านั่งยาว",
    "hint": "table",
@@ -1391,16 +1391,16 @@
    "folder": "furniture",
    "file": "rest_register_01",
    "w": 128,
-   "h": 128,
+   "h": 192,
    "x": 1476,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "เครื่องคิดเงิน",
    "hint": "register",
    "flags": "",
    "anchor": [
     64,
-    128
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1410,16 +1410,16 @@
    "folder": "furniture",
    "file": "rest_shelf_01",
    "w": 128,
-   "h": 256,
+   "h": 320,
    "x": 1688,
-   "y": 606,
+   "y": 670,
    "category": "โซนลูกค้า",
    "label": "ชั้นวางของ",
    "hint": "shelf",
    "flags": "",
    "anchor": [
     64,
-    256
+    320
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1429,16 +1429,16 @@
    "folder": "furniture",
    "file": "rest_menu_sign_01",
    "w": 128,
-   "h": 160,
+   "h": 192,
    "x": 60,
-   "y": 948,
+   "y": 1076,
    "category": "โซนลูกค้า",
    "label": "ป้ายเมนูตั้งพื้น",
    "hint": "sign",
    "flags": "",
    "anchor": [
     64,
-    160
+    192
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1448,16 +1448,16 @@
    "folder": "deco",
    "file": "deco_plant_pot_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 60,
-   "y": 1246,
+   "y": 1406,
    "category": "ตกแต่ง",
    "label": "กระถางต้นไม้",
    "hint": "plant",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1469,7 +1469,7 @@
    "w": 256,
    "h": 256,
    "x": 244,
-   "y": 1246,
+   "y": 1406,
    "category": "ตกแต่ง",
    "label": "พรม (ภาพแบนบนพื้น)",
    "hint": "rug",
@@ -1486,16 +1486,16 @@
    "folder": "deco",
    "file": "deco_lamp_floor_01",
    "w": 128,
-   "h": 256,
+   "h": 320,
    "x": 556,
-   "y": 1246,
+   "y": 1406,
    "category": "ตกแต่ง",
    "label": "โคมไฟตั้งพื้น",
    "hint": "floorlamp",
    "flags": "",
    "anchor": [
     64,
-    256
+    320
    ],
    "sheet": "next_shop",
    "status": "next"
@@ -1507,7 +1507,7 @@
    "w": 128,
    "h": 128,
    "x": 768,
-   "y": 1246,
+   "y": 1406,
    "category": "ตกแต่ง",
    "label": "ถังขยะ",
    "hint": "bin",
@@ -1526,7 +1526,7 @@
    "w": 128,
    "h": 128,
    "x": 980,
-   "y": 1246,
+   "y": 1406,
    "category": "ตกแต่ง",
    "label": "ลังไม้",
    "hint": "crate",
@@ -1545,7 +1545,7 @@
    "w": 64,
    "h": 64,
    "x": 92,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "จาน",
    "hint": "prop",
@@ -1564,7 +1564,7 @@
    "w": 64,
    "h": 64,
    "x": 304,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "ชาม",
    "hint": "prop",
@@ -1583,7 +1583,7 @@
    "w": 64,
    "h": 64,
    "x": 516,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "ถ้วย",
    "hint": "prop",
@@ -1602,7 +1602,7 @@
    "w": 64,
    "h": 64,
    "x": 728,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "หม้อ",
    "hint": "prop",
@@ -1621,7 +1621,7 @@
    "w": 64,
    "h": 64,
    "x": 940,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "กระทะ",
    "hint": "prop",
@@ -1640,7 +1640,7 @@
    "w": 64,
    "h": 64,
    "x": 1152,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "มีด",
    "hint": "prop",
@@ -1659,7 +1659,7 @@
    "w": 64,
    "h": 64,
    "x": 1364,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "เขียง",
    "hint": "prop",
@@ -1678,7 +1678,7 @@
    "w": 64,
    "h": 64,
    "x": 1576,
-   "y": 1640,
+   "y": 1864,
    "category": "ของเล็ก",
    "label": "แจกัน",
    "hint": "prop",
@@ -1697,7 +1697,7 @@
    "w": 64,
    "h": 64,
    "x": 92,
-   "y": 1790,
+   "y": 2014,
    "category": "ของเล็ก",
    "label": "ขวด",
    "hint": "prop",
@@ -1923,7 +1923,7 @@
    "folder": "chars",
    "file": "char_player_front_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 43,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -1932,7 +1932,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -1942,7 +1942,7 @@
    "folder": "chars",
    "file": "char_player_front_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 221,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -1951,7 +1951,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -1961,7 +1961,7 @@
    "folder": "chars",
    "file": "char_player_front_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 399,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -1970,7 +1970,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -1980,7 +1980,7 @@
    "folder": "chars",
    "file": "char_player_back_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 577,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -1989,7 +1989,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -1999,7 +1999,7 @@
    "folder": "chars",
    "file": "char_player_back_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 755,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -2008,7 +2008,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2018,7 +2018,7 @@
    "folder": "chars",
    "file": "char_player_back_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 933,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -2027,7 +2027,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2037,7 +2037,7 @@
    "folder": "chars",
    "file": "char_player_side_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1111,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -2046,7 +2046,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2056,7 +2056,7 @@
    "folder": "chars",
    "file": "char_player_side_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1289,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -2065,7 +2065,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2075,7 +2075,7 @@
    "folder": "chars",
    "file": "char_player_side_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1467,
    "y": 212,
    "category": "ตัวละคร: ผู้เล่น",
@@ -2084,7 +2084,7 @@
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2094,16 +2094,16 @@
    "folder": "chars",
    "file": "char_customer_a_front_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 43,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หน้า ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2113,16 +2113,16 @@
    "folder": "chars",
    "file": "char_customer_a_front_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 221,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หน้า เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2132,16 +2132,16 @@
    "folder": "chars",
    "file": "char_customer_a_front_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 399,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หน้า เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2151,16 +2151,16 @@
    "folder": "chars",
    "file": "char_customer_a_back_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 577,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หลัง ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2170,16 +2170,16 @@
    "folder": "chars",
    "file": "char_customer_a_back_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 755,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หลัง เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2189,16 +2189,16 @@
    "folder": "chars",
    "file": "char_customer_a_back_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 933,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A หลัง เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2208,16 +2208,16 @@
    "folder": "chars",
    "file": "char_customer_a_side_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1111,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A ข้างซ้าย ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2227,16 +2227,16 @@
    "folder": "chars",
    "file": "char_customer_a_side_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1289,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A ข้างซ้าย เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2246,16 +2246,16 @@
    "folder": "chars",
    "file": "char_customer_a_side_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1467,
-   "y": 542,
+   "y": 606,
    "category": "ตัวละคร: ลูกค้า A",
    "label": "ลูกค้า A ข้างซ้าย เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2265,16 +2265,16 @@
    "folder": "chars",
    "file": "char_customer_b_front_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 43,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หน้า ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2284,16 +2284,16 @@
    "folder": "chars",
    "file": "char_customer_b_front_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 221,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หน้า เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2303,16 +2303,16 @@
    "folder": "chars",
    "file": "char_customer_b_front_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 399,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หน้า เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2322,16 +2322,16 @@
    "folder": "chars",
    "file": "char_customer_b_back_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 577,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หลัง ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2341,16 +2341,16 @@
    "folder": "chars",
    "file": "char_customer_b_back_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 755,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หลัง เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2360,16 +2360,16 @@
    "folder": "chars",
    "file": "char_customer_b_back_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 933,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B หลัง เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2379,16 +2379,16 @@
    "folder": "chars",
    "file": "char_customer_b_side_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1111,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B ข้างซ้าย ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2398,16 +2398,16 @@
    "folder": "chars",
    "file": "char_customer_b_side_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1289,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B ข้างซ้าย เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2417,16 +2417,16 @@
    "folder": "chars",
    "file": "char_customer_b_side_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1467,
-   "y": 872,
+   "y": 1000,
    "category": "ตัวละคร: ลูกค้า B",
    "label": "ลูกค้า B ข้างซ้าย เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2436,16 +2436,16 @@
    "folder": "chars",
    "file": "char_customer_c_front_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 43,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หน้า ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2455,16 +2455,16 @@
    "folder": "chars",
    "file": "char_customer_c_front_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 221,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หน้า เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2474,16 +2474,16 @@
    "folder": "chars",
    "file": "char_customer_c_front_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 399,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หน้า เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2493,16 +2493,16 @@
    "folder": "chars",
    "file": "char_customer_c_back_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 577,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หลัง ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2512,16 +2512,16 @@
    "folder": "chars",
    "file": "char_customer_c_back_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 755,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หลัง เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2531,16 +2531,16 @@
    "folder": "chars",
    "file": "char_customer_c_back_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 933,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C หลัง เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2550,16 +2550,16 @@
    "folder": "chars",
    "file": "char_customer_c_side_idle_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1111,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C ข้างซ้าย ยืน",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2569,16 +2569,16 @@
    "folder": "chars",
    "file": "char_customer_c_side_walk1_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1289,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C ข้างซ้าย เดิน 1",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"
@@ -2588,16 +2588,16 @@
    "folder": "chars",
    "file": "char_customer_c_side_walk2_01",
    "w": 128,
-   "h": 192,
+   "h": 256,
    "x": 1467,
-   "y": 1202,
+   "y": 1394,
    "category": "ตัวละคร: ลูกค้า C",
    "label": "ลูกค้า C ข้างซ้าย เดิน 2",
    "hint": "char",
    "flags": "",
    "anchor": [
     64,
-    192
+    256
    ],
    "sheet": "later_chars",
    "status": "later"

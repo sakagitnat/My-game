@@ -186,7 +186,7 @@ func _draw_ghost() -> void:
 		return
 	var fa := ArtCatalog.facing_art(view.ghost_id, facing)
 	if not _draw_sprite(fa.art, origin, sz, Color(1, 1, 1, 0.75), fa.flip):
-		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75), facing if Catalog.is_rotatable(view.ghost_id) else -1)
+		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75), facing if Catalog.is_rotatable(view.ghost_id) else -1, ArtCatalog.height_blocks(view.ghost_id))
 	draw_set_transform(Vector2.ZERO)
 
 # Floor-style art: the canvas width maps to `width` and the canvas is centred on `center`.
@@ -212,8 +212,6 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	draw_texture_rect(tex, rect, false, tint)
 	return true
 
-func _object_height(sz: Vector2i) -> float:
-	return 20.0 * sz.y / Iso.SUB + 16.0
 
 func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
@@ -226,8 +224,8 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 	_draw_shadow(Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.32), Iso.unit_width(sz) * 0.42)
 	var fa := ArtCatalog.facing_art(id, facing)
 	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
-		_draw_box(origin, sz, ArtCatalog.placeable_color(id), facing if Catalog.is_rotatable(id) else -1)
-	_draw_status(origin, sz, _object_height(sz))
+		_draw_box(origin, sz, ArtCatalog.placeable_color(id), facing if Catalog.is_rotatable(id) else -1, ArtCatalog.height_blocks(id))
+	_draw_status(origin, sz, Iso.TILE_H * ArtCatalog.height_blocks(id))
 
 # `facing` >= 0 marks the front of the stand-in with a dark band (0 front face, 1 left, 2 back/top, 3 right).
 # How far up the screen, in pixels, a small thing of footprint `sz` at `origin` must be drawn to stand on the table under it:
@@ -250,13 +248,13 @@ func _draw_top(origin: Vector2i, id: String) -> void:
 	_draw_shadow(Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.3), Iso.unit_width(sz) * 0.4)
 	var fa := ArtCatalog.facing_art(id, 0)
 	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
-		_draw_box(origin, sz, ArtCatalog.placeable_color(id))
+		_draw_box(origin, sz, ArtCatalog.placeable_color(id), -1, ArtCatalog.height_blocks(id))
 	draw_set_transform(Vector2.ZERO)
 
-func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1) -> void:
+func _draw_box(origin: Vector2i, sz: Vector2i, col: Color, facing: int = -1, blocks: float = 1.0) -> void:
 	# A stand-in seen from the front and a little from above: a front face under a shorter top face.
 	var k := Iso.unit_corners(origin, sz)
-	var h := _object_height(sz)
+	var h := Iso.TILE_H * blocks   # a block is one cell tall
 	var depth := Iso.unit_height(sz) * 0.5
 	var bl := k[3]
 	var br := k[2]

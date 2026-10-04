@@ -43,10 +43,17 @@ static func facing_art(id: String, facing: int) -> Dictionary:
 		return {"art": name.trim_suffix("|flip"), "flip": true}
 	return {"art": name, "flip": false}
 
+# How tall a thing is, in blocks (one block is one cell, 64 game px): a counter or table 1, a fridge or door 2, a wall 3.
+# The art follows it: a thing's canvas is 128 x blocks px of height plus 64 px for every cell of depth (the top surface seen at an angle).
+const HEIGHT_BLOCKS := {"rest_table_small_01": 1.0, "rest_stove_01": 1.0, "farm_coop_01": 2.0, "farm_fence_01": 0.75, "rest_vase_small_01": 0.5, "rest_vase_large_01": 0.9}
+
+static func height_blocks(id: String) -> float:
+	return HEIGHT_BLOCKS.get(id, 1.0)
+
 # Where the top surface of a surface object (a table) lies on its picture, as fractions of the footprint's height from the back:
 # things standing on it are drawn on that band, further back on the table = higher on the screen (art spec: table top at y 8..68 of 128).
-const SURFACE_BAND := {"rest_table_small_01": Vector2(0.06, 0.55)}
-const DEFAULT_SURFACE_BAND := Vector2(0.06, 0.55)
+const SURFACE_BAND := {"rest_table_small_01": Vector2(0.02, 0.5)}
+const DEFAULT_SURFACE_BAND := Vector2(0.02, 0.5)
 const HOVER := 36.0   # a ghost that is not over any table hovers this high, in game pixels
 
 static func surface_band(surface_id: String) -> Vector2:

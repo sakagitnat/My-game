@@ -296,11 +296,11 @@ $('zip').onclick=()=>exportZip(false);$('zipReady').onclick=()=>exportZip(true);
 // ---------------- scene ----------------
 // The little shop: 8 x 6 cells of floor, back wall on top, thin walls at the sides, a low wall in front with a gap.
 // Everything is drawn at 128 px per cell exactly like the game does at half size.
-const CELL=128, SW=8, SH=6, OFFX=192, OFFY=380, CW=OFFX*2+SW*CELL, CH=OFFY+SH*CELL+240;
-const WALL_H=256;
+const CELL=128, SW=8, SH=6, OFFX=192, OFFY=470, CW=OFFX*2+SW*CELL, CH=OFFY+SH*CELL+240;
+const WALL_H=384;   // a wall is 3 blocks tall
 const SCENE=[
   // [id, col, row, cols, rows, layer, dx, dy]  (dx, dy nudge a piece in pixels so chairs tuck under the table edge)
-  ['mod_fridge',0,0,1,2,'kitchen'],['mod_cap_left',1,0,1,1,'kitchen'],['mod_counter',2,0,1,1,'kitchen'],['mod_sink',3,0,1,1,'kitchen'],['mod_stove',4,0,1,1,'kitchen'],['mod_oven',5,0,1,1,'kitchen'],['mod_cap_right',6,0,1,1,'kitchen'],['mod_prep',3,2,2,1,'kitchen'],
+  ['mod_fridge',0,0,1,1,'kitchen'],['mod_cap_left',1,0,1,1,'kitchen'],['mod_counter',2,0,1,1,'kitchen'],['mod_sink',3,0,1,1,'kitchen'],['mod_stove',4,0,1,1,'kitchen'],['mod_oven',5,0,1,1,'kitchen'],['mod_cap_right',6,0,1,1,'kitchen'],['mod_prep',3,2,2,1,'kitchen'],
   ['rest_bench',0,2,2,1,'dining'],
   ['rest_table_small',2,3,2,2,'dining'],['rest_chair_down',2,2,1,1,'dining',0,20],['rest_chair_down',3,2,1,1,'dining',0,20],['rest_chair_side',1,3,1,1,'dining',26,0,1],['rest_chair_side',4,4,1,1,'dining',-26,0],['rest_chair_up',2,5,1,1,'dining',0,-22],['rest_chair_up',3,5,1,1,'dining',0,-22],
   ['rest_table_long',5,3,2,1,'dining'],['rest_chair_down',5,2,1,1,'dining',0,20],['rest_chair_down',6,2,1,1,'dining',0,20],['rest_chair_up',5,4,1,1,'dining',0,-22],['rest_chair_up',6,4,1,1,'dining',0,-22],
@@ -308,7 +308,7 @@ const SCENE=[
   ['deco_plant',0,5,1,1,'decor'],['deco_lamp_floor',0,3,1,1,'decor'],['deco_bin',7,1,1,1,'decor'],['deco_crate',6,1,1,1,'decor'],
 ];
 const PROPS=[['prop_board',2,0,0.5,46],['prop_pot',4,0,0.5,46],['prop_pan',5,0,0.5,46],['prop_bowl',3.0,2,0.3,46],['prop_knife',4.0,2,0.7,46],['prop_plate',2,3,0.5,58],['rest_vase_small',3,3.2,0.5,50],['rest_vase_large',2,3,0.6,40],['prop_cup',5,3,0.3,58],['prop_vase',6,3,0.6,58],['prop_bottle',7,2,0.5,44]];
-const WALLDECO=[['wdeco_painting',2,70],['wdeco_window',3,70],['wdeco_hood',4,60],['wdeco_lamp',5,70],['wdeco_window',6,70]]; // [id, column, height of the base line above the wall foot, in game px]
+const WALLDECO=[['wdeco_painting',2,100],['wdeco_window',3,84],['wdeco_hood',4,96],['wdeco_lamp',5,100],['wdeco_window',6,84]]; // [id, column, height of the base line above the wall foot, in game px]
 function renderScene(){
   const cv=$('sceneCanvas');cv.width=CW;cv.height=CH;const c=cv.getContext('2d');
   c.fillStyle='#8fbf6a';c.fillRect(0,0,CW,CH);
@@ -316,7 +316,7 @@ function renderScene(){
   ground(0,OFFY-WALL_H-80,CW,80,'#b79a6a');       // country road along the top
   const used=new Set(),missing=new Set();
   const piece=id=>{used.add(id);return getP(id);};
-  const FLOORHINT=['module','fridge','table','chair','stool','register','shelf','sign','plant','floorlamp','bin','crate','prop'];
+  const FLOORHINT=['module','fridge','table','tablelong','chair','stool','register','shelf','sign','plant','floorlamp','bin','crate','prop'];
   const place=(id,bx,by,flip)=>{ // draw piece so its anchor (base point) lands on (bx,by)
     const it=byId[id],cv2=piece(id);
     if(cv2){
