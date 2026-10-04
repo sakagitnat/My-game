@@ -10,7 +10,7 @@ ITEMS = [
     # walls
     ("wall_plain", "walls", "wall_plain_01", 128, 384, "ผนัง", "ผนังหลัง (สูง 3 บล็อก)", "wallplain", "flush"),
     ("wall_low", "walls", "wall_low_01", 128, 64, "ผนัง", "ผนังเตี้ย / ราว", "walllow", "flush"),
-    ("wall_side", "walls", "wall_side_01", 32, 384, "ผนัง", "ผนังข้าง (แถบบาง)", "wallside", ""),
+    ("wall_side", "walls", "wall_side_01", 32, 384, "ผนัง", "ผนังข้าง (แถบเรียบ ไม่มีบัวหรือเส้นขวาง)", "wallside", ""),
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
     ("wdeco_door", "walls", "wdeco_door_01", 128, 280, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
@@ -59,8 +59,8 @@ ITEMS = [
     ("tile_dirt", "tiles", "tile_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ดิน (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
     ("tile_road", "tiles", "tile_road_dirt_01", 128, 128, "พื้นกลางแจ้ง", "ถนนดิน (ต่อซ้ำได้ทุกทิศ)", "tile", "tile"),
     # trees, rocks and bushes the player clears (the base of the trunk / rock sits on the bottom edge of the cell)
-    ("obs_tree", "obstacles", "obs_tree_01", 256, 512, "ต้นไม้ หิน พุ่ม", "ต้นไม้ใหญ่ (สูง 3 บล็อก ฐานลำต้นอยู่กลางภาพชิดขอบล่าง)", "tree", ""),
-    ("obs_tree_small", "obstacles", "obs_tree_02", 128, 256, "ต้นไม้ หิน พุ่ม", "ต้นไม้เล็ก (กรอบสูง 2 ช่อง เท่าตัวละคร วาดให้ยอดถึงขอบบนกรอบ)", "treesmall", ""),
+    ("obs_tree", "obstacles", "obs_tree_01", 256, 512, "ต้นไม้ หิน พุ่ม", "ต้นไม้ใหญ่ (ยอดสูงกว่าตัวคน)", "tree", ""),
+    ("obs_tree_small", "obstacles", "obs_tree_02", 128, 256, "ต้นไม้ หิน พุ่ม", "ต้นไม้เล็ก (สูงเท่าตัวคน)", "treesmall", ""),
     ("obs_bush", "obstacles", "obs_bush_01", 128, 128, "ต้นไม้ หิน พุ่ม", "พุ่มไม้ (สูง 1 บล็อก)", "bush", ""),
     ("obs_rock", "obstacles", "obs_rock_01", 128, 96, "ต้นไม้ หิน พุ่ม", "ก้อนหิน (สูงครึ่งบล็อก)", "rock", ""),
     # farm plot (2 x 2 cells), what grows on it, and the farm things

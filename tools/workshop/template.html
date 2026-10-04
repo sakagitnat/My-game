@@ -216,6 +216,9 @@ function removeBackground(c,w,h){
   c.putImageData(d,0,0);
 }
 function data(cv){return cv.getContext('2d').getImageData(0,0,cv.width,cv.height);}
+const FILLW=['module','table','table2','stove2','tablelong','coop','fence','wallplain','walllow','wallside','rug'];
+const FILLH=['wallplain','walllow','wallside'];
+const FLOORH=['module','fridge','table','tablelong','chair','stool','register','shelf','sign','plant','floorlamp','bin','crate','table2','stove2','tree','treesmall','rock','bush','fence','coop','vase','prop','crop1','crop2','crop3','crop4'];
 function check(it,cv){
   const d=data(cv),a=d.data,w=cv.width,h=cv.height,n=w*h,warns=[];
   let opaque=0,any=0,semi=0;
@@ -227,7 +230,7 @@ function check(it,cv){
     const dh=edgeDiff(px,w,h,'x'),dv=edgeDiff(px,w,h,'y');
     if(dh>22||dv>22)warns.push(`ขอบไม่ต่อกันเนียน (ซ้าย-ขวา ${dh.toFixed(0)}, บน-ล่าง ${dv.toFixed(0)}) ลายควรต่อกันได้ทุกทิศ`);
   }else{
-    if(opaque>=n*0.995&&it.flags!=='flat'&&it.hint!=='wallplain'&&it.hint!=='walllow')warns.push('ภาพทึบเต็มกรอบ ไม่มีพื้นหลังโปร่งใส');
+    if(opaque>=n*0.995&&it.flags!=='flat'&&!FILLW.includes(it.hint))warns.push('ภาพทึบเต็มกรอบ ไม่มีพื้นหลังโปร่งใส');
     const left=colFill(a,w,h,0),right=colFill(a,w,h,w-1);
     const need=(it.flags==='flush'||it.flags==='flushr')&&(left<0.5);
     const needR=(it.flags==='flush'||it.flags==='flushl')&&(right<0.5);
@@ -235,14 +238,19 @@ function check(it,cv){
     if(needR)warns.push('ปลายขวาไม่ชนขอบภาพ (ต้องต่อกับชิ้นข้างๆ ได้)');
     if(it.flags==='flush'&&(it.hint==='wallplain'||it.hint==='walllow')){const dh=edgeDiff(px,w,h,'x');if(dh>22)warns.push(`ซ้ายกับขวาของผนังไม่ต่อกันเนียน (${dh.toFixed(0)})`);}
     // art outside the frame is cut off: look for opaque pixels hugging the border for non-flush pieces
-    if(!it.flags){const e=borderFill(a,w,h);if(e>0.12)warns.push('ภาพชิดหรือเกินขอบกรอบ อาจถูกตัด ควรเว้นขอบโปร่งใสรอบๆ');}
+    // (things standing on the floor fill the bottom edge and reach the top edge legitimately; pieces that fill the width may touch the sides)
+    if(it.flags!=='tile'&&it.flags!=='flat'){
+      const sideOk=FILLW.includes(it.hint),topOk=FLOORH.includes(it.hint)||FILLH.includes(it.hint);
+      const e=borderFill(a,w,h,!sideOk,!topOk);
+      if(e>0.04)warns.push('ภาพชิดหรือเกินขอบกรอบ อาจถูกตัด ควรเว้นขอบโปร่งใสรอบๆ');
+    }
     if(it.hint==='prop'||it.hint==='table'||it.hint==='chair'){}
   }
   return{status:warns.length?'warn':'ok',warns,any,opaque};
 }
 function edgeDiff(px,w,h,axis){let sum=0,cnt=0;if(axis==='x'){for(let y=0;y<h;y+=2){const p=px(0,y),q=px(w-1,y);if(p[3]<255||q[3]<255)continue;sum+=Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])+Math.abs(p[2]-q[2]);cnt++;}}else{for(let x=0;x<w;x+=2){const p=px(x,0),q=px(x,h-1);if(p[3]<255||q[3]<255)continue;sum+=Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])+Math.abs(p[2]-q[2]);cnt++;}}return cnt?sum/cnt/3:0;}
 function colFill(a,w,h,x){let c=0;for(let y=0;y<h;y++){if(a[(y*w+x)*4+3]>200)c++;}return c/h;}
-function borderFill(a,w,h){let c=0,t=0;for(let x=0;x<w;x++){t+=2;if(a[x*4+3]>40)c++;if(a[((h-1)*w+x)*4+3]>40)c++;}for(let y=0;y<h;y++){t+=2;if(a[(y*w)*4+3]>40)c++;if(a[(y*w+w-1)*4+3]>40)c++;}return c/t;}
+function borderFill(a,w,h,sides,top){let c=0,t=0;if(top)for(let x=0;x<w;x++){t++;if(a[x*4+3]>40)c++;}if(sides)for(let y=0;y<h;y++){t+=2;if(a[(y*w)*4+3]>40)c++;if(a[(y*w+w-1)*4+3]>40)c++;}return t?c/t:0;}
 function render(){
   const cards=$('cards');cards.innerHTML='';
   const has=Object.keys(pieces).length>0;$('summary').hidden=!has;
