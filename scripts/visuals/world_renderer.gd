@@ -99,14 +99,14 @@ func _draw() -> void:
 	var items: Array = []
 	for o in g.objects:
 		var fp: Vector2i = g.footprints[o]
-		items.append([float(o.y + fp.y) * 1000.0 + o.x, 0, o])
+		items.append([Iso.footprint_depth(o, fp), 0, o])
 	for c in g.blocked:
-		items.append([float((c.y + 1) * Iso.SUB) * 1000.0 + c.x * Iso.SUB, 1, c])
+		items.append([Iso.depth_key(Vector2(c.x * Iso.SUB, (c.y + 1) * Iso.SUB)), 1, c])
 	for t in g.tops:
 		# drawn right after the table it stands on, so the table never covers it
 		var table: Vector2i = g.occupied.get(t, t)
 		var tfp: Vector2i = g.footprints.get(table, Vector2i.ONE)
-		items.append([float(table.y + tfp.y) * 1000.0 + table.x + 0.1 + float(t.y) * 0.001 + float(t.x) * 0.00001, 2, t])
+		items.append([Iso.depth_key(Vector2(float(table.x) + 0.1 + float(t.y) * 0.001 + float(t.x) * 0.00001, float(table.y + tfp.y))), 2, t])
 	items.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	for it in items:
 		if it[1] == 0:
@@ -203,12 +203,12 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	var tex := Assets.get_tex(id)
 	if tex == null:
 		return false
-	var s := tex.get_size() * (Iso.unit_width(sz) / tex.get_width())
 	var foot := Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.5)
-	# art anchor: the bottom edge of the canvas is the bottom edge of the cells the thing stands on
-	var rect := Rect2(foot - Vector2(s.x * 0.5, s.y), s)
+	# art anchor: the middle of the bottom edge of the picture sits on the middle of the bottom edge of the footprint (the foot);
+	# an ArtCatalog.ART_BOX entry can make the picture wider than the footprint or move it
+	var rect := ArtCatalog.sprite_rect(ArtCatalog.art_box(id), tex.get_size(), foot, Iso.unit_width(sz))
 	if flip:
-		rect = Rect2(rect.position + Vector2(s.x, 0.0), Vector2(-s.x, s.y))
+		rect = Rect2(rect.position + Vector2(rect.size.x, 0.0), Vector2(-rect.size.x, rect.size.y))
 	draw_texture_rect(tex, rect, false, tint)
 	return true
 

@@ -91,6 +91,17 @@ func footprint_owned(origin: Vector2i, sz: Vector2i) -> bool:
 	return true
 
 # Whether any unit of cell `c` holds part of an object.
+# Whether people cannot walk through unit `u`: a tree, rock or bush on its cell, or the blocking part of an object there
+# (Catalog.block_rect, which can be smaller than the room the object reserves). Things on tables never block.
+func blocks_walk(u: Vector2i) -> bool:
+	if blocked.has(Iso.cell_of_unit(u)):
+		return true
+	var origin: Vector2i = occupied.get(u, NONE)
+	if origin == NONE:
+		return false
+	var r := Catalog.block_rect(str(objects[origin]), facing_at(origin))
+	return r.has_point(u - origin)
+
 func cell_occupied(c: Vector2i) -> bool:
 	for dy in range(Iso.SUB):
 		for dx in range(Iso.SUB):
