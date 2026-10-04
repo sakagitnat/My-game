@@ -195,7 +195,7 @@ func tick(dt: float) -> bool:
 			reputation = maxi(0, reputation - 1)
 			customer_left.emit(id)
 			changed = true
-	if has_service() and host.shop_open():
+	if has_service():
 		arrival_timer -= dt
 		if arrival_timer <= 0.0:
 			arrival_timer = _arrival_interval()
