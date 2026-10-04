@@ -140,7 +140,7 @@ func _draw_shadow(center: Vector2, rx: float) -> void:
 	draw_colored_polygon(pts, Color(0.05, 0.14, 0.05, float(sun.alpha)))
 
 func _draw_obstacle(c: Vector2i, kind: String) -> void:
-	var art := ArtCatalog.obstacle(kind)
+	var art := ArtCatalog.obstacle_look(kind, Noise2D.hash2(c.x, c.y, 41), func(id: String) -> bool: return Assets.get_tex(id) != null)
 	var p := Iso.cell_to_world(c)
 	var foot := p + Vector2(0, Iso.TILE_H * 0.5)
 	_draw_shadow(foot + Vector2(0, -6), Iso.TILE_W * 0.2 * float(art.scale) + 4.0)

@@ -132,6 +132,12 @@ func run() -> void:
 	check(world.hud.modal.visible and world.hud.modal_kind == "confirm" and world.selected_obstacle == WorldGrid.NONE, "tapping an obstacle on unowned land offers to buy the block instead")
 	world.hud.close_modal()
 	check(assets.DIRS.has("td/obstacles"), "asset loader searches the top-down obstacles folder")
+	var has_art := func(id: String) -> bool: return id == "obs_tree_02"
+	var none := func(_id: String) -> bool: return false
+	check(ArtCatalog.obstacle_look("tree", 0.1, has_art).art == "obs_tree_02", "a share of the trees use the small look when its art exists")
+	check(ArtCatalog.obstacle_look("tree", 0.9, has_art).art == "obs_tree_01", "the rest keep the big tree")
+	check(ArtCatalog.obstacle_look("tree", 0.1, none).art == "obs_tree_01", "no small-tree art: every tree is the big one")
+	check(ArtCatalog.obstacle_look("rock", 0.1, has_art).art == "obs_rock_01", "rocks have no variant")
 	world.queue_free()
 	await process_frame
 

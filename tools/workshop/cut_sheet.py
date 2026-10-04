@@ -14,7 +14,7 @@ sheet = Image.open(sys.argv[1]).convert('RGBA')
 skip = set(arg('--skip', '').split(',')) - {''}
 k = sheet.width // sh['sheetW']
 assert k >= 1 and sheet.size == (sh['sheetW'] * k, sh['sheetH'] * k), f"sheet size {sheet.size} does not match sheet {n_sheet} ({sh['sheetW']}x{sh['sheetH']} or a multiple)"
-FLOOR = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'floorlamp', 'bin', 'crate', 'table2', 'stove2', 'tree', 'rock', 'bush', 'fence', 'coop', 'vase', 'prop')
+FLOOR = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'floorlamp', 'bin', 'crate', 'table2', 'stove2', 'tree', 'treesmall', 'rock', 'bush', 'fence', 'coop', 'vase', 'prop')
 
 def check(it, c):
     """Problems of one cut piece, judged on the pixels (c is already at the piece's own size)."""

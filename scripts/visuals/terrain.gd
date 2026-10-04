@@ -8,6 +8,9 @@ const GRASS_LIGHT := Color("94d856")
 const SAND_DARK := Color("d6bb7f")
 const SAND_LIGHT := Color("f0deac")
 const DRY := Color("cdb860")
+# Grass art (128x128, tiles in every direction): tile_grass_01, _02 ... one is picked per cell. Used inland (3 cells or more from the
+# water); without art, or near the shore where the beach tint is drawn, the smooth colours below are used.
+const GRASS_ART := ["tile_grass_01", "tile_grass_02", "tile_grass_03"]
 
 var zone: String = "restaurant"
 # "ground" draws the terrain; a second instance with "signs" sits above objects so signs stay readable.
@@ -103,6 +106,8 @@ func _draw() -> void:
 				if part[0].size() >= 3:
 					draw_polygon(part[0], part[1])
 				continue
+			if _draw_grass_art(c, g.is_owned(c)):
+				continue
 			var pts := Iso.footprint_corners(c, Vector2i.ONE)
 			var mid := Iso.cell_to_world(c)
 			for i in range(4):
@@ -114,6 +119,18 @@ func _draw() -> void:
 			draw_polygon(pts, cols)
 	_draw_decor(g, vis)
 	_draw_for_sale(g, false)
+
+# One grass tile on cell c if art exists and the cell is grass away from the shore; false otherwise.
+func _draw_grass_art(c: Vector2i, owned: bool) -> bool:
+	if GameState.layout_for(zone).tile_at(c) != SceneLayout.Tile.GRASS or GameState.edge_distance(zone, c) < 3:
+		return false
+	var variants: Array = GRASS_ART.filter(func(id: String) -> bool: return Assets.get_tex(id) != null)
+	if variants.is_empty():
+		return false
+	var tex: Texture2D = Assets.get_tex(variants[int(Noise2D.hash2(c.x, c.y, 72) * variants.size()) % variants.size()])
+	var size := Vector2.ONE * Iso.TILE_W * 1.04
+	draw_texture_rect(tex, Rect2(Iso.cell_to_world(c) - size * 0.5, size), false, Color.WHITE if owned else Color.WHITE.lerp(DRY, 0.16))
+	return true
 
 func _draw_decor(g: WorldGrid, vis: Rect2i) -> void:
 	for y in range(vis.position.y, vis.end.y):
