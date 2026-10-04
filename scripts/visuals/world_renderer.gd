@@ -185,7 +185,7 @@ func _draw_ghost() -> void:
 	if def.get("flat", false):
 		return
 	var fa := ArtCatalog.facing_art(view.ghost_id, facing)
-	if not _draw_sprite(fa.art, origin, sz, Color(1, 1, 1, 0.75), fa.flip):
+	if not _draw_facing_sprite(view.ghost_id, fa, origin, sz, Color(1, 1, 1, 0.75)):
 		_draw_box(origin, sz, Color(ArtCatalog.placeable_color(view.ghost_id), 0.75), facing if Catalog.is_rotatable(view.ghost_id) else -1, ArtCatalog.height_blocks(view.ghost_id))
 	draw_set_transform(Vector2.ZERO)
 
@@ -213,6 +213,10 @@ func _draw_sprite(id: String, origin: Vector2i, sz: Vector2i, tint: Color = Colo
 	return true
 
 
+# The picture for a turn; when that turn's own picture is not there yet, the thing's front picture is used (not a stand-in box).
+func _draw_facing_sprite(id: String, fa: Dictionary, origin: Vector2i, sz: Vector2i, tint: Color) -> bool:
+	return _draw_sprite(fa.art, origin, sz, tint, fa.flip) or (fa.art != id and _draw_sprite(id, origin, sz, tint))
+
 func _draw_object(origin: Vector2i, id: String) -> void:
 	var def: Dictionary = Catalog.PLACEABLES[id]
 	var g := GameState.grid(view.zone)
@@ -223,7 +227,7 @@ func _draw_object(origin: Vector2i, id: String) -> void:
 		return
 	_draw_shadow(Iso.unit_center(origin, sz) + Vector2(0, Iso.unit_height(sz) * 0.32), Iso.unit_width(sz) * 0.42)
 	var fa := ArtCatalog.facing_art(id, facing)
-	if not _draw_sprite(fa.art, origin, sz, Color.WHITE, fa.flip):
+	if not _draw_facing_sprite(id, fa, origin, sz, Color.WHITE):
 		_draw_box(origin, sz, ArtCatalog.placeable_color(id), facing if Catalog.is_rotatable(id) else -1, ArtCatalog.height_blocks(id))
 	_draw_status(origin, sz, Iso.TILE_H * ArtCatalog.height_blocks(id))
 

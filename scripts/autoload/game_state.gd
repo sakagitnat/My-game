@@ -382,7 +382,8 @@ func move_object(zone: String, from_cell: Vector2i, to_cell: Vector2i, top: bool
 	_commit()
 	return "ok"
 
-# Whether the object at `origin` can turn a quarter turn: "ok", "empty", "fixed" (nothing to turn) or the reason it does not fit there.
+# Whether the object at `origin` can turn a quarter turn about its middle: "ok", "empty", "fixed" (nothing to turn) or the reason it
+# does not fit there. Something standing on it (a vase on a table) blocks the turn: it would be left off the surface.
 func check_rotate(zone: String, origin: Vector2i) -> String:
 	var g := grid(zone)
 	if not g.objects.has(origin):
@@ -390,29 +391,40 @@ func check_rotate(zone: String, origin: Vector2i) -> String:
 	var id: String = g.objects[origin]
 	if not Catalog.is_rotatable(id):
 		return "fixed"
-	var sz := Catalog.size_facing(id, (g.facing_at(origin) + 1) % 4)
-	if not g.footprint_in_bounds(origin, sz):
+	if not g.tops_over(origin).is_empty():
+		return "occupied"
+	var next := (g.facing_at(origin) + 1) % 4
+	var sz := Catalog.size_facing(id, next)
+	var at := Catalog.origin_after_turn(id, origin, next)
+	if not g.footprint_in_bounds(at, sz):
 		return "invalid"
-	if not _footprint_solid(zone, origin, sz):
+	if not _footprint_solid(zone, at, sz):
 		return "invalid"
-	if not _footprint_in_area(zone, origin, sz, str(Catalog.PLACEABLES[id].area)):
+	if not _footprint_in_area(zone, at, sz, str(Catalog.PLACEABLES[id].area)):
 		return "area"
-	if not g.footprint_owned(origin, sz):
+	if not g.footprint_owned(at, sz):
 		return "locked"
-	if g.footprint_blocked(origin, sz):
+	if g.footprint_blocked(at, sz):
 		return "blocked"
-	for cell in g.cells_of(origin, sz):
+	for cell in g.cells_of(at, sz):
 		if g.occupied.has(cell) and g.occupied[cell] != origin:
 			return "occupied"
 	return "ok"
 
-# Turns the object at `origin` a quarter turn. Free of charge.
+# Where the object at `origin` has its top-left unit after its next quarter turn (the turn keeps its middle in place).
+func origin_after_rotate(zone: String, origin: Vector2i) -> Vector2i:
+	var g := grid(zone)
+	return Catalog.origin_after_turn(str(g.objects[origin]), origin, (g.facing_at(origin) + 1) % 4)
+
+# Turns the object at `origin` a quarter turn about its middle. Free of charge. Afterwards it is at origin_after_rotate (computed before).
 func rotate_object(zone: String, origin: Vector2i) -> String:
 	var result := check_rotate(zone, origin)
 	if result != "ok":
 		return result
 	var g := grid(zone)
-	g.turn(origin, Catalog.size_facing(g.objects[origin], (g.facing_at(origin) + 1) % 4))
+	var next := (g.facing_at(origin) + 1) % 4
+	var id := str(g.objects[origin])
+	g.turn(origin, Catalog.size_facing(id, next), Catalog.origin_after_turn(id, origin, next))
 	_commit()
 	return "ok"
 

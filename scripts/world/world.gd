@@ -511,11 +511,13 @@ func _on_move_requested() -> void:
 func _on_rotate_requested() -> void:
 	if selected_origin == NONE:
 		return
+	var next_origin := GameState.origin_after_rotate(zone, selected_origin) if GameState.grid(zone).objects.has(selected_origin) else selected_origin
 	var st := GameState.rotate_object(zone, selected_origin)
 	if st != "ok":
 		var e := _error_text(st)
 		hud.show_message(e[0], e[1])
 		return
+	selected_origin = next_origin   # a turn about the middle moves the top-left corner
 	hud.show_context(_context_info(selected_origin))
 	_redraw_all()
 

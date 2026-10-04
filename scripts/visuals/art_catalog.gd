@@ -53,7 +53,13 @@ const OBSTACLE_ALT := {
 
 # Art for things that look different from each side: [front, left, back, right]; a name ending "|flip" is the same picture mirrored.
 # Items without an entry use their own art for every turn. (The chair needs only front, back and one side: the right side is the left one mirrored.)
+# Which things need which pictures (the right side is always the left one mirrored, so at most three are drawn):
+#   shared  one picture for every turn: table, vases, stool, crate, bin, rug, plant pot, floor lamp (they look the same from every side)
+#   three   front, side (left) and back: chair, stove, bench / long table (side = the 1 x 2 / 2 x 1 footprint turned)
+#   fixed   cannot be turned (against a wall or with one front only): kitchen modules, fridge, shelf, register, menu sign
+# A turn whose own picture is missing falls back to the front picture.
 const FACING_ART := {
+	"rest_stove_01": ["rest_stove_01", "rest_stove_side_01", "rest_stove_back_01", "rest_stove_side_01|flip"],
 	"rest_chair_01": ["rest_chair_down_01", "rest_chair_side_01", "rest_chair_up_01", "rest_chair_side_01|flip"],
 }
 
