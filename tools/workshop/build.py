@@ -4,7 +4,7 @@ Run from the repo root: python3 tools/workshop/build.py"""
 import sys, os, json, base64, io, glob
 sys.path.insert(0, os.path.dirname(__file__))
 from PIL import Image, ImageDraw, ImageFont
-from items import ITEMS, CATEGORIES, SHEETS, anchor
+from items import ITEMS, CATEGORIES, SHEETS, WALL_DECO, anchor
 
 SHEET_W = 1920
 M = 32          # sheet margin
@@ -105,7 +105,21 @@ def draw_guide(items, heads, H, S, title, background=True):
         d.line([(x, y + ay * S), (x + w, y + ay * S)], fill=(*PK[:3], 140), width=S)
         d.line([(x + (ax - 6) * S, y + ay * S), (x + (ax + 6) * S, y + ay * S)], fill=GN, width=2 * S)
         d.line([(x + ax * S, y + (ay - 6) * S), (x + ax * S, y + (ay + 6) * S)], fill=GN, width=2 * S)
-        for sh in SHAPES.get(it['hint'], []):
+        guide = piece_guide(it['id'])
+        if guide is not None:
+            gw, gh = guide.size
+            if it['flags'] in ('tile', 'flat'):
+                scale = None; tw, th = it['w'] * S, it['h'] * S
+            else:
+                room_w, room_h = (it['w'] - 12) * S, (it['anchor'][1] - 6) * S if it['hint'] in WALL_DECO else (it['h'] - 12) * S
+                k = min(room_w / gw, room_h / gh); tw, th = max(1, int(gw * k)), max(1, int(gh * k))
+            g2 = guide.resize((tw, th), Image.LANCZOS)
+            g2.putalpha(g2.getchannel('A').point(lambda v: int(v * 0.7)))
+            gx = x + (it['w'] * S - tw) // 2
+            gy = y + (it['h'] * S - th - 6 * S if it['flags'] not in ('tile', 'flat') and it['hint'] not in WALL_DECO else (y + it['anchor'][1] * S - th - 6 * S if it['hint'] in WALL_DECO else y))
+            gy = int(gy) if it['flags'] not in ('tile', 'flat') else y
+            im.alpha_composite(g2, (int(gx), int(gy)))
+        for sh in ([] if guide is not None else SHAPES.get(it['hint'], [])):
             k = sh[0]; a = [ev(v, it['w'], it['h']) for v in sh[1:]]
             if k == 'r': d.rectangle([x + a[0] * S, y + a[1] * S, x + a[2] * S, y + a[3] * S], outline=BL, width=2 * S)
             elif k == 'e': d.ellipse([x + (a[0] - a[2]) * S, y + (a[1] - a[3]) * S, x + (a[0] + a[2]) * S, y + (a[1] + a[3]) * S], outline=BL, width=2 * S)
@@ -131,6 +145,12 @@ def draw_guide(items, heads, H, S, title, background=True):
         if it['hint'] in ('wallplain', 'walllow'):
             d.line([(x, y), (x, y + h)], fill=MG, width=3 * S); d.line([(x + w - 2 * S, y), (x + w - 2 * S, y + h)], fill=MG, width=3 * S)
     return im
+
+GUIDES = os.path.join(os.path.dirname(__file__), 'guides')
+def piece_guide(pid):
+    """A better guide drawing for a piece (see grid_guides.py), if one was made; else None and the plain shapes are drawn."""
+    path = os.path.join(GUIDES, pid + '.png')
+    return Image.open(path).convert('RGBA') if os.path.exists(path) else None
 
 def png_uri(im):
     b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
