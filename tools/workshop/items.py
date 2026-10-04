@@ -70,7 +70,7 @@ for _crop, _clabel in (("wheat", "ข้าวสาลี"), ("tomato", "มะ
         ITEMS.append((f"crop_{_crop}_s{_stage}", "farm", f"crop_{_crop}_s{_stage}", 256, 256, "พืช", f"{_clabel} {_slabel}", f"crop{_stage}", ""))
 ITEMS += [
     ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
-    ("farm_coop", "farm", "farm_coop_01", 384, 448, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 2 บล็อก)", "coop", ""),
+    ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
     ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
     ("rest_stove", "furniture", "rest_stove_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "เตา (2x2 ช่อง)", "stove2", ""),
