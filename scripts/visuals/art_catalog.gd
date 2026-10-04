@@ -27,6 +27,24 @@ const OBSTACLE := {
 	"bush": {"art": "obs_bush_01", "scale": 1.0},
 }
 
+# The picture's own box, separate from the room the thing reserves (Catalog "size") and from where it blocks walking.
+# By default the picture is as wide as its footprint, centred on it, and its bottom edge sits on the footprint's bottom edge
+# (the foot). An entry here changes that: "w" is the picture's width in units (more than the footprint lets a roof or a crown
+# stick out sideways without squeezing the picture), "dx" / "dy" move it in units (right / down). The picture keeps its shape.
+const ART_BOX := {}
+
+static func art_box(id: String) -> Dictionary:
+	return ART_BOX.get(id, {})
+
+# Where a picture is drawn: `foot` is the middle of the bottom edge of the footprint, `fp_width` its width, `tex_size` the
+# picture's size in pixels, `box` an ART_BOX entry (or {}). Units are Iso.TILE_W / Iso.SUB px wide.
+static func sprite_rect(box: Dictionary, tex_size: Vector2, foot: Vector2, fp_width: float) -> Rect2:
+	var unit := Iso.TILE_W / float(Iso.SUB)
+	var w := float(box.w) * unit if box.has("w") else fp_width
+	var s := tex_size * (w / tex_size.x)
+	var origin := foot + Vector2(float(box.get("dx", 0.0)), float(box.get("dy", 0.0))) * unit
+	return Rect2(origin - Vector2(s.x * 0.5, s.y), s)
+
 # A second, smaller look for a share of the trees (`share` of them, picked per cell): a young tree as tall as a person.
 # Used only when its art exists; heights (docs/ART_TOPDOWN.md): big tree 3 blocks, small tree 2, bush 1, rock half a block.
 const OBSTACLE_ALT := {

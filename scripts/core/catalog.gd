@@ -12,13 +12,16 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # "flat" objects are drawn like floor tiles instead of upright sprites.
 # "surface" objects (tables) carry small things; "on": "surface" things (vases, cups) stand on a surface instead of the floor:
 # they take no floor room and live in their own layer (WorldGrid.tops), still sized in units.
+# "block" is where the thing stops walking: a Rect2i (x, y, w, h) in units inside the footprint, as it stands facing front.
+# Without one the whole footprint blocks; Rect2i() (empty) means people walk over it (a plot). It is separate from "size"
+# (the room it reserves) and from the picture (ArtCatalog.ART_BOX); a quarter turn turns the rectangle with the footprint.
 # "rotatable" objects have a front: the player buys one and turns it (facing 0 front, 1 left, 2 back, 3 right).
 const PLACEABLES := {
 	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 4), "name": "ITEM_TABLE", "surface": true},
 	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(4, 4), "name": "ITEM_STOVE", "rotatable": true},
 	"rest_vase_small_01": {"area": "restaurant", "cost": 10, "size": Vector2i(1, 1), "name": "ITEM_VASE_SMALL", "on": "surface"},
 	"rest_vase_large_01": {"area": "restaurant", "cost": 25, "size": Vector2i(2, 2), "name": "ITEM_VASE_LARGE", "on": "surface"},
-	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(4, 4), "name": "ITEM_PLOT", "flat": true},
+	"farm_plot_01": {"area": "farm", "cost": 10, "size": Vector2i(4, 4), "name": "ITEM_PLOT", "flat": true, "block": Rect2i()},
 	"farm_fence_01": {"area": "farm", "cost": 20, "size": Vector2i(2, 2), "name": "ITEM_FENCE"},
 	"farm_coop_01": {"area": "farm", "cost": 120, "level": 2, "size": Vector2i(6, 6), "name": "ITEM_COOP"},
 }
@@ -84,6 +87,23 @@ static func is_rotatable(id: String) -> bool:
 static func size_facing(id: String, facing: int) -> Vector2i:
 	var sz: Vector2i = PLACEABLES[id].size
 	return Vector2i(sz.y, sz.x) if facing % 2 == 1 else sz
+
+# The walking-blocked part of `id` turned to `facing`, in units from the footprint's top-left corner (a quarter turn is
+# clockwise on screen: front -> left -> back -> right). Empty when people can walk over it.
+static func block_rect(id: String, facing: int = 0) -> Rect2i:
+	var def: Dictionary = PLACEABLES[id]
+	var sz: Vector2i = def.size
+	var r: Rect2i = def.get("block", Rect2i(Vector2i.ZERO, sz))
+	if r.size.x <= 0 or r.size.y <= 0:
+		return Rect2i()
+	return turn_rect(r, sz, facing)
+
+# A rectangle inside a `sz` box after `facing` clockwise quarter turns of the box: (x, y) in a W x H box becomes (H - y - h, x) in a H x W box.
+static func turn_rect(r: Rect2i, sz: Vector2i, facing: int) -> Rect2i:
+	for _i in range(facing % 4):
+		r = Rect2i(Vector2i(sz.y - r.position.y - r.size.y, r.position.x), Vector2i(r.size.y, r.size.x))
+		sz = Vector2i(sz.y, sz.x)
+	return r
 
 static func placeables_for(area: String) -> Array[String]:
 	var out: Array[String] = []

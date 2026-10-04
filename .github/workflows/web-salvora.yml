@@ -41,6 +41,7 @@ jobs:
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/scenes.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/editor.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/rotate.gd
+          XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/footprint.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/tabletop.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/storage.gd
           XDG_DATA_HOME=/tmp/salvora-tests godot --headless --path . --script tests/daylight.gd

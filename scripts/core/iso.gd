@@ -79,3 +79,14 @@ static func unit_corners(origin: Vector2i, sz: Vector2i) -> PackedVector2Array:
 	var w := unit_width(sz)
 	var h := unit_height(sz)
 	return PackedVector2Array([a, a + Vector2(w, 0), a + Vector2(w, h), a + Vector2(0, h)])
+
+# ---- Draw order. Everything that stands on the ground (furniture, trees, and later people) is sorted by where its feet
+# are: `foot` is the point at the middle of the bottom edge of what it stands on, in unit coordinates (float). A larger
+# key is nearer the viewer and is drawn later. A thing's size or picture never changes its key, only where it stands.
+static func depth_key(foot: Vector2) -> float:
+	return foot.y * 1000.0 + foot.x
+
+# Key of a thing with a footprint: the row of its bottom edge, and its left end as the tie-break so that two things on the same
+# row are ordered left to right. `origin` and `sz` are in units.
+static func footprint_depth(origin: Vector2i, sz: Vector2i) -> float:
+	return depth_key(Vector2(origin.x, origin.y + sz.y))
