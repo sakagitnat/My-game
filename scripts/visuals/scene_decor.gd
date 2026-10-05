@@ -295,15 +295,20 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_rect(Rect2(a + Vector2(13, -124), Vector2(38, 126)), Color("5b3a22"))
 		draw_circle(a + Vector2(44, -60), 2.5, Color("e8c98a"))
 
+# A window is a plain wall as far as a side wall is concerned: it must not break the strip (the end of a strip shows the rail and the panel).
+func _run_kind(kind: String) -> String:
+	return "wall" if kind == "window" else kind
+
 # A wall along the left edge of cell (x, y). Seen from the front it is a thin band; its cap sits a wall height up.
 # Consecutive cells of the same kind are drawn as ONE continuous strip, so no seams show between cells.
 func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
 	if kind == "door":
 		return   # an opening in a side wall: nothing to see but the mat
-	if str(lay.walls.get("%d,%d,w" % [x, y - 1], "")) == kind:
+	var run := _run_kind(kind)
+	if _run_kind(str(lay.walls.get("%d,%d,w" % [x, y - 1], ""))) == run:
 		return   # drawn as part of the run that starts above
 	var end_y := y
-	while str(lay.walls.get("%d,%d,w" % [x, end_y + 1], "")) == kind:
+	while _run_kind(str(lay.walls.get("%d,%d,w" % [x, end_y + 1], ""))) == run:
 		end_y += 1
 	var a := _pt(x - 0.5, y - 0.5)
 	var b := _pt(x - 0.5, end_y + 0.5)
