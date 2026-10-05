@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Layered character base (our own design): 32 x 64 frame, about 58 px tall, a big-headed chibi (head about 40% of the height), soft pastel fashion colours.
+"""Layered character base (our own design): 32 x 64 frame, about 58 px tall, a three-head chibi (head about a third of the height, legs a third), soft pastel fashion colours.
 Layers (drawn in this order): hair_back, body (skin + face), shoes, bottom, top, apron, hair_front. Each layer is its own PNG per view and frame, so a
 character is chosen by picking a hair style, an outfit and colours. Views: down (front), left (side), up (back); right is left mirrored.
 Walk: 4 frames per view (stand, step A, stand, step B).
@@ -46,126 +46,124 @@ def shade_rect(p, x0, y0, x1, y1, r, light_left=True):
     p.rect(x0, y0, x1, y1, r['m'])
     p.vline(x0 if light_left else x1, y0, y1, r['l']); p.vline(x1 if light_left else x0, y0, y1, r['d'])
 
-# ---- layers ------------------------------------------------------------------------------------------------------------
+# ---- layers (3-head proportions: head rows 3..21, torso 23..38, legs 39..57) ---------------------------------------------------
+HT, HB = 3, 21          # head top / bottom
+TT, TB = 23, 38         # torso top / bottom
+FOOT = 57               # last row of the shoes
+
 def body(view, f, skin):
     p = Pix(32, 64); P = pose(view, f); r = ramp(skin); b = P['bob']
     if view in ('down', 'up'):
         for lx, lift in ((11, P['ll']), (17, P['lr'])):
-            shade_rect(p, lx, 44 + b, lx + 3, 57 + lift, r)
-        shade_rect(p, 10, 27 + b, 21, 44 + b, r); p.rect(14, 24 + b, 17, 27 + b, r['d'])
+            shade_rect(p, lx, TB + 1 + b, lx + 3, FOOT - 2 + lift, r)
+        shade_rect(p, 10, TT + b, 21, TB + b, r); p.rect(14, HB + b, 17, TT + b, r['d'])
         for ax, a in ((7, P['al']), (22, P['ar'])):
-            shade_rect(p, ax, 28 + b + a, ax + 2, 40 + b + a, r); p.rect(ax, 41 + b + a, ax + 2, 43 + b + a, r['m']); p.hline(ax, ax + 2, 43 + b + a, r['d'])
-        head_shape(p, 6, 25, 3 + b, 24 + b, r['m']); p.hline(8, 23, 22 + b, r['d']); p.hline(9, 22, 23 + b, r['d'])
+            shade_rect(p, ax, TT + 1 + b + a, ax + 2, TB - 3 + b + a, r); p.rect(ax, TB - 2 + b + a, ax + 2, TB + b + a, r['m']); p.hline(ax, ax + 2, TB + b + a, r['d'])
+        head_shape(p, 7, 24, HT + b, HB + b, r['m']); p.hline(9, 22, HB - 1 + b, r['d'])
         if view == 'down':
-            for ex in (10, 20): p.rect(ex, 14 + b, ex + 1, 17 + b, EYE); p.set(ex, 14 + b, (255, 255, 255, 255))
-            p.rect(7, 18 + b, 9, 19 + b, BLUSH); p.rect(22, 18 + b, 24, 19 + b, BLUSH)
-            p.hline(14, 17, 20 + b, mix(r['m'], (200, 90, 100, 255), 0.6))
+            for ex in (11, 19): p.rect(ex, 12 + b, ex + 1, 15 + b, EYE); p.set(ex, 12 + b, (255, 255, 255, 255))
+            p.rect(8, 16 + b, 10, 17 + b, BLUSH); p.rect(21, 16 + b, 23, 17 + b, BLUSH)
+            p.hline(15, 16, 18 + b, mix(r['m'], (200, 90, 100, 255), 0.6))
     else:                                              # side, facing left
         dx = P['dx']
-        for lx, d in ((13, -dx), (13, dx)):
+        for d in (-dx, dx):
             near = d == dx
-            shade_rect(p, lx + d, 44 + b, lx + d + 3, 57 + (-1 if abs(dx) == 4 and not near else 0), r)
-        shade_rect(p, 11, 27 + b, 20, 44 + b, r); p.rect(13, 24 + b, 17, 27 + b, r['d'])
-        shade_rect(p, 14 - dx // 2, 28 + b, 16 - dx // 2, 40 + b, r); p.rect(14 - dx // 2, 41 + b, 16 - dx // 2, 43 + b, r['m'])
-        head_shape(p, 7, 24, 3 + b, 24 + b, r['m']); p.hline(9, 22, 23 + b, r['d'])
-        p.rect(10, 14 + b, 11, 17 + b, EYE); p.set(10, 14 + b, (255, 255, 255, 255)); p.rect(8, 18 + b, 10, 19 + b, BLUSH)
-        p.set(7, 18 + b, r['d'])
+            shade_rect(p, 13 + d, TB + 1 + b, 16 + d, FOOT - 2 + (-1 if abs(dx) == 4 and not near else 0), r)
+        shade_rect(p, 11, TT + b, 20, TB + b, r); p.rect(13, HB + b, 17, TT + b, r['d'])
+        shade_rect(p, 14 - dx // 2, TT + 1 + b, 16 - dx // 2, TB - 3 + b, r); p.rect(14 - dx // 2, TB - 2 + b, 16 - dx // 2, TB + b, r['m'])
+        head_shape(p, 8, 24, HT + b, HB + b, r['m']); p.hline(10, 22, HB - 1 + b, r['d'])
+        p.rect(11, 12 + b, 12, 15 + b, EYE); p.set(11, 12 + b, (255, 255, 255, 255)); p.rect(9, 16 + b, 11, 17 + b, BLUSH)
+        p.set(8, 16 + b, r['d'])
     return p
 
 def shoes(view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col)
     if view in ('down', 'up'):
         for lx, lift in ((11, P['ll']), (17, P['lr'])):
-            p.rect(lx - 1, 56 + lift, lx + 4, 58 + lift, r['m']); p.hline(lx - 1, lx + 4, 56 + lift, r['l']); p.hline(lx - 1, lx + 4, 58 + lift, r['d'])
+            p.rect(lx - 1, FOOT - 2 + lift, lx + 4, FOOT + lift, r['m']); p.hline(lx - 1, lx + 4, FOOT - 2 + lift, r['l']); p.hline(lx - 1, lx + 4, FOOT + lift, r['d'])
     else:
         dx = P['dx']
         for d in (-dx, dx):
             near = d == dx
-            y = 56 + (-1 if abs(dx) == 4 and not near else 0)
+            y = FOOT - 2 + (-1 if abs(dx) == 4 and not near else 0)
             p.rect(11 + d, y, 18 + d, y + 2, r['m']); p.hline(11 + d, 18 + d, y, r['l']); p.hline(11 + d, 18 + d, y + 2, r['d'])
     return p
 
 def bottom(kind, view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col); b = P['bob']
-    if view in ('down', 'up'):
-        if kind == 'skirt':
-            for i, y in enumerate(range(40, 50)):
-                w = 5 + i // 2; p.rect(16 - w, y + b, 15 + w, y + b, r['m']); p.set(16 - w, y + b, r['l']); p.set(15 + w, y + b, r['d'])
-            p.hline(9, 22, 49 + b, r['d'])
-        else:                                          # shorts
-            shade_rect(p, 10, 40 + b, 21, 47 + b, r); p.vline(15, 44 + b, 47 + b, r['d']); p.vline(16, 44 + b, 47 + b, r['d'])
-    else:
-        if kind == 'skirt':
-            for i, y in enumerate(range(40, 50)):
-                w = 4 + i // 2; p.rect(16 - w, y + b, 15 + w, y + b, r['m']); p.set(16 - w, y + b, r['l']); p.set(15 + w, y + b, r['d'])
-        else: shade_rect(p, 11, 40 + b, 20, 47 + b, r)
+    w0 = 5 if view in ('down', 'up') else 4
+    if kind == 'skirt':
+        for i, y in enumerate(range(TB - 2, TB + 9)):
+            w = w0 + i // 2; p.rect(16 - w, y + b, 15 + w, y + b, r['m']); p.set(16 - w, y + b, r['l']); p.set(15 + w, y + b, r['d'])
+        p.hline(16 - w0 - 5, 15 + w0 + 5, TB + 8 + b, r['d'])
+    else:                                              # shorts
+        x0, x1 = (10, 21) if view in ('down', 'up') else (11, 20)
+        shade_rect(p, x0, TB - 2 + b, x1, TB + 5 + b, r)
+        if view in ('down', 'up'): p.vline(15, TB + 2 + b, TB + 5 + b, r['d']); p.vline(16, TB + 2 + b, TB + 5 + b, r['d'])
     return p
 
 def top(kind, view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col); b = P['bob']
     if view in ('down', 'up'):
-        shade_rect(p, 9, 27 + b, 22, 41 + b, r)
-        for ax, a in ((6, P['al']), (22, P['ar'])):
-            shade_rect(p, ax, 28 + b + a, ax + 3, 34 + b + a, r)
+        shade_rect(p, 9, TT + b, 22, TB - 1 + b, r)
+        for ax, a in ((6, P['al']), (22, P['ar'])): shade_rect(p, ax, TT + 1 + b + a, ax + 3, TT + 7 + b + a, r)
         if kind == 'sailor' and view == 'down':
-            p.rect(11, 27 + b, 20, 29 + b, (250, 250, 250, 255)); p.vline(15, 30 + b, 33 + b, (240, 120, 140, 255)); p.vline(16, 30 + b, 33 + b, (240, 120, 140, 255))
-        p.hline(9, 22, 41 + b, r['d'])
-        if view == 'down': p.hline(13, 18, 27 + b, r['d'])
+            p.rect(11, TT + b, 20, TT + 2 + b, (250, 250, 250, 255)); p.vline(15, TT + 3 + b, TT + 6 + b, (240, 120, 140, 255)); p.vline(16, TT + 3 + b, TT + 6 + b, (240, 120, 140, 255))
+        p.hline(9, 22, TB - 1 + b, r['d'])
+        if view == 'down': p.hline(13, 18, TT + b, r['d'])
     else:
-        shade_rect(p, 10, 27 + b, 21, 41 + b, r)
-        shade_rect(p, 14 - P['dx'] // 2 - 1, 28 + b, 17 - P['dx'] // 2, 35 + b, r)
-        p.hline(10, 21, 41 + b, r['d'])
+        shade_rect(p, 10, TT + b, 21, TB - 1 + b, r)
+        shade_rect(p, 13 - P['dx'] // 2, TT + 1 + b, 17 - P['dx'] // 2, TT + 8 + b, r)
+        p.hline(10, 21, TB - 1 + b, r['d'])
     return p
 
 def apron(view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col); b = P['bob']
     if view == 'down':
-        p.rect(11, 33 + b, 20, 50 + b, r['m']); p.vline(11, 33 + b, 50 + b, r['l']); p.vline(20, 33 + b, 50 + b, r['d']); p.hline(11, 20, 50 + b, r['d'])
-        p.vline(12, 27 + b, 33 + b, r['m']); p.vline(19, 27 + b, 33 + b, r['m']); p.rect(14, 40 + b, 17, 43 + b, r['d'])
+        p.rect(11, TT + 6 + b, 20, TB + 9 + b, r['m']); p.vline(11, TT + 6 + b, TB + 9 + b, r['l']); p.vline(20, TT + 6 + b, TB + 9 + b, r['d']); p.hline(11, 20, TB + 9 + b, r['d'])
+        p.vline(12, TT + b, TT + 6 + b, r['m']); p.vline(19, TT + b, TT + 6 + b, r['m']); p.rect(14, TT + 11 + b, 17, TT + 14 + b, r['d'])
     elif view == 'up':
-        p.vline(12, 27 + b, 33 + b, r['m']); p.vline(19, 27 + b, 33 + b, r['m']); p.rect(13, 35 + b, 18, 37 + b, r['m']); p.hline(13, 18, 37 + b, r['d'])
+        p.vline(12, TT + b, TT + 6 + b, r['m']); p.vline(19, TT + b, TT + 6 + b, r['m']); p.rect(13, TT + 11 + b, 18, TT + 13 + b, r['m']); p.hline(13, 18, TT + 13 + b, r['d'])
     else:
-        p.rect(9, 33 + b, 11, 48 + b, r['m']); p.vline(9, 33 + b, 48 + b, r['l']); p.hline(9, 11, 48 + b, r['d'])
+        p.rect(9, TT + 6 + b, 11, TB + 7 + b, r['m']); p.vline(9, TT + 6 + b, TB + 7 + b, r['l']); p.hline(9, 11, TB + 7 + b, r['d'])
     return p
 
 def hair_back(style, view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col); b = P['bob']
     if view == 'down':
-        if style == 'bob': head_shape(p, 4, 27, 5 + b, 25 + b, r['d'])
-        elif style == 'long': head_shape(p, 4, 27, 5 + b, 25 + b, r['d']); p.rect(5, 22 + b, 9, 41 + b, r['d']); p.rect(22, 22 + b, 26, 41 + b, r['d'])
+        if style in ('bob', 'short'): head_shape(p, 5, 26, HT + 2 + b, HB + 3 + b, r['d'])
+        elif style == 'long': head_shape(p, 5, 26, HT + 2 + b, HB + 3 + b, r['d']); p.rect(6, HB + b, 9, TB + 3 + b, r['d']); p.rect(22, HB + b, 25, TB + 3 + b, r['d'])
         elif style == 'twin':
-            for tx in (2, 25): shade_rect(p, tx, 14 + b, tx + 4, 34 + b, r)
+            for tx in (3, 25): shade_rect(p, tx, 12 + b, tx + 4, 31 + b, r)
     elif view == 'left':
-        head_shape(p, 14, 28, 5 + b, 25 + b, r['d'])
-        if style == 'long': p.rect(18, 22 + b, 27, 41 + b, r['d'])
-        if style == 'twin': shade_rect(p, 19, 14 + b, 24, 34 + b, r)
+        head_shape(p, 14, 28, HT + 2 + b, HB + 3 + b, r['d'])
+        if style == 'long': p.rect(18, HB + b, 27, TB + 3 + b, r['d'])
+        if style == 'twin': shade_rect(p, 19, 12 + b, 24, 31 + b, r)
     return p
 
 def hair_front(style, view, f, col):
     p = Pix(32, 64); P = pose(view, f); r = ramp(col); b = P['bob']
     if view == 'down':
-        head_shape(p, 5, 26, 1 + b, 11 + b, r['m']); p.hline(8, 23, 2 + b, r['l']); p.hline(9, 18, 3 + b, r['l'])
-        for x in range(6, 26, 3): p.rect(x, 10 + b, x + 1, 12 + b, r['m'])                     # fringe points
-        p.rect(5, 10 + b, 6, 18 + b, r['m']); p.rect(25, 10 + b, 26, 18 + b, r['d'])
-        if style == 'bob': p.rect(4, 10 + b, 6, 23 + b, r['m']); p.rect(25, 10 + b, 27, 23 + b, r['d'])
-        if style == 'twin':
-            p.set(15, 1 + b, r['l']); p.rect(3, 6 + b, 6, 9 + b, (240, 150, 170, 255)); p.rect(25, 6 + b, 28, 9 + b, (240, 150, 170, 255))
-        if style == 'long': p.rect(4, 10 + b, 6, 28 + b, r['m']); p.rect(25, 10 + b, 27, 28 + b, r['d'])
-        if style == 'short': p.hline(8, 23, 11 + b, r['m'])
+        head_shape(p, 6, 25, HT - 2 + b, HT + 6 + b, r['m']); p.hline(9, 22, HT - 1 + b, r['l']); p.hline(10, 18, HT + b, r['l'])
+        for x in range(7, 25, 3): p.rect(x, HT + 6 + b, x + 1, HT + 8 + b, r['m'])           # fringe points
+        p.rect(6, HT + 6 + b, 7, 15 + b, r['m']); p.rect(24, HT + 6 + b, 25, 15 + b, r['d'])
+        if style == 'bob': p.rect(5, HT + 7 + b, 7, HB + 1 + b, r['m']); p.rect(24, HT + 7 + b, 26, HB + 1 + b, r['d'])
+        if style == 'twin': p.rect(3, 6 + b, 7, 9 + b, (240, 150, 170, 255)); p.rect(24, 6 + b, 28, 9 + b, (240, 150, 170, 255))
+        if style == 'long': p.rect(5, HT + 7 + b, 7, TB - 2 + b, r['m']); p.rect(24, HT + 7 + b, 26, TB - 2 + b, r['d'])
     elif view == 'up':
-        head_shape(p, 5, 26, 1 + b, 25 + b, r['m']); p.hline(8, 23, 2 + b, r['l'])
-        for x in range(8, 25, 4): p.vline(x, 8 + b, 24 + b, r['d'])
-        if style in ('bob', 'twin'): p.rect(4, 10 + b, 27, 24 + b, r['m'])
-        if style == 'long': p.rect(4, 10 + b, 27, 40 + b, r['m']); p.vline(10, 26 + b, 40 + b, r['d']); p.vline(21, 26 + b, 40 + b, r['d'])
+        head_shape(p, 6, 25, HT - 2 + b, HB + 2 + b, r['m']); p.hline(9, 22, HT - 1 + b, r['l'])
+        for x in range(9, 25, 4): p.vline(x, 8 + b, HB + b, r['d'])
+        if style == 'long': p.rect(5, 9 + b, 26, TB + 2 + b, r['m']); p.vline(11, HB + b, TB + 2 + b, r['d']); p.vline(20, HB + b, TB + 2 + b, r['d'])
+        if style == 'bob': p.rect(5, 9 + b, 26, HB + 2 + b, r['m'])
         if style == 'twin':
-            for tx in (2, 25): shade_rect(p, tx, 14 + b, tx + 4, 34 + b, r)
+            for tx in (3, 25): shade_rect(p, tx, 12 + b, tx + 4, 31 + b, r)
     else:                                              # side
-        head_shape(p, 6, 25, 1 + b, 12 + b, r['m']); p.hline(9, 22, 2 + b, r['l'])
-        p.rect(7, 10 + b, 11, 13 + b, r['m'])                                                   # fringe over the forehead
-        p.rect(15, 8 + b, 25, 22 + b, r['m']); p.vline(25, 8 + b, 22 + b, r['d'])
-        if style == 'bob': p.rect(15, 8 + b, 26, 25 + b, r['m'])
-        if style == 'long': p.rect(15, 8 + b, 26, 40 + b, r['m']); p.vline(26, 8 + b, 40 + b, r['d'])
-        if style == 'twin': shade_rect(p, 19, 14 + b, 24, 34 + b, r)
+        head_shape(p, 7, 25, HT - 2 + b, HT + 6 + b, r['m']); p.hline(9, 22, HT - 1 + b, r['l'])
+        p.rect(8, HT + 5 + b, 12, HT + 8 + b, r['m'])
+        p.rect(15, HT + 5 + b, 25, HB + b, r['m']); p.vline(25, HT + 5 + b, HB + b, r['d'])
+        if style == 'bob': p.rect(15, HT + 5 + b, 26, HB + 2 + b, r['m'])
+        if style == 'long': p.rect(15, HT + 5 + b, 26, TB + 2 + b, r['m']); p.vline(26, HT + 5 + b, TB + 2 + b, r['d'])
+        if style == 'twin': shade_rect(p, 19, 12 + b, 24, 31 + b, r)
     return p
 
 # ---- composition -------------------------------------------------------------------------------------------------------------
