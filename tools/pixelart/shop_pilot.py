@@ -97,14 +97,16 @@ def wall_low():
     return p.im
 
 def wall_side():
-    """Seen from the side: a plain strip. The game stacks it a cell at a time, so the top 32 px repeat: nothing across them."""
+    """Seen from the side: a thick post with a grey-white outline on both edges. The game stacks it a cell at a time, so the top 32 px repeat: nothing across them."""
     p = Pix(8, 96)
     for y in range(96):
-        p.set(0, y, 'c4'); p.rect(1, y, 5, y, 'c3'); p.set(6, y, 'c2'); p.set(7, y, 'c1')
-    p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0')            # chair rail
-    for y in range(64, 92):
-        p.set(0, y, 'c4'); p.rect(1, y, 5, y, 'b1'); p.set(6, y, 'b0'); p.set(7, y, 'n0')
-    p.rect(0, 92, 7, 95, 'c3'); p.hline(0, 7, 92, 'c4'); p.hline(0, 7, 95, 'n0')
+        p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, 5, y, 'c3'); p.set(6, y, 'c2'); p.set(7, y, 'n0')
+    p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0'); p.set(0, 60, 'n0'); p.set(7, 60, 'n0')   # chair rail
+    for y in range(64, 92):                                                                     # blue panel set into the post, darker than the frame
+        p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, 5, y, 'b1'); p.set(6, y, 'c2'); p.set(7, y, 'n0')
+        if y > 66: p.set(3, y, 'b0'); p.set(4, y, 'b2')
+    p.rect(2, 64, 5, 66, 'b0')                                                                  # shadow under the rail
+    p.rect(0, 92, 7, 95, 'c3'); p.hline(0, 7, 92, 'c4'); p.hline(0, 7, 95, 'n0'); p.set(0, 92, 'n0'); p.set(7, 92, 'n0')   # skirting
     return p.im
 
 # ---------- door and window (overlays on a wall; the last 6 rows hang below the base line) ----------
@@ -171,7 +173,8 @@ def table():
 def stove():
     p = Pix(64, 64)
     p.rect(0, 0, 63, 31, 'c2'); p.hline(0, 63, 0, 'c4'); p.vline(0, 0, 31, 'c3'); p.vline(63, 0, 31, 'n1')    # stone rim of the top
-    p.rect(3, 3, 60, 28, 's0'); p.hline(3, 60, 3, 's1'); p.hline(3, 60, 28, 'p0' if False else 's1')
+    p.rect(0, 0, 63, 5, 'c1'); p.hline(0, 63, 0, 'n1'); p.hline(0, 63, 1, 'c3'); p.hline(0, 63, 5, 'n0')      # back splash: the stove stands against the wall
+    p.rect(3, 7, 60, 28, 's0'); p.hline(3, 60, 7, 's1'); p.hline(3, 60, 28, 'p0' if False else 's1')
     for cx in (18, 45):                                                             # two burners
         p.disc(cx, 16, 10, 's1'); p.disc(cx, 16, 8, 's0'); p.ring(cx, 16, 4, 6, 's2'); p.disc(cx, 16, 2, 's1')
         p.hline(cx - 9, cx + 9, 16, 's1'); p.vline(cx, 7, 25, 's1')
