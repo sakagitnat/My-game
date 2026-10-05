@@ -8,7 +8,7 @@ const GRASS_LIGHT := Color("94d856")
 const SAND_DARK := Color("d6bb7f")
 const SAND_LIGHT := Color("f0deac")
 const DRY := Color("cdb860")
-# Grass art (128x128, tiles in every direction): tile_grass_01, _02 ... one is picked per cell. Used inland (3 cells or more from the
+# Grass art (pixel art 32x32, tiles in every direction): tile_grass_01, _02 ... one is picked per cell. Used inland (3 cells or more from the
 # water); without art, or near the shore where the beach tint is drawn, the smooth colours below are used.
 const GRASS_ART := ["tile_grass_01", "tile_grass_02", "tile_grass_03"]
 
@@ -128,7 +128,7 @@ func _draw_grass_art(c: Vector2i, owned: bool) -> bool:
 	if variants.is_empty():
 		return false
 	var tex: Texture2D = Assets.get_tex(variants[int(Noise2D.hash2(c.x, c.y, 72) * variants.size()) % variants.size()])
-	var size := Vector2.ONE * Iso.TILE_W * 1.04
+	var size := Vector2.ONE * (Iso.TILE_W + 1.0)
 	draw_texture_rect(tex, Rect2(Iso.cell_to_world(c) - size * 0.5, size), false, Color.WHITE if owned else Color.WHITE.lerp(DRY, 0.16))
 	return true
 

@@ -63,9 +63,9 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
   <h1 id="tplTitle">แม่แบบ</h1>
   <div class="panel">
     <ol class="steps">
-      <li>เลือกแผ่นที่ต้องการ ดาวน์โหลดแม่แบบ แล้วเปิดในแอปวาดรูปบน iPad (Procreate, Ibis Paint ฯลฯ) ใช้เป็นเลเยอร์ล่างสุด หรือส่งให้ GPT พร้อมคำสั่งที่ให้ไว้ในแต่ละแผ่น</li>
+      <li>เลือกแผ่นที่ต้องการ ดาวน์โหลด "แม่แบบพิกเซล" แล้วสร้างผืนผ้าใบขนาดเท่ากันเป๊ะ (พิกเซล ไม่ใช่มิลลิเมตร) ในแอปวาดรูปบน iPad (Procreate ฯลฯ) นำเข้าเป็นเลเยอร์ล่างสุดและล็อกไว้ ปิดการเกลี่ยขอบ (ใช้แปรงพิกเซล/ดินสอ ไม่มี anti-aliasing) ภาพขยาย 4 เท่ามีไว้อ่านชื่อชิ้น หรือส่งให้ GPT พร้อมคำสั่งที่ให้ไว้ในแต่ละแผ่น</li>
       <li>วาดของแต่ละชิ้นลงในกรอบของมัน ให้ฐานของวัตถุตรงเส้นชมพู ของที่ตั้งบนพื้นต้องเต็มช่องที่กิน (เส้นประเขียว)</li>
-      <li>เสร็จแล้ว <b>ซ่อนเลเยอร์แม่แบบ</b> ส่งออกเป็น PNG ขนาดเดิม (หรือใหญ่กว่าเท่าตัว) พื้นหลังโปร่งใส</li>
+      <li>เสร็จแล้ว <b>ซ่อนเลเยอร์แม่แบบ</b> ส่งออกเป็น PNG ขนาดเดิม (หรือขยายเป็นจำนวนเต็มเท่า โดยไม่เกลี่ยขอบ) พื้นหลังโปร่งใส</li>
       <li>ไปแท็บ "ตัดภาพ" เลือกแผ่นให้ตรง อัปโหลด เว็บจะตัดและตรวจขนาดให้ แล้วส่ง ZIP หรือไฟล์ให้ Claude ตรวจอีกรอบ</li>
     </ol>
     <p class="muted">ทำทีละแผ่นได้ แผ่นที่ "ใช้ในเกมตอนนี้" ควรทำก่อน เพราะเกมโหลดภาพชื่อนี้ทันที แผ่น "จะเพิ่มเข้าเกมต่อ" และ "เกมยังไม่ใช้" ทำไว้ล่วงหน้าตามชื่อและขนาดเดียวกัน แม่แบบเป็นภาพทึบพื้นอ่อนเพื่อให้เห็นเส้นชัด ห้ามส่งออกพร้อมแม่แบบ ต้องซ่อนเลเยอร์นี้ก่อนทุกครั้ง</p>
@@ -80,13 +80,12 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
     <div class="drop" id="drop">
       <div><b>ลากไฟล์ PNG ที่วาดมาวางที่นี่</b> หรือ</div>
       <div><button class="primary" id="pick">เลือกไฟล์</button><input id="file" type="file" accept="image/png,image/webp,image/jpeg" hidden></div>
-      <div class="muted" id="fileInfo">ยังไม่ได้เลือกไฟล์ (ต้องเป็นแผ่นเดียวกับแม่แบบ ขนาด 1920 px หรือ 3840 px)</div>
+      <div class="muted" id="fileInfo">ยังไม่ได้เลือกไฟล์ (ต้องเป็นแผ่นเดียวกับแม่แบบพิกเซล เช่น 480 px กว้าง หรือขยายเป็นจำนวนเต็มเท่า)</div>
       <div style="margin-top:8px">อัปโหลดแผ่นที่: <select id="sheetSel"></select></div>
     </div>
     <div class="row flags" style="margin-top:12px">
       <label class="field"><input type="checkbox" id="rmbg"> ภาพมีพื้นหลังทึบ ให้ลบสีพื้นหลัง (สีที่มุมซ้ายบน)</label>
       <label class="field">ความต่างสี <input type="range" id="tol" min="2" max="60" value="14"> <span id="tolv">14</span></label>
-      <label class="field"><input type="checkbox" id="hires"> ส่งออกขนาดละเอียด (ไม่ย่อ)</label>
       <label class="field">แผ่นนี้คือชุด <select id="slotSel"><option value="A">A</option><option value="B">B</option></select> <span class="muted">(ใช้ A กับ B เพื่อลองผสมชุด เช่น ผนังชุด A ประตูชุด B)</span></label>
     </div>
   </div>
@@ -132,11 +131,12 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px
   <div class="panel">
     <h2>ขนาดและกติกา</h2>
     <ul>
-      <li>1 ช่อง = 128 px ในไฟล์ (เกมแสดงที่ 64 px) ของเล็กเป็นครึ่งช่อง (64 px)</li>
+      <li><b>พิกเซลอาร์ต 1 ช่อง = 32 px</b> ในไฟล์ (เกมขยาย 2 เท่าเป็น 64 px ตรงกับที่แสดง) ของเล็กเป็นครึ่งช่อง (16 px) ตัวละครสูง 58 px ผนังสูง 96 px ประตูสูง 64 px</li>
+      <li>พิกเซลอาร์ต: พาเลตต์เล็ก (ไม่เกินราว 64 สีต่อชิ้น) ขอบคม แต่ละพิกเซลทึบเต็มหรือโปร่งใสเต็ม ไม่มีการเกลี่ยขอบหรือไล่สีเนียน เว็บจะเตือนถ้ามีสีมากเกินหรือขอบโปร่งแสง</li>
       <li>พื้น: ทึบเต็มภาพ ต่อกันทุกทิศเนียน ไม่มีเส้นขอบ</li>
       <li>ผนังและเคาน์เตอร์: ปลายซ้ายขวาชนขอบภาพพอดี ไม่มีเส้นตั้ง เงา หรือเสาที่ปลาย (เส้นแดงในแม่แบบ) เพื่อให้ต่อกันเป็นแถว</li>
-      <li>เฟอร์นิเจอร์และของตกแต่ง: ฐานอยู่ที่เส้นชมพู (สูงจากขอบล่าง 24 px) ตัวของอยู่ในกรอบ นอกกรอบเว้นโปร่งใส</li>
-      <li>เก้าอี้ทำ 4 ทิศ: ทิศคือทิศที่คนนั่งหันหน้าไป</li>
+      <li>เฟอร์นิเจอร์และของตกแต่ง: ฐานอยู่ที่เส้นชมพู (ของติดผนังสูงจากขอบล่าง 6 px) ตัวของอยู่ในกรอบ นอกกรอบเว้นโปร่งใส</li>
+      <li>ของที่หมุนได้ (เก้าอี้ เตา) วาด 3 ทิศ: หน้า / ข้างซ้าย / หลัง (ด้านขวาเกมกลับภาพให้) ของสมมาตร (โต๊ะ แจกัน) วาดภาพเดียว</li>
       <li><b>ประตู หน้าต่าง ภาพวาด โคมไฟ ต้องวาดเฉพาะตัวของและกรอบ ห้ามมีผนังของชุดติดมาในภาพ</b> เพื่อให้เอาไปติดบนผนังของชุดอื่นได้ กรอบประตูควรหนาพอปิดรอยต่อกับผนังได้ ประตูทำ 2 ภาพ: ปิด และเปิด (ช่องประตูเห็นพื้นข้างใน) ใช้แท็บ "จัดฉาก" เลือกชุด A/B ต่อหมวดเพื่อลองผสมชุด</li>
       <li>แสงมาจากบนซ้าย ท็อปเคาน์เตอร์สูงเท่ากันทุกชิ้น สี วัสดุ และความหนาเส้นขอบเหมือนกันทั้งชุด</li>
       <li>ไม่วาดเงาตกพื้น เกมวาดเงาให้เอง</li>
@@ -163,9 +163,9 @@ const STATUS_TH={now:'ใช้ในเกมตอนนี้',next:'จะ�
 $('tplTitle').textContent=`แม่แบบทั้งชุด (${ITEMS.length} ชิ้น ${SHEETS.length} แผ่น)`;
 SHEETS.forEach((sh,n)=>{
   const count=ITEMS.filter(i=>i.sheet===sh.id).length,im=IMAGES[n],div=document.createElement('div');div.className='panel';
-  div.innerHTML=`<h2>${sh.title} <span class="badge ${sh.status==='now'?'b-ok':sh.status==='next'?'b-warn':'b-empty'}">${STATUS_TH[sh.status]}</span></h2><p class="muted">${count} ชิ้น · ภาพ ${sh.sheetW}×${sh.sheetH} px · ${sh.note}</p>
-  <div class="row"><a class="primary" download="${sh.stem}_guide.png" href="${im.g1}">ดาวน์โหลดแม่แบบ (${sh.sheetW} px)</a><a class="primary" download="${sh.stem}_guide_2x.png" href="${im.g2}">ดาวน์โหลดแม่แบบละเอียด (${sh.sheetW*2} px)</a><a class="ghost" download="${sh.stem}_blank.png" href="${im.blank}">ผืนโปร่งใสเปล่า</a><button class="ghost" data-copy="${n}">คัดลอกคำสั่งสำหรับ GPT</button><a class="ghost" download="${sh.stem}_prompt.txt" href="data:text/plain;charset=utf-8,${encodeURIComponent(im.prompt)}">คำสั่ง GPT (ไฟล์ข้อความ)</a></div>
-  <details><summary>ดูภาพแม่แบบแผ่นนี้</summary><div class="sheetwrap"><img alt="${sh.title}" src="${im.g1}"></div></details>`;
+  div.innerHTML=`<h2>${sh.title} <span class="badge ${sh.status==='now'?'b-ok':sh.status==='next'?'b-warn':'b-empty'}">${STATUS_TH[sh.status]}</span></h2><p class="muted">${count} ชิ้น · พิกเซลอาร์ต ${sh.pxW}×${sh.pxH} px (32 px ต่อช่อง) · ${sh.note}</p>
+  <div class="row"><a class="primary" download="${sh.stem}_guide_px.png" href="${im.gpx}">แม่แบบพิกเซล ${sh.pxW}×${sh.pxH} (วาดบนอันนี้)</a><a class="ghost" download="${sh.stem}_blank_px.png" href="${im.bpx}">ผืนโปร่งใส ${sh.pxW}×${sh.pxH}</a><a class="ghost" download="${sh.stem}_guide.png" href="${im.g1}">ภาพอ่านง่าย ขยาย 4 เท่า (${sh.sheetW} px)</a><button class="ghost" data-copy="${n}">คัดลอกคำสั่งสำหรับ GPT</button><a class="ghost" download="${sh.stem}_prompt.txt" href="data:text/plain;charset=utf-8,${encodeURIComponent(im.prompt)}">คำสั่ง GPT (ไฟล์ข้อความ)</a></div>
+  <details><summary>ดูภาพแม่แบบแผ่นนี้ (ขยาย 4 เท่า มีชื่อชิ้น)</summary><div class="sheetwrap"><img alt="${sh.title}" src="${im.g1}"></div></details>`;
   $('sheetCards').appendChild(div);
 });
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const t=IMAGES[Number(b.dataset.copy)].prompt;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>{b.textContent='คัดลอกแล้ว';setTimeout(()=>b.textContent='คัดลอกคำสั่งสำหรับ GPT',1800);});else prompt('คัดลอกข้อความนี้',t);});
@@ -183,7 +183,6 @@ $('slotSel').onchange=()=>{slotNow=$('slotSel').value;pieces=slots[slotNow].piec
 $('sheetSel').onchange=()=>{if(lastImg)process();};
 $('tol').oninput=()=>{$('tolv').textContent=$('tol').value;if(lastImg)process();};
 $('rmbg').onchange=()=>{if(lastImg)process();};
-$('hires').onchange=()=>{if(lastImg)process();};
 $('pick').onclick=()=>$('file').click();
 $('file').onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);};
 const drop=$('drop');
@@ -193,21 +192,32 @@ drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])loadFile(e.dataTrans
 let lastImg=null;
 function loadFile(f){const url=URL.createObjectURL(f);const im=new Image();im.onload=()=>{lastImg=im;process();URL.revokeObjectURL(url);};im.onerror=()=>{$('fileInfo').textContent='เปิดไฟล์นี้ไม่ได้';};im.src=url;}
 function process(){
-  const im=lastImg,sh=SHEETS[Number($('sheetSel').value)],BASE=sh.sheetW,BASEH=sh.sheetH;
-  scale=im.width/BASE;
-  const okScale=Number.isInteger(scale)&&scale>=1&&scale<=4&&im.height===BASEH*scale;
-  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับ "${sh.title}" (ต้องเป็น ${BASE}×${BASEH} หรือเท่าตัวของมัน เช่น ${BASE*2}×${BASEH*2}) อย่าย่อหรือตัดขอบภาพ ถ้าเลือกแผ่นผิด ให้เลือกแผ่นที่ถูกในช่อง "อัปโหลดแผ่นที่"`;saveSlot();render();return;}
-  $('fileInfo').textContent=`${sh.title}: ไฟล์ ${im.width}×${im.height} px (ขยาย ${scale} เท่า)`;
-  const sheet=document.createElement('canvas');sheet.width=im.width;sheet.height=im.height;const sc=sheet.getContext('2d',{willReadFrequently:true});sc.drawImage(im,0,0);
+  const im=lastImg,sh=SHEETS[Number($('sheetSel').value)],K=LAYOUT.k||4,PW=sh.pxW,PH=sh.pxH;
+  scale=im.width/PW;   // sheet pixels per art pixel
+  const okScale=Number.isInteger(scale)&&scale>=1&&scale<=16&&im.height===PH*scale;
+  if(!okScale){$('fileInfo').textContent=`ขนาดภาพ ${im.width}×${im.height} ไม่ตรงกับ "${sh.title}" (ต้องเป็น ${PW}×${PH} หรือขยายเป็นจำนวนเต็มเท่า เช่น ${PW*2}×${PH*2}) อย่าย่อหรือตัดขอบภาพ ถ้าเลือกแผ่นผิด ให้เลือกแผ่นที่ถูกในช่อง "อัปโหลดแผ่นที่"`;saveSlot();render();return;}
+  $('fileInfo').textContent=`${sh.title}: ไฟล์ ${im.width}×${im.height} px (พิกเซลละ ${scale}×${scale})`;
+  const sheet=document.createElement('canvas');sheet.width=im.width;sheet.height=im.height;const sc=sheet.getContext('2d',{willReadFrequently:true});sc.imageSmoothingEnabled=false;sc.drawImage(im,0,0);
   if($('rmbg').checked)removeBackground(sc,sheet.width,sheet.height);
   ITEMS.filter(i=>i.sheet===sh.id).forEach(it=>{
-    const s=scale,x=it.x*s,y=it.y*s,w=it.w*s,h=it.h*s;
-    const raw=document.createElement('canvas');raw.width=w;raw.height=h;raw.getContext('2d').drawImage(sheet,x,y,w,h,0,0,w,h);
-    const out=document.createElement('canvas');
-    if($('hires').checked||s===1){out.width=w;out.height=h;out.getContext('2d').drawImage(raw,0,0);}else{out.width=it.w;out.height=it.h;const c=out.getContext('2d');c.imageSmoothingQuality='high';c.drawImage(raw,0,0,it.w,it.h);}
+    const pw=it.w/K,ph=it.h/K,m=scale,x=it.x/K*m,y=it.y/K*m;
+    // the real pixel piece (nearest sampling), and a 4x copy at the design size that the checks and the scene preview use
+    const px=document.createElement('canvas');px.width=pw;px.height=ph;const pc=px.getContext('2d');pc.imageSmoothingEnabled=false;pc.drawImage(sheet,x,y,pw*m,ph*m,0,0,pw,ph);
+    const out=document.createElement('canvas');out.width=it.w;out.height=it.h;const oc=out.getContext('2d');oc.imageSmoothingEnabled=false;oc.drawImage(px,0,0,it.w,it.h);
+    out.px=px;
     pieces[it.id]=out;report[it.id]=check(it,out);
+    if(report[it.id].status!=='empty')pixelWarns(px).forEach(w=>{report[it.id].warns.push(w);report[it.id].status='warn';});
   });
   saveSlot();render();
+}
+// pixel art: a small palette and hard edges
+function pixelWarns(px){
+  const d=px.getContext('2d').getImageData(0,0,px.width,px.height).data,seen=new Set();let drawn=0,soft=0;
+  for(let i=0;i<d.length;i+=4){if(d[i+3]===0)continue;drawn++;if(d[i+3]<255)soft++;seen.add(d[i]*16777216+d[i+1]*65536+d[i+2]*256+d[i+3]);}
+  const out=[];
+  if(seen.size>64)out.push(`${seen.size} สี: พิกเซลอาร์ตควรใช้พาเลตต์เล็ก (ไม่เกินราว 64 สี) ภาพนี้ดูเนียนหรือมีขอบเกลี่ย`);
+  if(drawn&&soft/drawn>0.04)out.push(`${Math.round(100*soft/drawn)}% ของพิกเซลโปร่งแสงครึ่งหนึ่ง: พิกเซลอาร์ตต้องขอบคม (แต่ละพิกเซลทึบเต็มหรือโปร่งใสเต็ม)`);
+  return out;
 }
 function removeBackground(c,w,h){
   const d=c.getImageData(0,0,w,h),a=d.data,bg=[a[0],a[1],a[2],a[3]],t=Number($('tol').value);
@@ -276,7 +286,7 @@ function render(){
   $('sumText').textContent=`ผ่าน ${ok} ชิ้น · ควรแก้ ${warn} ชิ้น · ยังว่าง ${empty} ชิ้น (ของแผ่นที่อัปโหลดแล้ว) · ยังไม่ได้อัปโหลดแผ่นของอีก ${notYet} ชิ้น (จากทั้งหมด ${ITEMS.length})`;
   $('zip').disabled=ok+warn===0;$('zipReady').disabled=ok===0;
 }
-function downloadPng(it,cv){cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=it.file+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});}
+function downloadPng(it,cv){(cv.px||cv).toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=it.file+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});}
 // ---------------- zip (store only) ----------------
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
@@ -295,7 +305,7 @@ async function canvasBytes(cv){return new Promise(res=>cv.toBlob(async b=>res(ne
 async function exportZip(onlyOk){
   const files=[],lines=['Salvora Set Workshop — ผลตรวจ',''];
   for(const it of ITEMS){const r=report[it.id];if(!r||r.status==='empty')continue;if(onlyOk&&r.status!=='ok')continue;
-    files.push({name:`assets/td/${it.folder}/${it.file}.png`,data:await canvasBytes(pieces[it.id])});
+    files.push({name:`assets/td/${it.folder}/${it.file}.png`,data:await canvasBytes(pieces[it.id].px||pieces[it.id])});
     lines.push(`${r.status==='ok'?'ผ่าน ':'ควรแก้'}  ${it.folder}/${it.file}.png`+(r.warns.length?'  — '+r.warns.join('; '):''));}
   files.push({name:'README.txt',data:new TextEncoder().encode(lines.join('\n')+'\n')});
   const blob=zipFiles(files),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='salvora_set.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);

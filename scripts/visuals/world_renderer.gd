@@ -18,6 +18,7 @@ var _sun_timer: float = 0.0
 var daylight: ShaderMaterial   # the time-of-day tint (shaders/daylight.gdshader)
 
 func setup(view_state: ViewState, cam: Camera2D) -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST   # the art is pixel art (32 px per cell, shown at 64): hard pixels, no smoothing
 	view = view_state
 	camera = cam
 	_build_backdrop()

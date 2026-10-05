@@ -2,6 +2,8 @@
 """Cuts a drawn template sheet into the game's asset files (what the web workshop's ZIP does, for use in the repo) and checks it.
 python3 tools/workshop/cut_sheet.py SHEET.png --sheet N [--skip id,id] [--report] [--dry]
   --sheet N   which sheet of the template the picture is (1..5, see docs/ART_SET.md)
+              the sheet is pixel art at 32 px per cell: its size is pxW x pxH of that sheet (e.g. 480 x 727), or a whole multiple of it
+              (each pixel drawn as m x m); pieces are written at their real pixel size
   --report    print a line for every piece: empty / ok / what is off (size, standing on the bottom edge, filling the cell, tile edges)
   --dry       check only, write nothing"""
 import sys, os, json
@@ -13,18 +15,22 @@ n_sheet = int(arg('--sheet', 1))
 sh = lay['sheets'][n_sheet - 1]
 sheet = Image.open(sys.argv[1]).convert('RGBA')
 skip = set(arg('--skip', '').split(',')) - {''}
-k = sheet.width // sh['sheetW']
-assert k >= 1 and sheet.size == (sh['sheetW'] * k, sh['sheetH'] * k), f"sheet size {sheet.size} does not match sheet {n_sheet} ({sh['sheetW']}x{sh['sheetH']} or a multiple)"
+K = lay.get('k', 4)   # design size / pixel size
+m = sheet.width / sh['pxW']   # how many sheet pixels make one art pixel
+assert m >= 1 and m == int(m) and sheet.size == (sh['pxW'] * int(m), sh['pxH'] * int(m)), f"sheet size {sheet.size} does not match sheet {n_sheet} ({sh['pxW']}x{sh['pxH']} px, or a whole multiple of it)"
+m = int(m)
 from piece_check import check
 
 done = bad = empty = 0
 for it in lay['items']:
     if it['sheet'] != sh['id'] or it['id'] in skip:
         continue
-    c = sheet.crop((it['x'] * k, it['y'] * k, (it['x'] + it['w']) * k, (it['y'] + it['h']) * k))
-    if k > 1:
-        c = c.resize((it['w'], it['h']), Image.LANCZOS)
-    res = check(it, c)
+    pw, ph = it['w'] // K, it['h'] // K
+    c = sheet.crop((it['x'] // K * m, it['y'] // K * m, (it['x'] // K + pw) * m, (it['y'] // K + ph) * m))
+    if m > 1:
+        c = c.resize((pw, ph), Image.NEAREST)
+    design = c.resize((it['w'], it['h']), Image.NEAREST)   # the checks are written for the design size (4x the pixels)
+    res = check(it, design, c)
     if res is None:
         empty += 1
         if '--report' in sys.argv: print(f"empty   {it['folder']}/{it['file']}.png")

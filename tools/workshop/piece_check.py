@@ -7,8 +7,26 @@ FILL_WIDTH = ('module', 'table', 'table2', 'stove2', 'tablelong', 'coop', 'fence
 # pieces that fill the whole height too (a wall), so they may touch the top
 FILL_HEIGHT = ('wallplain', 'walllow', 'wallside')
 
-def check(it, c):
-    """Problems of one piece, judged on the pixels. None when the frame is empty."""
+MAX_COLOURS = 64          # pixel art here uses a small palette; far more colours means a smooth or anti-aliased picture
+MAX_SOFT_EDGE = 0.04      # share of the drawn pixels that are half transparent (anti-aliased edges)
+
+def pixel_problems(px):
+    """Checks that a piece (at its real pixel size) really is pixel art: few colours and hard edges."""
+    out = []
+    data = list(px.convert('RGBA').getdata())
+    drawn = [p for p in data if p[3] > 0]
+    if not drawn:
+        return out
+    colours = len(set(drawn))
+    if colours > MAX_COLOURS:
+        out.append(f'{colours} colours: pixel art should use a small palette (up to about {MAX_COLOURS}); this looks smooth or anti-aliased')
+    soft = sum(1 for p in drawn if 0 < p[3] < 255) / len(drawn)
+    if soft > MAX_SOFT_EDGE:
+        out.append(f'{soft*100:.0f}% of the drawn pixels are half transparent: pixel art needs hard edges (each pixel fully on or off)')
+    return out
+
+def check(it, c, px=None):
+    """Problems of one piece, judged on the pixels (c is the piece at design size, 4x the pixels; px the real pixel piece). None when the frame is empty."""
     a = c.getchannel('A'); bbox = a.point(lambda v: 255 if v > 24 else 0).getbbox()
     if bbox is None:
         return None
@@ -29,4 +47,6 @@ def check(it, c):
         if hint in FLOOR and y1 < h - 8: out.append(f'does not stand on the bottom edge: it ends {h - y1} px above it (things on the floor sit on the bottom edge)')
         if hint in ('table', 'table2', 'stove2', 'module', 'coop', 'fence', 'tablelong') and x1 - x0 < w * 0.8: out.append(f'too narrow for the cells it takes: {x1 - x0} of {w} px wide (it should fill them)')
         if hint == 'char' and (y1 - y0) < h * 0.6: out.append('character looks too small in its frame')
+    if px is not None:
+        out += pixel_problems(px)
     return out

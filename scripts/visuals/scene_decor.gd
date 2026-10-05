@@ -4,9 +4,9 @@ extends Node2D
 # Drawn from a scene's SceneLayout and the player's land (GameState): the ground kinds the owner painted
 # (road, pavement, floor, sand, dirt), floor built over bought land, the walls on cell edges, and the build grid
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
-const WALL_H := 192.0      # a wall is three blocks (cells) tall (art: 128x384 for one cell wide); a door is two, a counter one
+const WALL_H := 192.0      # a wall is three blocks (cells) tall (pixel art 32x96 for one cell wide, shown at 2x); a door is two, a counter one
 const LOW_H := 32.0
-const SIDE_W := 16.0       # thickness of a wall seen from the side (art: 32x384)
+const SIDE_W := 16.0       # thickness of a wall seen from the side (pixel art 8x96)
 const FLOOR_A := Color("ead3a8")
 const FLOOR_B := Color("d9bb8b")
 const ROAD := Color("b79a6a")
@@ -23,8 +23,8 @@ const WHITE_FRAME := Color("fffaf0")
 const GRID := Color(1, 1, 1, 0.34)
 
 # Art ids tried first; when no such file is in assets/td, the code-drawn colours below are used instead.
-# Ground tiles are 128x128 (drawn at 64 px), each ground kind can have several variants (_01, _02 ...) picked per
-# cell. Walls: plain wall 128x384, low wall 128x64, side wall 32x384; windows, doors, lamps and paintings are
+# Art is pixel art at 32 px per cell, drawn at 2x (a cell is 64 px). Ground tiles are 32x32, each ground kind can have several variants (_01, _02 ...) picked per
+# cell. Walls: plain wall 32x96, low wall 32x16, side wall 8x96; windows, doors, lamps and paintings are
 # separate overlays on a plain wall (docs/ART_TOPDOWN.md).
 const TILE_ART := {
 	SceneLayout.Tile.SAND: ["tile_sand_01"],
@@ -38,7 +38,7 @@ const WALL_SIDE_ART := "wall_side_01"
 const WALL_OVERLAY := {"window": "wdeco_window_01", "door": "wdeco_door_01"}
 
 # Ground kinds that melt into each other: along a border the higher rank is laid over the lower one with a soft edge.
-# Road, pavement and floor have hard edges. Art (128x128, transparent) is tried first, named edge_<kind>_<side>_01 for a
+# Road, pavement and floor have hard edges. Art (32x32, transparent) is tried first, named edge_<kind>_<side>_01 for a
 # neighbour on that side (n, e, s, w) and corner_<kind>_<corner>_01 for one only on the diagonal (ne, se, sw, nw);
 # without art a soft gradient of the neighbour's colour is drawn.
 const BLEND_RANK := {SceneLayout.Tile.SAND: 1, SceneLayout.Tile.DIRT: 2, SceneLayout.Tile.GRASS: 3}
@@ -52,6 +52,7 @@ var view: ViewState
 var edge_void: SceneVoid
 
 func setup(view_state: ViewState) -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST   # pixel art: hard pixels, no smoothing
 	view = view_state
 	z_index = -1
 	edge_void = SceneVoid.new()
@@ -107,7 +108,7 @@ func _draw_tile_art(c: Vector2i, t: int) -> bool:
 		pick = (c.x + c.y) % 2 % variants.size()   # the shop floor alternates its two boards like a checker
 	var tex := Assets.get_tex(variants[pick])
 	var mid := Iso.cell_to_world(c)
-	var size := Vector2.ONE * Iso.TILE_W * 1.04
+	var size := Vector2.ONE * (Iso.TILE_W + 1.0)   # one pixel of overlap hides seams between cells
 	draw_texture_rect(tex, Rect2(mid - size * 0.5, size), false)
 	return true
 
@@ -202,7 +203,7 @@ func _draw_blend_piece(c: Vector2i, kind: int, piece: String) -> void:
 	var tex := Assets.get_tex("%s_%s_%s_01" % ["edge" if is_side else "corner", BLEND_NAME[kind], piece])
 	var mid := Iso.cell_to_world(c)
 	if tex != null:
-		var size := Vector2.ONE * Iso.TILE_W * 1.04
+		var size := Vector2.ONE * (Iso.TILE_W + 1.0)   # one pixel of overlap hides seams between cells
 		draw_texture_rect(tex, Rect2(mid - size * 0.5, size), false)
 		return
 	# cell corners as vertex coordinates (Terrain colours them): (x, y) is the top-left of cell (x, y)
@@ -271,10 +272,10 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_rect(Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, 7 if kind != "low" else 5)), TRIM)
 	var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
 	if overlay != null:
-		# art anchor: the base line is 24 px (source) above the canvas bottom; a window's base sits 84 px up the wall (above a counter, which is 64 px tall), a door's on the floor line
+		# art anchor: the base line is 3/16 of the picture's width above the canvas bottom (24 px of a 128 px design, 6 px of the 32 px pixel art); a window's base sits 84 px up the wall (above a counter, which is 64 px tall), a door's on the floor line
 		var size := overlay.get_size() * (Iso.TILE_W / overlay.get_width())
 		var base_y := a.y - (84.0 if kind == "window" else 0.0)
-		var drop := 24.0 * Iso.TILE_W / overlay.get_width()
+		var drop := Iso.TILE_W * 0.1875   # 6 art pixels at 2x = 12 px
 		draw_texture_rect(overlay, Rect2(Vector2(a.x, base_y + drop - size.y), size), false)
 	elif kind == "window":
 		draw_rect(Rect2(a + Vector2(10, -142), Vector2(44, 56)), WHITE_FRAME)
