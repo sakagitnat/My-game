@@ -57,7 +57,7 @@ func seats() -> Array:
 	var out: Array = []
 	for t in tables():
 		out.append({"table": t, "index": 0, "cell": t + Vector2i(-2, 0)})
-		out.append({"table": t, "index": 1, "cell": t + Vector2i(4, 2)})
+		out.append({"table": t, "index": 1, "cell": t + Vector2i(4, 0)})
 	return out
 
 func free_seats() -> Array:

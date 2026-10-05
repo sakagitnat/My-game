@@ -794,16 +794,16 @@
    "folder": "furniture",
    "file": "rest_table_small_01",
    "w": 256,
-   "h": 256,
+   "h": 192,
    "x": 32,
    "y": 1428,
    "category": "ร้าน (ในเกมตอนนี้)",
-   "label": "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)",
+   "label": "โต๊ะ (กว้าง 2 ช่อง ลึก 1 ช่อง นั่งได้ 2 ที่ ซ้ายและขวา)",
    "hint": "table2",
    "flags": "",
    "anchor": [
     128,
-    256
+    192
    ],
    "sheet": "now_shop",
    "status": "now"

@@ -125,22 +125,25 @@ def build(cols=13, rows=9, k=3):
     put(P['rest_stove_01'], 10 * C, wall + 1 * C + 0)
     put(plant(), 12 * C - 2, wall + 1 * C)
     put(lamp(), 3 * C + 0, wall + 1 * C + 8)
-    # dining: a rug, a table with two chairs on each long side and vases on top
+    # dining: a rug, a table (2 wide, 1 deep, about waist high) with a chair at each end and one on each long side, and vases on top
     rx, ry = 3 * C, wall + 3 * C
-    at(rug(), rx + 0, ry + 0)
-    tx, ty = rx, ry + 8
+    at(rug(), rx, ry - 8)
+    tx, ty = rx, ry + 8                                       # table's top-left of its picture (48 px high, foot at ty + 48)
     ch_up = chair(False); ch_dn = chair(True)
-    put(ch_dn, tx + 0, ty + 4 + 8); put(ch_dn, tx + 32, ty + 4 + 8)
-    put(P['rest_table_small_01'], tx, ty + 64)
-    put(P['rest_vase_large_01'], tx + 8, ty + 28 + 4); put(P['rest_vase_small_01'], tx + 40, ty + 34 + 4)
-    put(ch_up, tx + 0, ty + 64 + 20); put(ch_up, tx + 32, ty + 64 + 20)
-    # second table on the right with chairs
+    put(ch_dn, tx + 16, ty + 22)                              # behind the table (we see its front)
+    put(P['rest_table_small_01'], tx, ty + 48)
+    objs.append((ty + 49, tx + 6, ty - 19, P['rest_vase_large_01']))      # on the table top (drawn right after the table)
+    objs.append((ty + 49, tx + 40, ty - 5, P['rest_vase_small_01']))
+    put(flip(chair_side()), tx - 22, ty + 48 + 2)             # left of the table, facing right
+    put(chair_side(), tx + 64 - 10, ty + 48 + 2)              # right of the table, facing left
+    put(ch_up, tx + 16, ty + 48 + 18)
+    # a second table on the right
     t2x, t2y = 8 * C, wall + 4 * C + 8
-    put(ch_dn, t2x + 16, t2y + 12)
-    put(P['rest_table_small_01'], t2x, t2y + 64)
-    put(flip(chair_side()), t2x - 20, t2y + 64 + 6)        # left of the table, facing right (the left view mirrored)
-    put(chair_side(), t2x + 64 - 12, t2y + 64 + 6)          # right of the table, facing left
-    put(ch_up, t2x + 16, t2y + 64 + 20)
+    put(ch_dn, t2x + 16, t2y + 22)
+    put(P['rest_table_small_01'], t2x, t2y + 48)
+    put(flip(chair_side()), t2x - 22, t2y + 48 + 2)
+    put(chair_side(), t2x + 64 - 10, t2y + 48 + 2)
+    put(ch_up, t2x + 16, t2y + 48 + 18)
     put(plant(), 16, wall + 8 * C); put(plant(), 12 * C - 12, wall + 8 * C)
     for foot, x, y, piece in sorted(objs, key=lambda o: o[0]):
         sd = Image.new('RGBA', (piece.width, 6), (0, 0, 0, 0))

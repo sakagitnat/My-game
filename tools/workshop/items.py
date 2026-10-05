@@ -74,7 +74,7 @@ ITEMS += [
     ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
     ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
-    ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
+    ("rest_table_small", "furniture", "rest_table_small_01", 256, 192, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (กว้าง 2 ช่อง ลึก 1 ช่อง นั่งได้ 2 ที่ ซ้ายและขวา)", "table2", ""),
     ("rest_stove", "furniture", "rest_stove_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (กว้าง 2 ช่อง ลึก 1 ช่อง สูงราว 1 บล็อกเกินนิดหน่อย)", "stove", ""),
     ("rest_stove_side", "furniture", "rest_stove_side_01", 128, 288, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว กว้าง 1 ช่อง ลึก 2 ช่อง)", "stoveside", ""),
     ("rest_stove_back", "furniture", "rest_stove_back_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว กว้าง 2 ช่อง ลึก 1 ช่อง)", "stove", ""),
