@@ -3,7 +3,7 @@
 Run from the repo root.
 
   python3 tools/workshop/ground_tools.py check  TILE.png [TILE2.png ...]      seams of tiles + a 4x4 preview next to each (TILE_tiled.png)
-  python3 tools/workshop/ground_tools.py seamless BIG.png NAME [--grid N] [--size 128] [--out DIR]
+  python3 tools/workshop/ground_tools.py seamless BIG.png NAME [--grid N] [--size 32] [--out DIR]
         makes a picture tile in every direction and cuts it to NAME_01.png (with --grid N: the picture is split into N x N
         parts, each made seamless, NAME_01 ... NAME_NN: variants of one ground)
   python3 tools/workshop/ground_tools.py edges  grass|dirt [--tiles DIR] [--out DIR]
@@ -15,7 +15,7 @@ from PIL import Image, ImageFilter
 import numpy as np
 
 TILES_DIR = 'assets/td/tiles'
-S = 128                      # a tile is 128 px (one cell)
+S = 32                       # a tile is 32 px (one cell of pixel art, shown at 2x)
 DEPTH = 0.42 * S             # how far an edge reaches into the cell (the game's BLEND_DEPTH)
 arg = lambda name, default=None: sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
 
@@ -98,7 +98,7 @@ def wobble(t, seed):
     neighbouring cells meet where they end."""
     return (math.sin(2 * math.pi * 1 * t + seed) * 0.6 + math.sin(2 * math.pi * 2 * t + seed * 2.3) * 0.4) * math.sin(math.pi * t)
 
-def edge_mask(side, seed=1.0, soft=5.0):
+def edge_mask(side, seed=1.0, soft=1.0):
     """Alpha (S x S, 0..1) of the ground reaching into the cell from `side`, along a wavy line."""
     m = np.zeros((S, S), dtype=np.float32)
     for i in range(S):
@@ -113,10 +113,10 @@ def edge_mask(side, seed=1.0, soft=5.0):
 
 def smoothed(m):
     """A little blur so the wavy line has no sharp points (the blur keeps the alpha at the cell's own sides unchanged enough to meet the next cell)."""
-    img = Image.fromarray((m * 255).astype(np.uint8), 'L').filter(ImageFilter.GaussianBlur(2.2))
+    img = Image.fromarray((m * 255).astype(np.uint8), 'L').filter(ImageFilter.GaussianBlur(0.6))
     return np.asarray(img, dtype=np.float32) / 255
 
-def corner_mask(corner, seed=2.0, soft=5.0):
+def corner_mask(corner, seed=2.0, soft=1.0):
     """Alpha of a blob of ground around one corner of the cell."""
     ys, xs = np.mgrid[0:S, 0:S].astype(np.float32) + 0.5
     cx = S if 'e' in corner else 0
@@ -130,7 +130,7 @@ def corner_mask(corner, seed=2.0, soft=5.0):
 
 def piece(tile, mask):
     a = np.asarray(tile, dtype=np.float32).copy()
-    a[..., 3] = a[..., 3] * mask
+    a[..., 3] = a[..., 3] * (mask > 0.5)   # pixel art: each pixel fully on or off
     return Image.fromarray(a.astype(np.uint8), 'RGBA')
 
 def cmd_edges():

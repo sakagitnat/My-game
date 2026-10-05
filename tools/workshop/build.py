@@ -6,10 +6,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 from PIL import Image, ImageDraw, ImageFont
 from items import ITEMS, CATEGORIES, SHEETS, WALL_DECO, anchor
 
-SHEET_W = 1920
+SHEET_W = 1920   # design size: 128 px per cell. The art is pixel art at 32 px per cell = a quarter of this (K).
+K = 4
 M = 32          # sheet margin
 GUT = 28        # gap between cells
-LABEL_H = 58
+LABEL_H = 60
 HEAD_H = 52
 FONT = 'assets/fonts/NotoSansThai_400Regular.ttf'
 OUT = 'assets/td/art_workshop'
@@ -17,17 +18,17 @@ CY = (45, 170, 192, 255); BL = (44, 106, 172, 255); PK = (224, 88, 120, 255); GN
 
 def layout(sheet):
     """Positions of the pieces of one sheet: (items, heads, height)."""
-    out = []; x = M; y = M + 70; row_h = 0; heads = []
+    out = []; x = M; y = M + 72; row_h = 0; heads = []
     for cat in sheet['categories']:
         its = [i for i in ITEMS if i[5] == cat]
         if x > M:
             y += row_h; x = M; row_h = 0
         heads.append((cat, y)); y += HEAD_H
         for (id_, folder, file, w, h, c, label, hint, flags) in its:
-            cw = max(w, 150 if hint == 'char' else 184)
+            cw = max(w, 152 if hint == 'char' else 184)
             if x + cw > SHEET_W - M:
                 y += row_h; x = M; row_h = 0
-            out.append(dict(id=id_, folder=folder, file=file, w=w, h=h, x=x + (cw - w) // 2, y=y + LABEL_H, category=c, label=label, hint=hint, flags=flags, anchor=list(anchor(w, h, hint)), sheet=sheet['id'], status=sheet['status']))
+            out.append(dict(id=id_, folder=folder, file=file, w=w, h=h, x=x + (cw - w) // 8 * 4, y=y + LABEL_H, category=c, label=label, hint=hint, flags=flags, anchor=list(anchor(w, h, hint)), sheet=sheet['id'], status=sheet['status']))
             x += cw + GUT; row_h = max(row_h, LABEL_H + h + GUT)
         y += row_h; x = M; row_h = 0
     return out, heads, y + M
@@ -90,8 +91,8 @@ def ev(v, w, h):
 def draw_guide(items, heads, H, S, title, background=True):
     im = Image.new('RGBA', (SHEET_W * S, H * S), (240, 244, 241, 255) if background else (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     f1 = ImageFont.truetype(FONT, 15 * S); f2 = ImageFont.truetype(FONT, 11 * S); fh = ImageFont.truetype(FONT, 26 * S); ft = ImageFont.truetype(FONT, 18 * S)
-    d.text((M * S, 18 * S), f'Salvora — {title} — วาดทับแม่แบบนี้ แล้ว "ซ่อนเลเยอร์แม่แบบ" ก่อนส่งออก PNG', font=fh, fill=(23, 60, 54, 255))
-    d.text((M * S, 52 * S), 'เส้นฟ้า = กรอบภาพ (1 ช่อง = 128 px)  เส้นประเขียว = ช่องที่ของกิน (ตัวของต้องเต็มช่องนี้ ชิดขอบล่างและขอบหลัง)  เส้นแดงที่ขอบ = ต้องชนขอบพอดี', font=ft, fill=(99, 117, 110, 255))
+    d.text((M * S, 18 * S), f'Salvora — {title} — พิกเซลอาร์ต 32 px ต่อช่อง (ภาพนี้ขยาย 4 เท่าให้อ่านง่าย) วาดบนแม่แบบ _px แล้ว "ซ่อนเลเยอร์แม่แบบ" ก่อนส่งออก PNG', font=fh, fill=(23, 60, 54, 255))
+    d.text((M * S, 52 * S), 'เส้นฟ้า = กรอบภาพ (1 ช่อง = 32 px จริง)  เส้นประเขียว = ช่องที่ของกิน (ตัวของต้องเต็มช่องนี้ ชิดขอบล่างและขอบหลัง)  เส้นแดงที่ขอบ = ต้องชนขอบพอดี', font=ft, fill=(99, 117, 110, 255))
     for cat, y in heads:
         d.rectangle([M * S, y * S, (SHEET_W - M) * S, (y + 40) * S], fill=(210, 228, 222, 255))
         d.text(((M + 10) * S, (y + 6) * S), cat, font=fh, fill=(23, 60, 54, 255))
@@ -99,7 +100,7 @@ def draw_guide(items, heads, H, S, title, background=True):
         x, y, w, h = it['x'] * S, it['y'] * S, it['w'] * S, it['h'] * S
         d.text((x, y - 54 * S), it['label'], font=f1, fill=(23, 60, 54, 255))
         d.text((x, y - 34 * S), it['file'], font=f2, fill=(99, 117, 110, 255))
-        d.text((x, y - 19 * S), f"{it['w']}x{it['h']} px", font=f2, fill=(99, 117, 110, 255))
+        d.text((x, y - 19 * S), f"{it['w'] // K}x{it['h'] // K} px", font=f2, fill=(99, 117, 110, 255))
         d.rectangle([x, y, x + w - 1, y + h - 1], outline=CY, width=2 * S, fill=(255, 255, 255, 255) if background else None)
         for cx in range(1, it['w'] // 128): d.line([(x + cx * 128 * S, y), (x + cx * 128 * S, y + h)], fill=(45, 170, 192, 110), width=S)
         for cy in range(1, it['h'] // 128): d.line([(x, y + cy * 128 * S), (x + w, y + cy * 128 * S)], fill=(45, 170, 192, 110), width=S)
@@ -151,6 +152,34 @@ def draw_guide(items, heads, H, S, title, background=True):
             d.line([(x, y), (x, y + h)], fill=MG, width=3 * S); d.line([(x + w - 2 * S, y), (x + w - 2 * S, y + h)], fill=MG, width=3 * S)
     return im
 
+def draw_guide_px(items, H, background=True):
+    """The same sheet at its real pixel size (a quarter of the design size): 1 px lines, no text. Import it into the drawing app as the
+    bottom, locked layer of a canvas of this size: frame (blue), the cells a thing stands on (green dashes), the base line (pink), a tick
+    at every block of height on the left edge, and the 1.8-block line for characters."""
+    W = SHEET_W // K
+    im = Image.new('RGBA', (W, H // K), (240, 244, 241, 255) if background else (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    for it in items:
+        x, y, w, h = it['x'] // K, it['y'] // K, it['w'] // K, it['h'] // K
+        if background: d.rectangle([x, y, x + w - 1, y + h - 1], fill=(255, 255, 255, 255))
+        d.rectangle([x - 1, y - 1, x + w, y + h], outline=CY)
+        if it['hint'] in FLOOR_HINTS:
+            fd = FOOT_DEPTH.get(it['hint'], 128)
+            fd = it['h'] if fd is None else fd
+            fw = FOOT_WIDTH.get(it['hint'], it['w'])
+            fx0, fy0, fx1, fy1 = x + (it['w'] - fw) // K // 2, y + h - fd // K, x + (it['w'] + fw) // K // 2 - 1, y + h - 1
+            for t in range(fx0, fx1 + 1, 2):
+                d.point((t, fy0), fill=GN); d.point((t, fy1), fill=GN)
+            for t in range(fy0, fy1 + 1, 2):
+                d.point((fx0, t), fill=GN); d.point((fx1, t), fill=GN)
+        ax, ay = it['anchor']
+        d.line([(x, y + ay // K), (x + w - 1, y + ay // K)], fill=PK)
+        for b in range(1, (it['h'] // 128) + 1):
+            ty = y + h - b * 32 - (it['h'] - ay) // K
+            if y <= ty < y + h: d.line([(x, ty), (x + 2, ty)], fill=CY)
+        if it['hint'] == 'char':
+            d.line([(x, y + h - int(1.8 * 32)), (x + w - 1, y + h - int(1.8 * 32))], fill=PK)
+    return im
+
 GUIDES = os.path.join(os.path.dirname(__file__), 'guides')
 def piece_guide(pid):
     """A better guide drawing for a piece (see grid_guides.py), if one was made; else None and the plain shapes are drawn."""
@@ -160,18 +189,20 @@ def piece_guide(pid):
 def png_uri(im):
     b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
 
-PROMPT = """ภาพแนบคือแม่แบบ "{title}" ของเกมร้านอาหารบนเกาะ Salvora (Stardew Valley-like, มุมมองบนเฉียง top-down 3/4) ช่วยวาดของทุกชิ้นลงในกรอบของมัน
+PROMPT = """ภาพแนบ (ถ้ามี) คือแม่แบบ "{title}" ของเกมร้านอาหารบนเกาะ Salvora (แนว Stardew Valley มุมมองบนเฉียง top-down 3/4) ช่วยวาดของทุกชิ้นเป็น **พิกเซลอาร์ต** ลงในกรอบของมัน
 
-สไตล์: ภาพวาดนุ่ม ๆ แบบ hand-painted สีอบอุ่น ขอบไม่คมแข็ง (ไม่ใช่พิกเซลอาร์ต) แสงมาจากด้านซ้ายบน ทุกชิ้นในแผ่นต้องโทนสีและฝีมือเดียวกัน
+สไตล์: พิกเซลอาร์ตสีอบอุ่น พาเลตต์จำกัด (ราว 16-24 สีต่อชิ้น) ขอบพิกเซลคมชัด ไม่มีการไล่สีเนียนหรือเบลอ (no anti-aliasing) เส้นขอบสีเข้มกว่าสีของมันเล็กน้อย แสงมาจากซ้ายบน ทุกชิ้นในแผ่นต้องพาเลตต์และฝีมือเดียวกัน
+
+สเกล: 1 ช่อง = 32 พิกเซล (หนึ่งช่องคือกระเบื้องพื้น 1 แผ่น) 1 บล็อกสูง = 32 พิกเซล ตัวละครสูงประมาณ 58 พิกเซล (1.8 บล็อก) ผนังสูง 96 พิกเซล (3 บล็อก) ประตูสูง 64 พิกเซล (2 บล็อก)
 
 กติกา (สำคัญมาก):
-1. ส่งภาพกลับเป็น PNG ขนาด {w}x{h} px เท่ากับแม่แบบทุกพิกเซล ห้ามย่อ ห้ามขยาย ห้ามตัดขอบ ห้ามเลื่อนกรอบ
-2. วาดแต่ละชิ้นอยู่ในกรอบสีฟ้าของตัวเอง ห้ามล้ำออกนอกกรอบ พื้นหลังนอกตัวของต้องโปร่งใส (ยกเว้นพื้นกระเบื้อง/ดินที่ต้องเต็มกรอบ)
-3. ห้ามวาดเส้นแม่แบบ ตัวหนังสือ หรือเส้นไกด์ลงในภาพ
-4. ของที่ตั้งบนพื้น: ขอบล่างของภาพคือพื้นที่ที่ของยืน ตัวของต้องชิดขอบล่างและเต็มความกว้างของช่องที่กิน (เส้นประเขียวคือขอบเขตของช่อง) ห้ามวาดเงาตกพื้นเอง เกมวาดเงาให้
-5. ของที่ต้องต่อกัน (พื้น ผนัง เคาน์เตอร์) ต้องชนขอบซ้ายขวาพอดี ลายต่อกันเนียนไม่มีรอยต่อ
-6. ชื่อและคำอธิบายบนแม่แบบบอกว่าแต่ละกรอบคือของอะไร
-7. แสง: วาดด้วยแสงกลางวันกลาง ๆ มาจากซ้ายบน สีอบอุ่นอิ่มพอสมควร (ไม่ซีดและไม่มืดเกินไป) เพราะเกมมีเวลาเช้า เย็น กลางคืน และจะคลุมสีทับทั้งฉากเอง ห้ามวาดแสงยามเย็นหรือกลางคืนลงในภาพ
+1. ภาพทั้งแผ่นขนาด {w}x{h} พิกเซล (หนึ่งพิกเซลภาพ = หนึ่งพิกเซลเกม) แต่ละชิ้นอยู่ในกรอบของตัวเอง ห้ามล้ำออกนอกกรอบ พื้นหลังนอกตัวของโปร่งใส (ยกเว้นพื้นกระเบื้อง/ดินที่ต้องเต็มกรอบ)
+2. ห้ามวาดเส้นแม่แบบ ตัวหนังสือ หรือเส้นไกด์ลงในภาพ
+3. ของที่ตั้งบนพื้น: ขอบล่างของภาพคือพื้นที่ของยืน ตัวของต้องชิดขอบล่างและเต็มความกว้างของช่องที่กิน ห้ามวาดเงาตกพื้น เกมวาดเงาให้
+4. ของที่ต้องต่อกัน (พื้น ผนัง เคาน์เตอร์) ต้องชนขอบซ้ายขวาพอดี ลายต่อกันเนียนไม่มีรอยต่อ
+5. ชื่อและคำอธิบายบนแม่แบบบอกว่าแต่ละกรอบคือของอะไร
+6. แสง: วาดด้วยแสงกลางวันกลาง ๆ มาจากซ้ายบน เพราะเกมมีเวลาเช้า เย็น กลางคืน และจะคลุมสีทับทั้งฉากเอง ห้ามวาดแสงเย็นหรือกลางคืนลงในภาพ
+7. ห้ามมีของที่ไม่ได้สั่งติดมา (ผนังต้องเรียบ ท็อปโต๊ะต้องโล่ง หน้าต่างและประตูไม่มีฉากวิวข้างใน)
 """
 
 def build_sheet(n, sheet):
@@ -179,11 +210,13 @@ def build_sheet(n, sheet):
     g1 = draw_guide(items, heads, H, 1, sheet['title']); g2 = draw_guide(items, heads, H, 2, sheet['title'])
     blank = Image.new('RGBA', (SHEET_W, H), (0, 0, 0, 0))
     stem = f"set_template_{n}_{sheet['id']}"
+    gpx = draw_guide_px(items, H); bpx = Image.new('RGBA', (SHEET_W // K, H // K), (0, 0, 0, 0))
     g1.convert('RGB').save(f'{OUT}/{stem}_guide.png'); g2.convert('RGB').save(f'{OUT}/{stem}_guide_2x.png'); blank.save(f'{OUT}/{stem}_blank.png')
-    prompt = PROMPT.format(title=sheet['title'], w=SHEET_W, h=H)
+    gpx.convert('RGB').save(f'{OUT}/{stem}_guide_px.png'); bpx.save(f'{OUT}/{stem}_blank_px.png')
+    prompt = PROMPT.format(title=sheet['title'], w=SHEET_W // K, h=H // K)
     open(f'{OUT}/{stem}_prompt.txt', 'w', encoding='utf-8').write(prompt)
-    lay = {'id': sheet['id'], 'title': sheet['title'], 'status': sheet['status'], 'note': sheet['note'], 'sheetW': SHEET_W, 'sheetH': H, 'categories': sheet['categories'], 'stem': stem}
-    return lay, items, (g1, g2, blank), prompt
+    lay = {'id': sheet['id'], 'title': sheet['title'], 'status': sheet['status'], 'note': sheet['note'], 'sheetW': SHEET_W, 'sheetH': H, 'pxW': SHEET_W // K, 'pxH': H // K, 'categories': sheet['categories'], 'stem': stem}
+    return lay, items, (g1, g2, blank, gpx, bpx), prompt
 
 STATUS_TH = {'now': 'ใช้ในเกมตอนนี้', 'next': 'จะเพิ่มเข้าเกมต่อ', 'later': 'เกมยังไม่ใช้'}
 
@@ -194,21 +227,21 @@ if __name__ == '__main__':
     sheets, all_items, imgs = [], [], []
     for n, sh in enumerate(SHEETS, 1):
         lay, items, ims, prompt = build_sheet(n, sh)
-        sheets.append(lay); all_items += items; imgs.append({'g1': png_uri(ims[0]), 'g2': png_uri(ims[1]), 'blank': png_uri(ims[2]), 'prompt': prompt})
-    lay = {'sheets': sheets, 'items': all_items, 'categories': CATEGORIES}
+        sheets.append(lay); all_items += items; imgs.append({'g1': png_uri(ims[0]), 'g2': png_uri(ims[1]), 'blank': png_uri(ims[2]), 'gpx': png_uri(ims[3]), 'bpx': png_uri(ims[4]), 'prompt': prompt})
+    lay = {'k': K, 'sheets': sheets, 'items': all_items, 'categories': CATEGORIES}
     tpl = open('tools/workshop/template.html', encoding='utf-8').read()
     html = tpl.replace('__LAYOUT__', json.dumps(lay, ensure_ascii=False)).replace('__IMAGES__', json.dumps(imgs, ensure_ascii=False))
     open(f'{OUT}/index.html', 'w', encoding='utf-8').write(html)
     json.dump(lay, open(f'{OUT}/set_template_layout.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     note = {'tile': 'ทึบ ต่อกันทุกทิศ', 'flush': 'ปลายซ้ายขวาชนขอบภาพ', 'flushr': 'ปลายซ้ายชนขอบ', 'flushl': 'ปลายขวาชนขอบ', 'flat': 'ภาพแบนบนพื้น', '': ''}
     rows = [f'# ชุดเซ็ต (Set v2): {len(all_items)} ชิ้นใน {len(sheets)} แผ่น', '',
-            'สร้างอัตโนมัติจาก `tools/workshop/items.py` ด้วย `python3 tools/workshop/build.py` อย่าแก้มือ เว็บ Art Workshop (`/art-workshop/`) ใช้รายการนี้ ชื่อไฟล์ตรงกับที่เกมโหลด (`assets/td/<โฟลเดอร์>/<ชื่อ>.png`)', '',
+            'สร้างอัตโนมัติจาก `tools/workshop/items.py` ด้วย `python3 tools/workshop/build.py` อย่าแก้มือ เว็บ Art Workshop (`/art-workshop/`) ใช้รายการนี้ ชื่อไฟล์ตรงกับที่เกมโหลด (`assets/td/<โฟลเดอร์>/<ชื่อ>.png`) **พิกเซลอาร์ต 32 px ต่อช่อง** ขนาดในตารางคือขนาดพิกเซลจริงของไฟล์ (ขนาดออกแบบ 128 px ต่อช่อง ÷ 4) เกมขยาย 2 เท่า', '',
             '- **ใช้ในเกมตอนนี้**: เกมโหลดไฟล์ชื่อนี้ทันทีที่มี ขนาดตรงกับขนาดของในเกม (`Catalog`)', '- **จะเพิ่มเข้าเกมต่อ**: ชิ้นของชุดตกแต่งร้าน ยังไม่มีในร้านค้า ผมจะเพิ่มรายการสินค้าให้ตรงกับภาพที่ได้', '- **เกมยังไม่ใช้**: ไอคอนและตัวละคร ทำภาพไว้ล่วงหน้าตามชื่อและขนาดนี้', '']
     for sh, lay_s in zip(SHEETS, sheets):
-        rows += [f"## {sh['title']} ({STATUS_TH[sh['status']]}, แม่แบบ {lay_s['sheetW']}x{lay_s['sheetH']} px)", '', '| หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |', '|---|---|---|---|---|---|']
+        rows += [f"## {sh['title']} ({STATUS_TH[sh['status']]}, แม่แบบ {lay_s['pxW']}x{lay_s['pxH']} px)", '', '| หมวด | ชื่อ | โฟลเดอร์ | ไฟล์ | ขนาด (px) | หมายเหตุ |', '|---|---|---|---|---|---|']
         for it in all_items:
             if it['sheet'] == sh['id']:
-                rows.append(f"| {it['category']} | {it['label']} | `{it['folder']}` | `{it['file']}.png` | {it['w']}x{it['h']} | {note.get(it['flags'], '')} |")
+                rows.append(f"| {it['category']} | {it['label']} | `{it['folder']}` | `{it['file']}.png` | {it['w'] // K}x{it['h'] // K} | {note.get(it['flags'], '')} |")
         rows.append('')
     rows += ['ของบนพื้น (เฟอร์นิเจอร์ ครัว ตกแต่ง ของเล็ก ฟาร์ม): ขอบล่างของภาพคือขอบล่างของช่องที่ของกิน ตัวของต้องเต็มช่อง (ท็อปเคาน์เตอร์ต่อถึงผนังด้านหลัง) ภาพสูงกว่าช่องได้เพื่อทำของสูง ของติดผนัง (หน้าต่าง ประตู โคมไฟ ภาพวาด ฮู้ด): เส้นฐานสูงจากขอบล่างของภาพ 24 px หน้าต่างติดสูงจากพื้นผนัง 70 px (ในเกม) ประตูอยู่บนพื้น เกมวาดเงาแนบพื้นใต้ของให้เอง']
     open('docs/ART_SET.md', 'w', encoding='utf-8').write('\n'.join(rows) + '\n')

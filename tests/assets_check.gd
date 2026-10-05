@@ -51,7 +51,7 @@ func _initialize() -> void:
 			printerr("ART PROBLEM: ", p)
 		quit(1)
 
-# Top-down art (docs/ART_TOPDOWN.md): assets/td/<folder>/*.png, one cell = 128 px.
+# Top-down art (docs/ART_TOPDOWN.md): pixel art in assets/td/<folder>/*.png, one cell = 32 px (shown at 2x).
 func _check_topdown() -> void:
 	var re := RegEx.create_from_string(NAME_RE)
 	var base := DirAccess.open("res://assets/td")
@@ -74,24 +74,24 @@ func _check_topdown() -> void:
 				continue
 			var want := Vector2i.ZERO
 			if sub == "tiles" or sub == "icons":
-				want = Vector2i(128, 128)
+				want = Vector2i(32, 32)
 			elif sub == "props":
-				want = Vector2i(64, 64)
+				want = Vector2i(16, 16)
 			elif sub == "walls":
 				if f.begins_with("wdeco_door"):
-					want = Vector2i(128, 280)   # two blocks above the base line (24 px up from the bottom) plus the 24 px below it
+					want = Vector2i(32, 70)   # two blocks (64 px) above the base line (6 px up from the bottom) plus the 6 px below it
 				elif f.begins_with("wdeco_"):
-					want = Vector2i(128, 128)
+					want = Vector2i(32, 32)
 				elif f.begins_with("wall_low"):
-					want = Vector2i(128, 64)
+					want = Vector2i(32, 16)
 				elif f.begins_with("wall_side"):
-					want = Vector2i(32, 384)
+					want = Vector2i(8, 96)
 				else:
-					want = Vector2i(128, 384)   # a wall is three blocks tall
+					want = Vector2i(32, 96)   # a wall is three blocks tall
 			if want != Vector2i.ZERO:
 				if img.get_size() != want:
 					problems.append("%s: must be %dx%d, is %dx%d" % [path, want.x, want.y, img.get_width(), img.get_height()])
-			elif img.get_width() % 128 != 0 or img.get_height() % 32 != 0:
-				problems.append("%s: width must be whole cells (multiple of 128) and height a multiple of 32, is %dx%d" % [path, img.get_width(), img.get_height()])
-			if sub != "tiles" and img.get_used_rect().size.x < 16:
+			elif img.get_width() % 16 != 0 or img.get_height() % 8 != 0:
+				problems.append("%s: width must be whole units (multiple of 16 = half a cell) and height a multiple of 8, is %dx%d" % [path, img.get_width(), img.get_height()])
+			if sub != "tiles" and img.get_used_rect().size.x < 4:
 				problems.append("%s: artwork is almost empty" % path)
