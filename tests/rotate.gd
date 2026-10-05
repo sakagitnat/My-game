@@ -47,6 +47,7 @@ func run() -> void:
 	world._select(origin)
 	check(world._context_info(origin).can_rotate, "the stove bubble offers a turn")
 	world._on_rotate_requested()
+	origin = world.view.selected_origin   # a turn keeps the middle, so the top-left unit moves and the selection follows it
 	check(gs.grid("restaurant").facing_at(origin) == 2, "the bubble turns the stove")
 	var before: Dictionary = gs.grid("restaurant").to_dict()
 	var saved := JSON.parse_string(JSON.stringify(before)) as Dictionary

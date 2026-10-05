@@ -173,38 +173,27 @@ def table():
     p.set(0, 63, T); p.set(63, 63, T)
     return p.im
 
-def _stove_body():
-    p = Pix(64, 64)
-    p.rect(0, 0, 63, 31, 'c2'); p.hline(0, 63, 0, 'c4'); p.vline(0, 0, 31, 'c3'); p.vline(63, 0, 31, 'n1')    # stone rim of the top
-    p.rect(0, 0, 63, 5, 'c1'); p.hline(0, 63, 0, 'n1'); p.hline(0, 63, 1, 'c3'); p.hline(0, 63, 5, 'n0')      # back splash: the stove stands against the wall
-    p.rect(3, 7, 60, 28, 's0'); p.hline(3, 60, 7, 's1'); p.hline(3, 60, 28, 'p0' if False else 's1')
-    for cx in (18, 45):                                                             # two burners
-        p.disc(cx, 16, 10, 's1'); p.disc(cx, 16, 8, 's0'); p.ring(cx, 16, 4, 6, 's2'); p.disc(cx, 16, 2, 's1')
-        p.hline(cx - 9, cx + 9, 16, 's1'); p.vline(cx, 7, 25, 's1')
-        p.set(cx - 7, 11, 's2'); p.set(cx - 6, 10, 's2')
-    p.rect(0, 32, 63, 36, 'c3'); p.hline(0, 63, 32, 'c4'); p.hline(0, 63, 36, 'n1')                          # front panel with knobs
-    for kx in (10, 20, 43, 53):
-        p.disc(kx, 34, 2, 'r1'); p.set(kx - 1, 33, 'r2'); p.set(kx + 1, 35, 'r0')
-    p.rect(0, 37, 63, 63, 'c2'); p.vline(0, 37, 63, 'c3'); p.vline(63, 37, 63, 'n1')                          # body
-    p.rect(5, 39, 58, 59, 'b1'); p.hline(5, 58, 39, 'b4'); p.vline(5, 39, 59, 'b3'); p.hline(5, 58, 59, 'b0'); p.vline(58, 39, 59, 'b0')   # oven door frame
-    p.rect(9, 44, 54, 56, 's0'); p.hline(9, 54, 44, 's1'); p.rect(11, 46, 20, 47, 's1'); p.hline(11, 17, 46, 's2')   # oven window
-    p.rect(8, 41, 55, 42, 'r1'); p.hline(8, 55, 41, 'r2'); p.hline(8, 55, 42, 'r0')                            # handle
-    p.rect(0, 61, 63, 63, 'n1'); p.hline(0, 63, 63, 'n0')
-    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 63, 'n0'); p.vline(63, 0, 63, 'n0')
-    return p.im
-
 def stove():
-    """64 x 80: the 2 x 2 cell body (bottom 64 rows, standing on the footprint) with a tiled back splash rising 16 rows above it, so the stove
-    reads as standing against the wall and its top overlaps the wall."""
-    body = _stove_body()
-    p = Pix(64, 80)
-    p.im.alpha_composite(body, (0, 16))
-    p.rect(1, 1, 62, 15, 'c2'); p.hline(1, 62, 1, 'c3')
-    for x in range(1, 63, 8): p.vline(x, 2, 15, 'c1')
-    p.hline(1, 62, 8, 'c1')
-    p.hline(1, 62, 15, 'n0'); p.hline(1, 62, 14, 'c0')
-    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 15, 'n0'); p.vline(63, 0, 15, 'n0')
-    for x in (16, 47): p.rect(x - 5, 3, x + 5, 6, 's2'); p.hline(x - 5, x + 5, 3, 's3')     # two small pot lids hung on the splash
+    """64 x 56: two cells wide, one deep, a block tall (32 rows of front + 16 of top) and 8 rows of back splash standing against the wall.
+    The bottom 48 rows are the footprint, the top 8 rows overlap the wall a little."""
+    p = Pix(64, 56)
+    p.rect(1, 1, 62, 7, 'c2'); p.hline(1, 62, 1, 'c3')                                         # back splash (tiles), overlaps the wall
+    for x in range(1, 63, 8): p.vline(x, 2, 7, 'c1')
+    p.hline(1, 62, 7, 'n0')
+    p.rect(0, 8, 63, 23, 'c2'); p.hline(0, 63, 8, 'c4'); p.vline(0, 8, 23, 'c3'); p.vline(63, 8, 23, 'n1')   # top surface seen from above
+    p.rect(3, 10, 60, 22, 's0'); p.hline(3, 60, 10, 's1')
+    for cx in (18, 45):                                                                         # two burners
+        p.disc(cx, 16, 5, 's1'); p.disc(cx, 16, 4, 's0'); p.ring(cx, 16, 2, 3, 's2'); p.set(cx, 16, 's1')
+        p.hline(cx - 5, cx + 5, 16, 's1'); p.vline(cx, 11, 21, 's1')
+    p.rect(0, 24, 63, 28, 'c3'); p.hline(0, 63, 24, 'c4'); p.hline(0, 63, 28, 'n1')            # front panel with knobs
+    for kx in (10, 20, 43, 53):
+        p.disc(kx, 26, 1.6, 'r1'); p.set(kx - 1, 25, 'r2')
+    p.rect(0, 29, 63, 55, 'c2'); p.vline(0, 29, 55, 'c3'); p.vline(63, 29, 55, 'n1')           # body
+    p.rect(5, 31, 58, 51, 'b1'); p.hline(5, 58, 31, 'b4'); p.vline(5, 31, 51, 'b3'); p.hline(5, 58, 51, 'b0'); p.vline(58, 31, 51, 'b0')   # oven door frame
+    p.rect(9, 36, 54, 48, 's0'); p.hline(9, 54, 36, 's1'); p.rect(11, 38, 20, 39, 's1'); p.hline(11, 17, 38, 's2')   # oven window
+    p.rect(8, 33, 55, 34, 'r1'); p.hline(8, 55, 33, 'r2'); p.hline(8, 55, 34, 'r0')           # handle
+    p.rect(0, 53, 63, 55, 'n1'); p.hline(0, 63, 55, 'n0')
+    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 55, 'n0'); p.vline(63, 0, 55, 'n0')
     return p.im
 
 # ---------- vases ----------
@@ -287,7 +276,7 @@ def room(pieces, cols=9, rows=6, k=3):
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 70 + 6))
     im.alpha_composite(pieces['wdeco_window_01'], (4 * C, 3 * C - 96 + 4 + (56 - 28) // 2 - 2))        # window base 42 px up the wall
     for r in range(rows): im.alpha_composite(pieces['wall_side_01'], (0, 0)) if False else None
-    im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 16))                                  # 2 x 2 cells, standing on its bottom edge
+    im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 8))                                  # 2 x 2 cells, standing on its bottom edge
     tx, ty = 2 * C, base + 2 * C                                                               # table
     im.alpha_composite(pieces['rest_table_small_01'], (tx, ty))
     im.alpha_composite(pieces['rest_vase_large_01'], (tx + 8, ty + 4))

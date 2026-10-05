@@ -62,7 +62,8 @@ SHAPES = {
     'vase': [('e', 'W/2', 44, 26, 30), ('r', 44, 72, 84, 122)],
     # the game's table and stove take 2 x 2 cells: top surface at the back (about 6%..55% of the depth), front face down to the floor
     'table2': [('r', 8, 4, 'W-8', 128), ('r', 16, 128, 'W-16', 252)],
-    'stove2': [('r', 8, 4, 'W-8', 64), ('r', 8, 68, 'W-8', 192), ('r', 16, 192, 'W-16', 316), ('e', 80, 128, 22, 14), ('e', 176, 128, 22, 14)],
+    'stove': [('r', 8, 4, 'W-8', 32), ('r', 8, 32, 'W-8', 96), ('r', 16, 96, 'W-16', 220), ('e', 80, 64, 22, 14), ('e', 176, 64, 22, 14)],
+    'stoveside': [('r', 8, 4, 'W-8', 32), ('r', 8, 32, 'W-8', 160), ('r', 12, 160, 'W-12', 284)],
     # outdoors and farm
     'tree': [('e', 'W/2', 170, 110, 110), ('r', 112, 280, 144, 500), ('e', 'W/2', 500, 40, 10)],
     'treesmall': [('e', 'W/2', 80, 52, 52), ('r', 56, 130, 72, 244), ('e', 'W/2', 244, 22, 8)],
@@ -81,9 +82,9 @@ SHAPES = {
     'corner_nw': [('r', 0, 0, 50, 50)], 'corner_ne': [('r', 77, 0, 127, 50)],
     'corner_sw': [('r', 0, 77, 50, 127)], 'corner_se': [('r', 77, 77, 127, 127)],
 }
-FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove2', 'vase', 'tree', 'treesmall', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
+FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove', 'stoveside', 'vase', 'tree', 'treesmall', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
 # how deep (px) and how wide the dashed floor marker is for pieces that are not one cell
-FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 256, 'stove2': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
+FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 256, 'stove': 128, 'stoveside': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
 FOOT_WIDTH = {'tree': 128, 'treesmall': 128, 'rock': 128, 'bush': 128}
 def ev(v, w, h):
     return int(eval(str(v), {}, {'W': w - 1, 'H': h})) if isinstance(v, str) else v

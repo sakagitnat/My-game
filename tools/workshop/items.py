@@ -75,9 +75,9 @@ ITEMS += [
     ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
     ("rest_table_small", "furniture", "rest_table_small_01", 256, 256, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (2x2 ช่อง นั่งได้ 2 ที่)", "table2", ""),
-    ("rest_stove", "furniture", "rest_stove_01", 256, 320, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (2x2 ช่อง)", "stove2", ""),
-    ("rest_stove_side", "furniture", "rest_stove_side_01", 256, 320, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว)", "stove2", ""),
-    ("rest_stove_back", "furniture", "rest_stove_back_01", 256, 320, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว)", "stove2", ""),
+    ("rest_stove", "furniture", "rest_stove_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (กว้าง 2 ช่อง ลึก 1 ช่อง สูงราว 1 บล็อกเกินนิดหน่อย)", "stove", ""),
+    ("rest_stove_side", "furniture", "rest_stove_side_01", 128, 288, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว กว้าง 1 ช่อง ลึก 2 ช่อง)", "stoveside", ""),
+    ("rest_stove_back", "furniture", "rest_stove_back_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว กว้าง 2 ช่อง ลึก 1 ช่อง)", "stove", ""),
     ("rest_vase_small", "furniture", "rest_vase_small_01", 64, 64, "ร้าน (ในเกมตอนนี้)", "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)", "prop", ""),
     ("rest_vase_large", "furniture", "rest_vase_large_01", 128, 128, "ร้าน (ในเกมตอนนี้)", "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)", "vase", ""),
     # icons (not used by the game yet; one cell, seen straight on)

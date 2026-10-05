@@ -81,7 +81,7 @@ func run() -> void:
 	check(gt2.load_dict(JSON.parse_string(JSON.stringify(gt.to_dict()))) and gt2.facing_at(Vector2i(4, 4)) == 1, "the turn is saved")
 	check(gt.turn(Vector2i(4, 4), Vector2i(2, 1)) and gt.turn(Vector2i(4, 4), Vector2i(1, 2)) and gt.turn(Vector2i(4, 4), Vector2i(2, 1)) and gt.facing_at(Vector2i(4, 4)) == 0 and not gt.facings.has(Vector2i(4, 4)), "four turns face front again")
 	check(gt.remove_at(Vector2i(4, 4)) == "bar" and gt.facing_at(Vector2i(4, 4)) == 0, "removing forgets the turn")
-	check(Catalog.size_facing("rest_stove_01", 1) == Vector2i(4, 4) and ArtCatalog.facing_art("rest_chair_01", 3) == {"art": "rest_chair_side_01", "flip": true} and ArtCatalog.facing_art("rest_table_small_01", 2) == {"art": "rest_table_small_01", "flip": false}, "facing art and sizes")
+	check(Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 4) and ArtCatalog.facing_art("rest_chair_01", 3) == {"art": "rest_chair_side_01", "flip": true} and ArtCatalog.facing_art("rest_table_small_01", 2) == {"art": "rest_table_small_01", "flip": false}, "facing art and sizes")
 
 	# Inventory
 	var inv := Inventory.new(5)
@@ -104,7 +104,7 @@ func run() -> void:
 	check(gs.place_object("restaurant", Vector2i(34, 26), "rest_stove_01") == "ok" and gs.coins == 240, "footprint may span two owned blocks")
 	check(gs.place_object("restaurant", Vector2i(20, 104), "farm_fence_01") == "invalid", "an item does not stand on the sea")
 	var stove_at: Vector2i = gs.grid("restaurant").origin_at(Vector2i(34, 26))
-	check(gs.rotate_object("restaurant", stove_at) == "ok" and gs.grid("restaurant").facing_at(stove_at) == 1 and gs.coins == 240, "turning is free")
+	check(gs.rotate_object("restaurant", stove_at) == "ok" and gs.grid("restaurant").facing_at(gs.grid("restaurant").origin_at(Vector2i(34, 26))) == 1 and gs.coins == 240, "turning is free")   # a turn keeps the middle, so the top-left unit moves
 	check(gs.rotate_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(26, 26))) == "fixed", "a table has no front to turn")
 	check(gs.place_object("restaurant", Vector2i(40, 26), "rest_stove_01", 2) == "ok" and gs.grid("restaurant").facing_at(gs.grid("restaurant").origin_at(Vector2i(40, 26))) == 2, "a bought item can be placed turned")
 	gs.store_object("restaurant", gs.grid("restaurant").origin_at(Vector2i(40, 26)))

@@ -47,7 +47,7 @@ func run() -> void:
 	r.tick(5.0)
 	check(r.customers.is_empty(), "no customers without a stove")
 	gs.place_object("restaurant", Vector2i(31, 31), "rest_stove_01")
-	check(r.has_service() and r.stoves() == [Vector2i(30, 30)], "table + stove opens the restaurant")
+	check(r.has_service() and r.stoves() == [Vector2i(30, 31)], "table + stove opens the restaurant")
 
 	# Recipes follow the level
 	gs.level = 1
@@ -86,16 +86,16 @@ func run() -> void:
 	gs.level = 10
 	check(r.can_cook("omelet") == "ok", "ingredients in the barn allow cooking")
 	check(gs.cook_dish("omelet") == "ok" and gs.inventory.count("egg") == 1, "cooking takes the ingredients")
-	check(r.is_cooking("omelet") and gs.grid("restaurant").states.has(Vector2i(30, 30)), "the dish is on the stove")
-	check(gs.progress("restaurant", Vector2i(30, 30)) == 0.0 and gs.seconds_left("restaurant", Vector2i(30, 30)) == 20, "stove progress and timer")
+	check(r.is_cooking("omelet") and gs.grid("restaurant").states.has(Vector2i(30, 31)), "the dish is on the stove")
+	check(gs.progress("restaurant", Vector2i(30, 31)) == 0.0 and gs.seconds_left("restaurant", Vector2i(30, 31)) == 20, "stove progress and timer")
 	gs.inventory.add("wheat", 4)
 	check(r.can_cook("wheat_porridge") == "busy", "one stove cooks one dish at a time")
 	gs.clock_override = 1010.0
-	check(is_equal_approx(gs.progress("restaurant", Vector2i(30, 30)), 0.5), "stove progress is half way")
+	check(is_equal_approx(gs.progress("restaurant", Vector2i(30, 31)), 0.5), "stove progress is half way")
 	check(not r.tick(0.1) and r.counter.is_empty(), "nothing at the counter before it is done")
 	gs.clock_override = 1020.0
 	check(r.tick(0.1) and r.counter == ["omelet"] and events.has("ready:omelet"), "finished dish goes to the counter")
-	check(not gs.grid("restaurant").states.has(Vector2i(30, 30)) and not r.is_cooking("omelet"), "the stove is free again")
+	check(not gs.grid("restaurant").states.has(Vector2i(30, 31)) and not r.is_cooking("omelet"), "the stove is free again")
 
 	# Serving
 	var coins_before: int = gs.coins
@@ -160,7 +160,7 @@ func run() -> void:
 	check(r.counter.is_empty() and r.reputation == 0, "reset clears the restaurant")
 	gs.clock_override = 2100.0
 	check(gs.load_game() and r.counter == ["tomato_soup"] and r.reputation == 7, "counter and reputation persist")
-	check(gs.grid("restaurant").states.has(Vector2i(30, 30)), "a dish on the stove persists")
+	check(gs.grid("restaurant").states.has(Vector2i(30, 31)), "a dish on the stove persists")
 	check(r.customers.is_empty() and saved_customers >= 0, "customers are not saved")
 	r.arrival_timer = 99999.0
 	r.tick(0.1)

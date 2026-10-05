@@ -20,7 +20,8 @@ func run() -> void:
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 2) == Rect2i(0, 1, 4, 1), "a half turn: the back row becomes the front row")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 3) == Rect2i(0, 0, 1, 4), "three quarters: the left column")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 4) == back_row, "four quarter turns come back to the start")
-	check(Catalog.block_rect("rest_stove_01", 1) == Rect2i(0, 0, 4, 4), "a square footprint blocks the same square turned")
+	check(Catalog.block_rect("rest_table_small_01", 1) == Rect2i(0, 0, 4, 4), "a square footprint blocks the same square turned")
+	check(Catalog.size_facing("rest_stove_01", 0) == Vector2i(4, 2) and Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 4), "a stove is two cells wide and one deep (about a block tall), 2 x 4 units turned")
 
 	# blocking in the world
 	var g := WorldGrid.new(Vector2i(40, 40))
