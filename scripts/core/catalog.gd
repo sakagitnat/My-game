@@ -17,7 +17,7 @@ const ZONES: Array[String] = ["restaurant", "farm"]
 # (the room it reserves) and from the picture (ArtCatalog.ART_BOX); a quarter turn turns the rectangle with the footprint.
 # "rotatable" objects have a front: the player buys one and turns it (facing 0 front, 1 left, 2 back, 3 right).
 const PLACEABLES := {
-	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 4), "name": "ITEM_TABLE", "surface": true},
+	"rest_table_small_01": {"area": "restaurant", "cost": 30, "size": Vector2i(4, 2), "name": "ITEM_TABLE", "surface": true},
 	"rest_stove_01": {"area": "restaurant", "cost": 80, "size": Vector2i(4, 2), "name": "ITEM_STOVE", "rotatable": true},
 	"rest_vase_small_01": {"area": "restaurant", "cost": 10, "size": Vector2i(1, 1), "name": "ITEM_VASE_SMALL", "on": "surface"},
 	"rest_vase_large_01": {"area": "restaurant", "cost": 25, "size": Vector2i(2, 2), "name": "ITEM_VASE_LARGE", "on": "surface"},

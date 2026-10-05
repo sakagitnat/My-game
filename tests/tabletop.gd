@@ -31,28 +31,28 @@ func run() -> void:
 	check(gs.place_object("restaurant", Vector2i(27, 27), "rest_table_small_01") == "ok", "place a table")
 	var coins_after_table: int = gs.coins
 	check(gs.place_object("restaurant", Vector2i(27, 27), small) == "ok" and gs.coins == coins_after_table - 10 and g.tops.size() == 1, "a small vase goes on the table")
-	check(g.objects.size() == 1 and g.top_origin_at(Vector2i(27, 27)) == Vector2i(27, 27) and g.origin_at(Vector2i(27, 27)) == Vector2i(26, 26), "the vase is in its own layer: the table keeps its floor")
+	check(g.objects.size() == 1 and g.top_origin_at(Vector2i(27, 27)) == Vector2i(27, 27) and g.origin_at(Vector2i(27, 27)) == Vector2i(26, 27), "the vase is in its own layer: the table keeps its floor")
 	check(gs.place_object("restaurant", Vector2i(27, 27), small) == "occupied", "two vases cannot share a unit")
-	check(gs.place_object("restaurant", Vector2i(28, 27), small) == "ok", "the next unit is free: small things sit side by side")
-	check(gs.place_object("restaurant", Vector2i(29, 29), large) == "no_surface", "a big vase may not hang over the table edge")
-	check(gs.place_object("restaurant", Vector2i(28, 28), large) == "ok" and g.tops.size() == 3, "a big vase fits on the table")
-	check(gs.place_object("restaurant", Vector2i(28, 28), large) == "occupied" and gs.place_object("restaurant", Vector2i(29, 29), small) == "occupied", "and blocks the units under it")
+	check(gs.place_object("restaurant", Vector2i(26, 27), small) == "ok", "the next unit is free: small things sit side by side")
+	check(gs.place_object("restaurant", Vector2i(29, 28), large) == "no_surface", "a big vase may not hang over the table edge")
+	check(gs.place_object("restaurant", Vector2i(28, 27), large) == "ok" and g.tops.size() == 3, "a big vase fits on the table")
+	check(gs.place_object("restaurant", Vector2i(28, 27), large) == "occupied" and gs.place_object("restaurant", Vector2i(29, 28), small) == "occupied", "and blocks the units under it")
 	check(gs.place_object("restaurant", Vector2i(33, 27), "rest_stove_01") == "ok", "floor things are not bothered by the layer above")
 
 	# Moving
-	check(gs.check_move("restaurant", Vector2i(27, 27), Vector2i(26, 26), true) == "occupied" or gs.check_move("restaurant", Vector2i(27, 27), Vector2i(26, 26), true) == "ok", "a vase may be judged against others only")
+	check(gs.check_move("restaurant", Vector2i(27, 27), Vector2i(27, 28), true) == "occupied" or gs.check_move("restaurant", Vector2i(27, 27), Vector2i(27, 28), true) == "ok", "a vase may be judged against others only")
 	check(gs.check_move("restaurant", Vector2i(27, 27), Vector2i(24, 24), true) == "no_surface", "a vase cannot be moved off the table")
 	check(gs.check_move("restaurant", Vector2i(30, 30), Vector2i(26, 26), true) == "empty", "nothing to move where no vase stands")
-	check(gs.move_object("restaurant", Vector2i(27, 27), Vector2i(26, 26), true) == "ok" and g.tops.has(Vector2i(26, 26)) and not g.tops.has(Vector2i(27, 27)), "a vase moves along the table, free of charge")
+	check(gs.move_object("restaurant", Vector2i(27, 27), Vector2i(27, 28), true) == "ok" and g.tops.has(Vector2i(27, 28)) and not g.tops.has(Vector2i(27, 27)), "a vase moves along the table, free of charge")
 	var table_before := g.tops.size()
 	var coins_before: int = gs.coins
 
 	# The table carries them
 	gs.coins = 5000
-	check(gs.check_move("restaurant", Vector2i(26, 26), Vector2i(29, 31)) == "ok", "the table can move")
-	check(gs.move_object("restaurant", Vector2i(26, 26), Vector2i(29, 31)) == "ok", "move the table")
-	check(g.tops.size() == table_before and g.tops.has(Vector2i(28, 30)) and g.tops.has(Vector2i(30, 31)) and g.tops.has(Vector2i(30, 32)) and not g.tops.has(Vector2i(26, 26)), "its vases moved with it")
-	check(g.origin_at(Vector2i(28, 30)) == Vector2i(28, 30) and g.top_occupied.size() == 1 + 1 + 4, "both layers follow the move")
+	check(gs.check_move("restaurant", Vector2i(26, 27), Vector2i(29, 31)) == "ok", "the table can move")
+	check(gs.move_object("restaurant", Vector2i(26, 27), Vector2i(29, 31)) == "ok", "move the table")
+	check(g.tops.size() == table_before and g.tops.has(Vector2i(29, 32)) and g.tops.has(Vector2i(28, 31)) and g.tops.has(Vector2i(30, 31)) and not g.tops.has(Vector2i(26, 27)), "its vases moved with it")
+	check(g.origin_at(Vector2i(28, 31)) == Vector2i(28, 31) and g.top_occupied.size() == 1 + 1 + 4, "both layers follow the move")
 
 	# Saving
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(g.to_dict()))
@@ -106,7 +106,7 @@ func run() -> void:
 	world._on_store_requested()
 	check(gs.grid("restaurant").tops.is_empty() and not gs.grid("restaurant").objects.is_empty() and gs.stash_count(small) == 1, "storing the vase leaves the table")
 	world._on_tap(Iso.unit_corner(Vector2i(27, 27)) + Vector2(8, 8))
-	check(not world.selected_top and world.selected_origin == Vector2i(26, 26), "with no vase, the same tap selects the table")
+	check(not world.selected_top and world.selected_origin == Vector2i(26, 27), "with no vase, the same tap selects the table")
 	world.queue_redraw()
 	await process_frame
 

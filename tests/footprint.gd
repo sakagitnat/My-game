@@ -13,29 +13,29 @@ func _initialize() -> void:
 
 func run() -> void:
 	# block rectangle: defaults to the whole footprint, empty for a plot, turns with the footprint
-	check(Catalog.block_rect("rest_table_small_01") == Rect2i(0, 0, 4, 4), "a table blocks its whole footprint")
+	check(Catalog.block_rect("rest_table_small_01") == Rect2i(0, 0, 4, 2), "a table blocks its whole footprint (2 cells wide, 1 deep)")
 	check(Catalog.block_rect("farm_plot_01").size == Vector2i.ZERO, "a plot can be walked over")
 	var back_row := Rect2i(0, 0, 4, 1)   # a 4x2 thing that blocks only its back row
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 1) == Rect2i(1, 0, 1, 4), "a quarter turn: the back row becomes the right column of the 2x4 footprint")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 2) == Rect2i(0, 1, 4, 1), "a half turn: the back row becomes the front row")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 3) == Rect2i(0, 0, 1, 4), "three quarters: the left column")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 4) == back_row, "four quarter turns come back to the start")
-	check(Catalog.block_rect("rest_table_small_01", 1) == Rect2i(0, 0, 4, 4), "a square footprint blocks the same square turned")
+	check(Catalog.block_rect("rest_vase_large_01", 1) == Rect2i(0, 0, 2, 2), "a square footprint blocks the same square turned")
 	check(Catalog.size_facing("rest_stove_01", 0) == Vector2i(4, 2) and Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 4), "a stove is two cells wide and one deep (about a block tall), 2 x 4 units turned")
 
 	# blocking in the world
 	var g := WorldGrid.new(Vector2i(40, 40))
 	g.owned_parcels = {}   # ownership does not matter here
 	g.objects[Vector2i(10, 10)] = "rest_table_small_01"
-	g.footprints[Vector2i(10, 10)] = Vector2i(4, 4)
-	for c in g.cells_of(Vector2i(10, 10), Vector2i(4, 4)):
+	g.footprints[Vector2i(10, 10)] = Vector2i(4, 2)
+	for c in g.cells_of(Vector2i(10, 10), Vector2i(4, 2)):
 		g.occupied[c] = Vector2i(10, 10)
 	g.objects[Vector2i(20, 10)] = "farm_plot_01"
 	g.footprints[Vector2i(20, 10)] = Vector2i(4, 4)
 	for c in g.cells_of(Vector2i(20, 10), Vector2i(4, 4)):
 		g.occupied[c] = Vector2i(20, 10)
 	g.blocked[Vector2i(3, 3)] = "tree"
-	check(g.blocks_walk(Vector2i(11, 12)), "a table's units block walking")
+	check(g.blocks_walk(Vector2i(11, 11)), "a table's units block walking")
 	check(not g.blocks_walk(Vector2i(14, 10)), "next to the table is free")
 	check(not g.blocks_walk(Vector2i(21, 11)), "a plot does not block walking")
 	check(g.blocks_walk(Vector2i(6, 7)) and g.blocks_walk(Vector2i(7, 6)), "a tree blocks all four units of its cell")
@@ -53,9 +53,9 @@ func run() -> void:
 	check(ArtCatalog.art_box("rest_table_small_01").is_empty(), "no entry: the default box")
 
 	# draw order: feet decide, not sizes
-	var table_key := Iso.footprint_depth(Vector2i(10, 10), Vector2i(4, 4))
-	check(Iso.depth_key(Vector2(12, 15)) > table_key, "a person standing south of the table's bottom edge is drawn after it")
-	check(Iso.depth_key(Vector2(12, 13)) < table_key, "a person standing north of the bottom edge is drawn before it")
+	var table_key := Iso.footprint_depth(Vector2i(10, 10), Vector2i(4, 2))
+	check(Iso.depth_key(Vector2(12, 13)) > table_key, "a person standing south of the table's bottom edge is drawn after it")
+	check(Iso.depth_key(Vector2(12, 11)) < table_key, "a person standing north of the bottom edge is drawn before it")
 	var tree_key := Iso.depth_key(Vector2(3 * Iso.SUB, (3 + 1) * Iso.SUB))
 	check(Iso.footprint_depth(Vector2i(6, 6), Vector2i(2, 2)) == tree_key, "a tree and a 1-cell thing in the same cell have the same key")
 

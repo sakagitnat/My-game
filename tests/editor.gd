@@ -139,7 +139,7 @@ func run() -> void:
 	check(lay.wall_at(Vector2i(30, 30), "n") == "", "the wall is gone")
 	ed.erase_walls = false
 	ed.begin_stroke()
-	check(ed.apply_at(_world_at(Vector2i(17, 13))), "erase items removes the table")
+	check(ed.apply_at(_world_at(Vector2i(17, 12))), "erase items removes the table")
 	ed.end_stroke()
 	check(gs.grid("restaurant").objects.is_empty(), "the table is gone from the scene")
 

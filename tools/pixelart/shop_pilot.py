@@ -173,27 +173,24 @@ def window():
 
 # ---------- table and stove (2 x 2 cells: top surface seen from above on the upper half, the front on the lower half) ----------
 def table():
-    p = Pix(64, 64)
-    p.rect(0, 0, 63, 31, 'w4')
-    for r in range(4):                                                             # planks run along the width
-        y = r * 8
-        tone = ('w4', 'w5', 'w3', 'w5')[r]
-        p.rect(1, y + 1, 62, y + 6, tone)
-        p.hline(1, 62, y + 7, 'w2'); p.hline(1, 62, y, 'w6' if r == 0 else 'w5')
+    """64 x 48: two cells wide, one deep, about waist high (well below a person): the top seen from above in the top 16 rows, the front edge and legs below."""
+    p = Pix(64, 48)
+    p.rect(0, 0, 63, 15, 'w4')
+    for r in range(2):                                                             # planks run along the width
+        y = r * 8; tone = ('w4', 'w5')[r]
+        p.rect(1, y + 1, 62, y + 6, tone); p.hline(1, 62, y + 7, 'w2'); p.hline(1, 62, y, 'w6' if r == 0 else 'w5')
     rnd = random.Random(3)
-    for r in range(4):
-        for _ in range(3):
-            x = rnd.randint(3, 52); p.hline(x, x + rnd.randint(3, 8), r * 8 + rnd.randint(2, 5), 'w3')
-    for j, y in ((20, 0), (44, 8), (12, 16), (36, 24)):                            # plank joints
-        p.vline(j, y + 1, y + 7, 'w1')
-    p.hline(0, 63, 0, 'w1'); p.vline(0, 0, 31, 'w1'); p.vline(63, 0, 31, 'w1')   # outline of the top
-    p.rect(1, 1, 62, 1, 'w6')
-    p.rect(0, 32, 63, 36, 'w2'); p.hline(0, 63, 32, 'w5'); p.hline(0, 63, 36, 'w1')   # front thickness
+    for r in range(2):
+        for _ in range(2):
+            x = rnd.randint(3, 50); p.hline(x, x + rnd.randint(3, 8), r * 8 + rnd.randint(2, 5), 'w3')
+    for j, y in ((22, 0), (44, 8)): p.vline(j, y + 1, y + 7, 'w1')                 # plank joints
+    p.hline(0, 63, 0, 'w1'); p.vline(0, 0, 15, 'w1'); p.vline(63, 0, 15, 'w1'); p.rect(1, 1, 62, 1, 'w6')
+    p.rect(0, 16, 63, 20, 'w2'); p.hline(0, 63, 16, 'w5'); p.hline(0, 63, 20, 'w1')   # front thickness
     for lx in (3, 54):                                                             # legs
-        p.rect(lx, 37, lx + 6, 63, 'w2'); p.vline(lx, 37, 63, 'w4'); p.vline(lx + 1, 37, 63, 'w3'); p.vline(lx + 6, 37, 63, 'w1')
-        p.rect(lx - 0, 62, lx + 6, 63, 'w0')
-    p.rect(10, 52, 53, 54, 'w2'); p.hline(10, 53, 52, 'w3'); p.hline(10, 53, 54, 'w1')   # stretcher
-    p.set(0, 63, T); p.set(63, 63, T)
+        p.rect(lx, 21, lx + 6, 47, 'w2'); p.vline(lx, 21, 47, 'w4'); p.vline(lx + 1, 21, 47, 'w3'); p.vline(lx + 6, 21, 47, 'w1')
+        p.rect(lx, 46, lx + 6, 47, 'w0')
+    p.rect(10, 36, 53, 38, 'w2'); p.hline(10, 53, 36, 'w3'); p.hline(10, 53, 38, 'w1')   # stretcher
+    p.set(0, 47, T); p.set(63, 47, T)
     return p.im
 
 def stove():
@@ -303,8 +300,8 @@ def room(pieces, cols=9, rows=6, k=3):
     im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 8))                                  # 2 x 2 cells, standing on its bottom edge
     tx, ty = 2 * C, base + 2 * C                                                               # table
     im.alpha_composite(pieces['rest_table_small_01'], (tx, ty))
-    im.alpha_composite(pieces['rest_vase_large_01'], (tx + 8, ty + 4))
-    im.alpha_composite(pieces['rest_vase_small_01'], (tx + 40, ty + 10))
+    im.alpha_composite(pieces['rest_vase_large_01'], (tx + 6, ty - 17))
+    im.alpha_composite(pieces['rest_vase_small_01'], (tx + 40, ty - 5))
     return im.resize((W * k, H * k), Image.NEAREST)
 
 def sheet2(pieces, layout_path='assets/td/art_workshop/set_template_layout.json'):
