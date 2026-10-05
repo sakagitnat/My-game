@@ -7,35 +7,35 @@ sys.path.insert(0, os.path.dirname(__file__))
 from PIL import Image
 from shop_pilot import Pix, PIECES, wall_side, T
 
-# All four chair views share one skeleton so they match: 32 x 40, the back rest from row 2 to 19 (about chest height of a person), the seat rows 20..25,
-# short legs 26..37 (a chair's seat is about knee height), a dark foot at rows 38/39.
+# All four chair views share one skeleton so they match: 32 x 32, the back rest from row 1 to 14 (about chest height of a person), the seat rows 15..19,
+# short legs 20..29 (a chair's seat is about knee height), a dark foot at rows 30/31.
 def _legs(p, xs):
     for lx in xs:
-        p.rect(lx, 26, lx + 2, 37, 'w2'); p.vline(lx, 26, 37, 'w3'); p.hline(lx, lx + 2, 38, 'w1')
+        p.rect(lx, 20, lx + 2, 29, 'w2'); p.vline(lx, 20, 29, 'w3'); p.hline(lx, lx + 2, 30, 'w1')
 
 def chair(front):
-    p = Pix(32, 40)
+    p = Pix(32, 32)
     if front:                                   # we see its front: the back rest behind the seat
-        p.rect(7, 2, 24, 19, 'w3'); p.hline(7, 24, 2, 'w5'); p.vline(7, 2, 19, 'w4'); p.vline(24, 2, 19, 'w1')
-        for x in (11, 15, 19): p.vline(x, 5, 17, 'w2')
-        p.rect(5, 20, 26, 25, 'w5'); p.hline(5, 26, 20, 'w6'); p.hline(5, 26, 25, 'w2')
+        p.rect(7, 1, 24, 14, 'w3'); p.hline(7, 24, 1, 'w5'); p.vline(7, 1, 14, 'w4'); p.vline(24, 1, 14, 'w1')
+        for x in (11, 15, 19): p.vline(x, 4, 12, 'w2')
+        p.rect(5, 15, 26, 19, 'w5'); p.hline(5, 26, 15, 'w6'); p.hline(5, 26, 19, 'w2')
         _legs(p, (6, 23))
     else:                                       # we see its back: the back rest covers the seat
-        p.rect(7, 2, 24, 25, 'w3'); p.hline(7, 24, 2, 'w5'); p.vline(7, 2, 25, 'w4'); p.vline(24, 2, 25, 'w1')
-        for x in (11, 15, 19): p.vline(x, 5, 19, 'w2')
-        p.rect(7, 22, 24, 25, 'w2'); p.hline(7, 24, 22, 'w1')
-        p.rect(5, 23, 26, 25, 'w5'); p.hline(5, 26, 25, 'w2')
+        p.rect(7, 1, 24, 19, 'w3'); p.hline(7, 24, 1, 'w5'); p.vline(7, 1, 19, 'w4'); p.vline(24, 1, 19, 'w1')
+        for x in (11, 15, 19): p.vline(x, 4, 14, 'w2')
+        p.rect(7, 16, 24, 19, 'w2'); p.hline(7, 24, 16, 'w1')
+        p.rect(5, 17, 26, 19, 'w5'); p.hline(5, 26, 19, 'w2')
         _legs(p, (6, 23))
     return outline(p)
 
 def chair_side():
     """Seen from the left side (facing left): the back rest on the right, seat, two legs. The right side is this mirrored."""
-    p = Pix(32, 40)
-    p.rect(21, 2, 25, 25, 'w3'); p.vline(21, 2, 25, 'w4'); p.vline(25, 2, 25, 'w1'); p.hline(21, 25, 2, 'w5')      # back rest (thin from the side)
-    p.rect(21, 8, 25, 9, 'w2'); p.rect(21, 14, 25, 15, 'w2')
-    p.rect(5, 20, 25, 25, 'w5'); p.hline(5, 25, 20, 'w6'); p.hline(5, 25, 25, 'w2'); p.vline(5, 20, 25, 'w6')        # seat
+    p = Pix(32, 32)
+    p.rect(21, 1, 25, 19, 'w3'); p.vline(21, 1, 19, 'w4'); p.vline(25, 1, 19, 'w1'); p.hline(21, 25, 1, 'w5')      # back rest (thin from the side)
+    p.rect(21, 6, 25, 7, 'w2'); p.rect(21, 11, 25, 12, 'w2')
+    p.rect(5, 15, 25, 19, 'w5'); p.hline(5, 25, 15, 'w6'); p.hline(5, 25, 19, 'w2'); p.vline(5, 15, 19, 'w6')        # seat
     _legs(p, (6, 22))
-    p.rect(9, 31, 21, 32, 'w1')
+    p.rect(9, 25, 21, 26, 'w1')
     return outline(p)
 
 def flip(im): return im.transpose(Image.FLIP_LEFT_RIGHT)
@@ -115,7 +115,7 @@ def build(cols=13, rows=9, k=3):
         a = int(70 * (1 - yy / 14)); [sh.putpixel((xx, yy), (30, 20, 12, a)) for xx in range(cols * C)]
     at(sh, 0, wall)
     # wall decoration
-    at(P['wdeco_door_01'], 5 * C, wall - 86 + 6)
+    at(P['wdeco_door_01'], 5 * C, wall - 70 + 6)
     for wx in (2, 9): at(P['wdeco_window_01'], wx * C, 16)
     at(painting(), 7 * C + 0, 24)
     objs = []                                                       # (foot y, x, y, piece)
@@ -125,25 +125,25 @@ def build(cols=13, rows=9, k=3):
     put(P['rest_stove_01'], 10 * C, wall + 1 * C + 0)
     put(plant(), 12 * C - 2, wall + 1 * C)
     put(lamp(), 3 * C + 0, wall + 1 * C + 8)
-    # dining: a rug, a table (2 wide, 1 deep, about waist high) with a chair at each end and one on each long side, and vases on top
+    # dining: a rug, a table (1.5 cells wide, 1 deep, low) with a chair behind, one in front and one at each end, and vases on top
     rx, ry = 3 * C, wall + 3 * C
     at(rug(), rx, ry - 8)
-    tx, ty = rx, ry + 8                                       # table's top-left of its picture (48 px high, foot at ty + 40)
+    tx, ty = rx + 8, ry + 8                                   # table's top-left of its picture (32 px high, foot at ty + 32)
     ch_up = chair(False); ch_dn = chair(True)
-    put(ch_dn, tx + 16, ty + 14)                              # behind the table (we see its front)
-    put(P['rest_table_small_01'], tx, ty + 40)
-    objs.append((ty + 41, tx + 6, ty - 19, P['rest_vase_large_01']))      # on the table top (drawn right after the table)
-    objs.append((ty + 41, tx + 40, ty - 5, P['rest_vase_small_01']))
-    put(flip(chair_side()), tx - 22, ty + 40 + 2)             # left of the table, facing right
-    put(chair_side(), tx + 64 - 10, ty + 40 + 2)              # right of the table, facing left
-    put(ch_up, tx + 16, ty + 40 + 18)
+    put(ch_dn, tx + 8, ty + 10)                               # behind the table (we see its front)
+    put(P['rest_table_small_01'], tx, ty + 32)
+    objs.append((ty + 33, tx + 4, ty - 17 + 2, P['rest_vase_large_01']))      # on the table top (drawn right after the table)
+    objs.append((ty + 33, tx + 30, ty - 5 + 1, P['rest_vase_small_01']))
+    put(flip(chair_side()), tx - 22, ty + 32 + 2)             # left of the table, facing right
+    put(chair_side(), tx + 48 - 10, ty + 32 + 2)              # right of the table, facing left
+    put(ch_up, tx + 8, ty + 32 + 14)
     # a second table on the right
     t2x, t2y = 8 * C, wall + 4 * C + 8
-    put(ch_dn, t2x + 16, t2y + 14)
-    put(P['rest_table_small_01'], t2x, t2y + 40)
-    put(flip(chair_side()), t2x - 22, t2y + 40 + 2)
-    put(chair_side(), t2x + 64 - 10, t2y + 40 + 2)
-    put(ch_up, t2x + 16, t2y + 40 + 18)
+    put(ch_dn, t2x + 8, t2y + 10)
+    put(P['rest_table_small_01'], t2x, t2y + 32)
+    put(flip(chair_side()), t2x - 22, t2y + 32 + 2)
+    put(chair_side(), t2x + 48 - 10, t2y + 32 + 2)
+    put(ch_up, t2x + 8, t2y + 32 + 14)
     put(plant(), 16, wall + 8 * C); put(plant(), 12 * C - 12, wall + 8 * C)
     for foot, x, y, piece in sorted(objs, key=lambda o: o[0]):
         sd = Image.new('RGBA', (piece.width, 6), (0, 0, 0, 0))
@@ -163,7 +163,7 @@ def build(cols=13, rows=9, k=3):
 def chairs_sheet(k=6):
     """All the chair views side by side: front (down), side (left), back (up), right (the left mirrored)."""
     views = [chair(True), chair_side(), chair(False), flip(chair_side())]
-    im = Image.new('RGBA', (len(views) * 40 + 8, 48), (236, 232, 224, 255))
+    im = Image.new('RGBA', (len(views) * 40 + 8, 40), (236, 232, 224, 255))
     for i, v in enumerate(views): im.alpha_composite(v, (8 + i * 40, 4))
     return im.resize((im.width * k, im.height * k), Image.NEAREST)
 

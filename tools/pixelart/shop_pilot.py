@@ -114,46 +114,45 @@ def wall_side():
 
 # ---------- door and window (overlays on a wall; the last 6 rows hang below the base line) ----------
 def door():
-    """32 x 86: the door is 2.5 blocks (80 rows) above its base line, plus 6 rows (the threshold stone) below it."""
-    p = Pix(32, 86)
-    p.rect(0, 0, 31, 79, 'w2')                                                     # frame
+    p = Pix(32, 70)
+    p.rect(0, 0, 31, 63, 'w2')                                                     # frame
     p.hline(0, 31, 0, 'w5'); p.hline(0, 31, 1, 'w4'); p.hline(0, 31, 3, 'w1')
-    p.vline(0, 0, 79, 'w4'); p.vline(1, 0, 79, 'w3'); p.vline(31, 0, 79, 'w1'); p.vline(30, 0, 79, 'w1'); p.vline(2, 4, 79, 'w1')
-    p.rect(3, 4, 28, 79, 'b2')                                                     # leaf
+    p.vline(0, 0, 63, 'w4'); p.vline(1, 0, 63, 'w3'); p.vline(31, 0, 63, 'w1'); p.vline(30, 0, 63, 'w1'); p.vline(2, 4, 63, 'w1')
+    p.rect(3, 4, 28, 63, 'b2')                                                     # leaf
     for x in range(3, 29, 6):                                                      # planks
-        p.vline(x, 4, 79, 'b0'); p.vline(x + 1, 4, 79, 'b3')
+        p.vline(x, 4, 63, 'b0'); p.vline(x + 1, 4, 63, 'b3')
     p.rect(3, 4, 28, 5, 'b1'); p.hline(3, 28, 4, 'b4')                           # top rail
-    p.rect(8, 42, 23, 71, 'b1'); p.rect(9, 43, 22, 70, 'b2')                       # lower panel
-    p.hline(8, 23, 42, 'b0'); p.vline(8, 42, 71, 'b0'); p.hline(8, 23, 71, 'b3'); p.vline(23, 42, 71, 'b3')
-    p.disc(15.5, 22, 6.5, 'r1'); p.disc(15.5, 22, 5, 'r0'); p.disc(15.5, 22, 4, 'g1')   # porthole
-    p.rect(12, 19, 13, 20, 'g2'); p.hline(17, 19, 25, 'g0'); p.ring(15.5, 22, 4, 5, 'r1')
-    p.set(11, 16, 'r2'); p.set(20, 16, 'r2')
-    p.rect(24, 38, 26, 44, 'r0'); p.rect(24, 38, 25, 43, 'r1'); p.set(24, 38, 'r2')    # handle
-    p.rect(3, 76, 28, 79, 'b1'); p.hline(3, 28, 79, 'b0')                           # kick plate
-    p.rect(1, 80, 30, 82, 'c1'); p.hline(1, 30, 80, 'c3'); p.hline(1, 30, 82, 'c0')   # threshold stone
+    p.rect(8, 33, 23, 56, 'b1'); p.rect(9, 34, 22, 55, 'b2')                       # lower panel
+    p.hline(8, 23, 33, 'b0'); p.vline(8, 33, 56, 'b0'); p.hline(8, 23, 56, 'b3'); p.vline(23, 33, 56, 'b3')
+    p.disc(15.5, 18, 6.5, 'r1'); p.disc(15.5, 18, 5, 'r0'); p.disc(15.5, 18, 4, 'g1')   # porthole
+    p.rect(12, 15, 13, 16, 'g2'); p.hline(17, 19, 21, 'g0'); p.ring(15.5, 18, 4, 5, 'r1')
+    p.set(11, 12, 'r2'); p.set(20, 12, 'r2')
+    p.rect(24, 30, 26, 36, 'r0'); p.rect(24, 30, 25, 35, 'r1'); p.set(24, 30, 'r2')    # handle
+    p.rect(3, 60, 28, 63, 'b1'); p.hline(3, 28, 63, 'b0')                           # kick plate
+    p.rect(1, 64, 30, 66, 'c1'); p.hline(1, 30, 64, 'c3'); p.hline(1, 30, 66, 'c0')   # threshold stone
     return p.im
 
 def door_open():
     """The same door swung open into the room: the frame stays, the opening shows the dim room and its floor, the leaf is seen edge-on at the hinge side,
     narrow and a little shorter at its far edge (perspective)."""
-    p = Pix(32, 86)
-    p.rect(0, 0, 31, 79, 'w2')
+    p = Pix(32, 70)
+    p.rect(0, 0, 31, 63, 'w2')
     p.hline(0, 31, 0, 'w5'); p.hline(0, 31, 1, 'w4'); p.hline(0, 31, 3, 'w1')
-    p.vline(0, 0, 79, 'w4'); p.vline(1, 0, 79, 'w3'); p.vline(31, 0, 79, 'w1'); p.vline(30, 0, 79, 'w1'); p.vline(2, 4, 79, 'w1')
-    p.rect(3, 4, 28, 79, 'w0')                                                    # the dim room behind
-    p.rect(3, 4, 28, 28, 'w1'); p.rect(3, 29, 28, 36, 'w0')
-    p.rect(3, 62, 28, 79, 'c1'); p.hline(3, 28, 62, 'c0'); p.rect(3, 70, 28, 79, 'c2')   # the floor inside, lighter near the door
-    for x in range(3, 29, 8): p.vline(x, 62, 79, 'c0')
+    p.vline(0, 0, 63, 'w4'); p.vline(1, 0, 63, 'w3'); p.vline(31, 0, 63, 'w1'); p.vline(30, 0, 63, 'w1'); p.vline(2, 4, 63, 'w1')
+    p.rect(3, 4, 28, 63, 'w0')                                                    # the dim room behind
+    p.rect(3, 4, 28, 20, 'w1'); p.rect(3, 21, 28, 26, 'w0')
+    p.rect(3, 50, 28, 63, 'c1'); p.hline(3, 28, 50, 'c0'); p.rect(3, 56, 28, 63, 'c2')   # the floor inside, lighter near the door
+    for x in range(3, 29, 8): p.vline(x, 50, 63, 'c0')
     for x in range(3, 12):                                                         # the leaf, hinged on the left: its far edge is shorter
         t = (x - 3) / 8.0
-        top = 4 + int(round(5 * t)); bot = 79 - int(round(6 * t))
+        top = 4 + int(round(4 * t)); bot = 63 - int(round(5 * t))
         for y in range(top, bot + 1): p.set(x, y, 'b2' if x % 4 else 'b0')
         p.set(x, top, 'b4'); p.set(x, bot, 'b0')
-    p.vline(11, 9, 73, 'b0'); p.vline(10, 10, 72, 'b3')
-    p.disc(7, 22, 2, 'r1'); p.set(7, 22, 'g1')                                      # porthole, foreshortened
-    p.rect(9, 41, 9, 46, 'r0'); p.set(9, 41, 'r2')                                  # handle
-    p.rect(3, 14, 4, 17, 'r0'); p.rect(3, 62, 4, 65, 'r0')                          # hinges
-    p.rect(1, 80, 30, 82, 'c1'); p.hline(1, 30, 80, 'c3'); p.hline(1, 30, 82, 'c0')   # threshold stone
+    p.vline(11, 8, 58, 'b0'); p.vline(10, 9, 57, 'b3')
+    p.disc(7, 18, 2, 'r1'); p.set(7, 18, 'g1')                                      # porthole, foreshortened
+    p.rect(9, 33, 9, 37, 'r0'); p.set(9, 33, 'r2')                                  # handle
+    p.rect(3, 12, 4, 14, 'r0'); p.rect(3, 48, 4, 50, 'r0')                          # hinges
+    p.rect(1, 64, 30, 66, 'c1'); p.hline(1, 30, 64, 'c3'); p.hline(1, 30, 66, 'c0')   # threshold stone
     return p.im
 
 def window():
@@ -174,46 +173,43 @@ def window():
 
 # ---------- table and stove (2 x 2 cells: top surface seen from above on the upper half, the front on the lower half) ----------
 def table():
-    """64 x 40: two cells wide, one deep, low (the front face is 24 rows: edge 4 + short legs 20): the top seen from above in the top 16 rows."""
-    p = Pix(64, 40)
-    p.rect(0, 0, 63, 15, 'w4')
+    """48 x 32: one and a half cells wide, one deep, low: the top seen from above in the top 12 rows, then the front edge (4) and short legs (16)."""
+    p = Pix(48, 32)
+    p.rect(0, 0, 47, 11, 'w4')
     for r in range(2):                                                             # planks run along the width
-        y = r * 8; tone = ('w4', 'w5')[r]
-        p.rect(1, y + 1, 62, y + 6, tone); p.hline(1, 62, y + 7, 'w2'); p.hline(1, 62, y, 'w6' if r == 0 else 'w5')
+        y = r * 6; tone = ('w4', 'w5')[r]
+        p.rect(1, y + 1, 46, y + 4, tone); p.hline(1, 46, y + 5, 'w2'); p.hline(1, 46, y, 'w6' if r == 0 else 'w5')
     rnd = random.Random(3)
     for r in range(2):
         for _ in range(2):
-            x = rnd.randint(3, 50); p.hline(x, x + rnd.randint(3, 8), r * 8 + rnd.randint(2, 5), 'w3')
-    for j, y in ((22, 0), (44, 8)): p.vline(j, y + 1, y + 7, 'w1')                 # plank joints
-    p.hline(0, 63, 0, 'w1'); p.vline(0, 0, 15, 'w1'); p.vline(63, 0, 15, 'w1'); p.rect(1, 1, 62, 1, 'w6')
-    p.rect(0, 16, 63, 20, 'w2'); p.hline(0, 63, 16, 'w5'); p.hline(0, 63, 20, 'w1')   # front thickness
-    for lx in (3, 54):                                                             # short legs
-        p.rect(lx, 21, lx + 6, 39, 'w2'); p.vline(lx, 21, 39, 'w4'); p.vline(lx + 1, 21, 39, 'w3'); p.vline(lx + 6, 21, 39, 'w1')
-        p.rect(lx, 38, lx + 6, 39, 'w0')
-    p.set(0, 39, T); p.set(63, 39, T)
+            x = rnd.randint(3, 36); p.hline(x, x + rnd.randint(3, 7), r * 6 + rnd.randint(2, 4), 'w3')
+    for j, y in ((17, 0), (33, 6)): p.vline(j, y + 1, y + 5, 'w1')                 # plank joints
+    p.hline(0, 47, 0, 'w1'); p.vline(0, 0, 11, 'w1'); p.vline(47, 0, 11, 'w1'); p.rect(1, 1, 46, 1, 'w6')
+    p.rect(0, 12, 47, 15, 'w2'); p.hline(0, 47, 12, 'w5'); p.hline(0, 47, 15, 'w1')   # front thickness
+    for lx in (2, 40):                                                             # short legs
+        p.rect(lx, 16, lx + 5, 31, 'w2'); p.vline(lx, 16, 31, 'w4'); p.vline(lx + 1, 16, 31, 'w3'); p.vline(lx + 5, 16, 31, 'w1')
+        p.rect(lx, 30, lx + 5, 31, 'w0')
+    p.set(0, 31, T); p.set(47, 31, T)
     return p.im
 
 def stove():
-    """64 x 56: two cells wide, one deep, a block tall (32 rows of front + 16 of top) and 8 rows of back splash standing against the wall.
-    The bottom 48 rows are the footprint, the top 8 rows overlap the wall a little."""
-    p = Pix(64, 56)
-    p.rect(1, 1, 62, 7, 'c2'); p.hline(1, 62, 1, 'c3')                                         # back splash (tiles), overlaps the wall
-    for x in range(1, 63, 8): p.vline(x, 2, 7, 'c1')
-    p.hline(1, 62, 7, 'n0')
-    p.rect(0, 8, 63, 23, 'c2'); p.hline(0, 63, 8, 'c4'); p.vline(0, 8, 23, 'c3'); p.vline(63, 8, 23, 'n1')   # top surface seen from above
-    p.rect(3, 10, 60, 22, 's0'); p.hline(3, 60, 10, 's1')
-    for cx in (18, 45):                                                                         # two burners
-        p.disc(cx, 16, 5, 's1'); p.disc(cx, 16, 4, 's0'); p.ring(cx, 16, 2, 3, 's2'); p.set(cx, 16, 's1')
-        p.hline(cx - 5, cx + 5, 16, 's1'); p.vline(cx, 11, 21, 's1')
-    p.rect(0, 24, 63, 28, 'c3'); p.hline(0, 63, 24, 'c4'); p.hline(0, 63, 28, 'n1')            # front panel with knobs
-    for kx in (10, 20, 43, 53):
-        p.disc(kx, 26, 1.6, 'r1'); p.set(kx - 1, 25, 'r2')
-    p.rect(0, 29, 63, 55, 'c2'); p.vline(0, 29, 55, 'c3'); p.vline(63, 29, 55, 'n1')           # body
-    p.rect(5, 31, 58, 51, 'b1'); p.hline(5, 58, 31, 'b4'); p.vline(5, 31, 51, 'b3'); p.hline(5, 58, 51, 'b0'); p.vline(58, 31, 51, 'b0')   # oven door frame
-    p.rect(9, 36, 54, 48, 's0'); p.hline(9, 54, 36, 's1'); p.rect(11, 38, 20, 39, 's1'); p.hline(11, 17, 38, 's2')   # oven window
-    p.rect(8, 33, 55, 34, 'r1'); p.hline(8, 55, 33, 'r2'); p.hline(8, 55, 34, 'r0')           # handle
-    p.rect(0, 53, 63, 55, 'n1'); p.hline(0, 63, 55, 'n0')
-    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 55, 'n0'); p.vline(63, 0, 55, 'n0')
+    """48 x 40: one and a half cells wide, one deep, about a block tall; the top 8 rows (a tiled back splash) overlap the wall a little."""
+    p = Pix(48, 40)
+    p.rect(1, 1, 46, 5, 'c2'); p.hline(1, 46, 1, 'c3')
+    for x in range(1, 47, 6): p.vline(x, 2, 5, 'c1')
+    p.hline(1, 46, 5, 'n0')
+    p.rect(0, 6, 47, 17, 'c2'); p.hline(0, 47, 6, 'c4'); p.vline(0, 6, 17, 'c3'); p.vline(47, 6, 17, 'n1')     # top surface seen from above
+    p.rect(3, 8, 44, 16, 's0'); p.hline(3, 44, 8, 's1')
+    for cx in (14, 33):                                                                                         # two burners
+        p.disc(cx, 12, 4, 's1'); p.disc(cx, 12, 3, 's0'); p.ring(cx, 12, 1, 2, 's2'); p.set(cx, 12, 's1')
+    p.rect(0, 18, 47, 20, 'c3'); p.hline(0, 47, 18, 'c4'); p.hline(0, 47, 20, 'n1')                            # front panel with knobs
+    for kx in (8, 15, 32, 39): p.set(kx, 19, 'r1')
+    p.rect(0, 21, 47, 39, 'c2'); p.vline(0, 21, 39, 'c3'); p.vline(47, 21, 39, 'n1')                            # body
+    p.rect(4, 23, 43, 36, 'b1'); p.hline(4, 43, 23, 'b4'); p.vline(4, 23, 36, 'b3'); p.hline(4, 43, 36, 'b0'); p.vline(43, 23, 36, 'b0')   # oven door frame
+    p.rect(7, 27, 40, 34, 's0'); p.hline(7, 40, 27, 's1'); p.rect(9, 28, 15, 28, 's2')                          # oven window
+    p.rect(6, 25, 41, 25, 'r1'); p.hline(6, 41, 24, 'r2')                                                       # handle
+    p.rect(0, 38, 47, 39, 'n1'); p.hline(0, 47, 39, 'n0')
+    p.hline(0, 47, 0, 'n0'); p.vline(0, 0, 39, 'n0'); p.vline(47, 0, 39, 'n0')
     return p.im
 
 # ---------- vases ----------
@@ -293,15 +289,15 @@ def room(pieces, cols=9, rows=6, k=3):
     for x in range(cols): im.alpha_composite(pieces['wall_plain_01'], (x * C, 0))
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, 3 * C - 64 - 6 + 6 - 0 - 6 + 0 + 0)) if False else None
     base = 3 * C                                                                                # the floor line (bottom of the wall)
-    im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 86 + 6))
-    im.alpha_composite(pieces['wdeco_door_open_01'], (3 * C, base - 86 + 6))
+    im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 70 + 6))
+    im.alpha_composite(pieces['wdeco_door_open_01'], (3 * C, base - 70 + 6))
     im.alpha_composite(pieces['wdeco_window_01'], (4 * C, 3 * C - 96 + 4 + (56 - 28) // 2 - 2))        # window base 42 px up the wall
     for r in range(rows): im.alpha_composite(pieces['wall_side_01'], (0, 0)) if False else None
     im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 8))                                  # 2 x 2 cells, standing on its bottom edge
     tx, ty = 2 * C, base + 2 * C                                                               # table
     im.alpha_composite(pieces['rest_table_small_01'], (tx, ty))
-    im.alpha_composite(pieces['rest_vase_large_01'], (tx + 6, ty - 17))
-    im.alpha_composite(pieces['rest_vase_small_01'], (tx + 40, ty - 5))
+    im.alpha_composite(pieces['rest_vase_large_01'], (tx + 4, ty - 15))
+    im.alpha_composite(pieces['rest_vase_small_01'], (tx + 30, ty - 5))
     return im.resize((W * k, H * k), Image.NEAREST)
 
 def sheet2(pieces, layout_path='assets/td/art_workshop/set_template_layout.json'):
