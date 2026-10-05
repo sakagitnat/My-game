@@ -30,6 +30,7 @@ var inventory: Inventory = Inventory.new(60)
 var stash: Dictionary = {}
 # Time of day (looks only for now, see DayClock).
 var day_clock := DayClock.new()
+var shop_hours := ShopHours.new()
 var save_path: String = SAVE_PATH
 var autosave: bool = true
 var clock_override: float = -1.0
@@ -45,8 +46,23 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	day_clock.tick(delta)
+	shop_hours.refresh(day_clock.hour())
 	if restaurant_active and restaurant.tick(delta):
 		_commit()
+
+# Whether the restaurant takes new customers now (the clock keeps running when it is closed).
+func shop_open() -> bool:
+	return shop_hours.is_open(day_clock.hour())
+
+# The player's opening and closing hours.
+func set_shop_hours(open_at: int, close_at: int) -> void:
+	shop_hours.set_hours(open_at, close_at, day_clock.hour())
+	_commit()
+
+# "Open now" / "Close now": lasts until the schedule next opens or closes.
+func force_shop(open: bool) -> void:
+	shop_hours.force(open, day_clock.hour())
+	_commit()
 
 func reset() -> void:
 	restaurant.reset_state()
@@ -59,6 +75,7 @@ func reset() -> void:
 	inventory = Inventory.new(60)
 	stash.clear()
 	day_clock.reset()
+	shop_hours.reset()
 	player_name = ""
 	restaurant_name = ""
 
@@ -664,7 +681,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "clock": day_clock.to_dict(), "restaurant": restaurant.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "clock": day_clock.to_dict(), "hours": shop_hours.to_dict(), "restaurant": restaurant.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -694,6 +711,8 @@ func load_game() -> bool:
 				stash[str(id)] = int(st[id])
 	var clk = d.get("clock", {})
 	day_clock.load_dict(clk if clk is Dictionary else {})
+	var hrs = d.get("hours", {})
+	shop_hours.load_dict(hrs if hrs is Dictionary else {})
 	var rest = d.get("restaurant", {})
 	if rest is Dictionary:
 		restaurant.load_dict(rest)
