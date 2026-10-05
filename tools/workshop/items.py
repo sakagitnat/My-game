@@ -13,8 +13,8 @@ ITEMS = [
     ("wall_side", "walls", "wall_side_01", 48, 384, "ผนัง", "ผนังข้าง (แถบเรียบ ไม่มีบัวหรือเส้นขวาง)", "wallside", ""),
     # things hung on or set into a wall
     ("wdeco_window", "walls", "wdeco_window_01", 128, 128, "ของติดผนัง", "หน้าต่าง", "window", ""),
-    ("wdeco_door", "walls", "wdeco_door_01", 128, 344, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
-    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 344, "ของติดผนัง", "ประตู (เปิด) (เกมยังไม่ใช้)", "dooropen", ""),
+    ("wdeco_door", "walls", "wdeco_door_01", 128, 280, "ของติดผนัง", "ประตู (ปิด)", "door", ""),
+    ("wdeco_door_open", "walls", "wdeco_door_open_01", 128, 280, "ของติดผนัง", "ประตู (เปิด) (เกมยังไม่ใช้)", "dooropen", ""),
     ("wdeco_lamp", "walls", "wdeco_lamp_01", 128, 128, "ของติดผนัง", "โคมไฟติดผนัง (เกมยังไม่ใช้)", "lamp", ""),
     ("wdeco_painting", "walls", "wdeco_painting_01", 128, 128, "ของติดผนัง", "ภาพวาด (เกมยังไม่ใช้)", "painting", ""),
     ("wdeco_hood", "walls", "wdeco_hood_01", 128, 128, "ของติดผนัง", "ฮู้ดเหนือเตา (เกมยังไม่ใช้)", "hood", ""),
@@ -29,9 +29,9 @@ ITEMS = [
     ("mod_prep", "modular", "mod_modern_prep_table_01", 256, 192, "ครัว", "โต๊ะเตรียม (เกาะกลาง)", "module", "flush"),
     # customer area
     ("rest_table_long", "furniture", "rest_table_long_01", 256, 192, "โซนลูกค้า", "โต๊ะยาว (2x1 ช่อง สูง 1 บล็อก)", "tablelong", ""),
-    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
-    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
-    ("rest_chair_side", "furniture", "rest_chair_side_01", 128, 160, "โซนลูกค้า", "เก้าอี้หันข้าง (วาดหันซ้าย)", "chair", ""),
+    ("rest_chair_up", "furniture", "rest_chair_up_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันขึ้น (ใต้โต๊ะ)", "chair", ""),
+    ("rest_chair_down", "furniture", "rest_chair_down_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันลง (เหนือโต๊ะ)", "chair", ""),
+    ("rest_chair_side", "furniture", "rest_chair_side_01", 128, 128, "โซนลูกค้า", "เก้าอี้หันข้าง (วาดหันซ้าย)", "chair", ""),
     ("rest_stool", "furniture", "rest_stool_01", 128, 128, "โซนลูกค้า", "สตูล", "stool", ""),
     ("rest_bench", "furniture", "rest_bench_01", 256, 128, "โซนลูกค้า", "ม้านั่งยาว", "table", ""),
     ("rest_register", "furniture", "rest_register_01", 128, 192, "โซนลูกค้า", "เครื่องคิดเงิน", "register", ""),
@@ -74,10 +74,10 @@ ITEMS += [
     ("farm_fence", "farm", "farm_fence_01", 128, 160, "ฟาร์ม", "รั้ว (1 ช่อง ต่อกันเป็นแถว)", "fence", ""),
     ("farm_coop", "farm", "farm_coop_01", 384, 576, "ฟาร์ม", "เล้าไก่ (3x3 ช่อง สูง 3 บล็อก)", "coop", ""),
     # what the shop sells today (sizes follow the game's Catalog: a table and a stove take 2 x 2 cells)
-    ("rest_table_small", "furniture", "rest_table_small_01", 256, 160, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (กว้าง 2 ช่อง ลึก 1 ช่อง นั่งได้ 2 ที่ ซ้ายและขวา)", "table2", ""),
-    ("rest_stove", "furniture", "rest_stove_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (กว้าง 2 ช่อง ลึก 1 ช่อง สูงราว 1 บล็อกเกินนิดหน่อย)", "stove", ""),
-    ("rest_stove_side", "furniture", "rest_stove_side_01", 128, 288, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว กว้าง 1 ช่อง ลึก 2 ช่อง)", "stoveside", ""),
-    ("rest_stove_back", "furniture", "rest_stove_back_01", 256, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว กว้าง 2 ช่อง ลึก 1 ช่อง)", "stove", ""),
+    ("rest_table_small", "furniture", "rest_table_small_01", 192, 128, "ร้าน (ในเกมตอนนี้)", "โต๊ะ (กว้าง 2 ช่อง ลึก 1 ช่อง นั่งได้ 2 ที่ ซ้ายและขวา)", "table2", ""),
+    ("rest_stove", "furniture", "rest_stove_01", 192, 160, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหน้า (กว้าง 2 ช่อง ลึก 1 ช่อง สูงราว 1 บล็อกเกินนิดหน่อย)", "stove", ""),
+    ("rest_stove_side", "furniture", "rest_stove_side_01", 128, 224, "ร้าน (ในเกมตอนนี้)", "เตา ด้านข้างซ้าย (หมุนแล้ว กว้าง 1 ช่อง ลึก 2 ช่อง)", "stoveside", ""),
+    ("rest_stove_back", "furniture", "rest_stove_back_01", 192, 160, "ร้าน (ในเกมตอนนี้)", "เตา ด้านหลัง (หมุนแล้ว กว้าง 2 ช่อง ลึก 1 ช่อง)", "stove", ""),
     ("rest_vase_small", "furniture", "rest_vase_small_01", 64, 64, "ร้าน (ในเกมตอนนี้)", "แจกันเล็ก (บนโต๊ะ ครึ่งช่อง)", "prop", ""),
     ("rest_vase_large", "furniture", "rest_vase_large_01", 128, 128, "ร้าน (ในเกมตอนนี้)", "แจกันใหญ่ (บนโต๊ะ 1 ช่อง)", "vase", ""),
     # icons (not used by the game yet; one cell, seen straight on)

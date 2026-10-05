@@ -38,8 +38,8 @@ SHAPES = {
     'walllow': [('r', 0, 8, 127, 56)],
     'wallside': [('r', 3, 3, 44, 380)],
     'window': [('r', 16, 40, 112, 100), ('l', 64, 40, 64, 100), ('l', 16, 70, 112, 70)],
-    'door': [('r', 14, 20, 114, 320), ('r', 24, 32, 104, 308)],
-    'dooropen': [('r', 14, 20, 114, 320), ('r', 24, 32, 104, 308), ('l', 24, 32, 44, 40), ('l', 44, 40, 44, 300), ('l', 44, 300, 24, 308)],
+    'door': [('r', 14, 20, 114, 256), ('r', 24, 32, 104, 244)],
+    'dooropen': [('r', 14, 20, 114, 256), ('r', 24, 32, 104, 244), ('l', 24, 32, 44, 40), ('l', 44, 40, 44, 236), ('l', 44, 236, 24, 244)],
     'lamp': [('r', 48, 44, 80, 100), ('l', 64, 30, 64, 44)],
     'painting': [('r', 20, 36, 108, 100), ('r', 28, 44, 100, 92)],
     'hood': [('r', 20, 30, 108, 96), ('r', 40, 50, 88, 96)],
@@ -47,7 +47,7 @@ SHAPES = {
     'module': [('r', 0, 2, 'W', 62), ('r', 0, 62, 'W', 188)],
     'fridge': [('r', 10, 4, 118, 64), ('r', 10, 64, 118, 316), ('l', 10, 150, 118, 150)],
     'table': [('r', 4, 8, 'W-4', 68), ('r', 8, 68, 'W-8', 122)],
-    'chair': [('r', 34, 8, 94, 76), ('r', 30, 80, 98, 102), ('r', 34, 104, 94, 152)],
+    'chair': [('r', 34, 8, 94, 60), ('r', 30, 64, 98, 84), ('r', 34, 84, 94, 124)],
     'tablelong': [('r', 4, 4, 'W-4', 64), ('r', 8, 64, 'W-8', 188)],
     'stool': [('e', 64, 62, 34, 18), ('l', 40, 76, 34, 122), ('l', 88, 76, 94, 122)],
     'register': [('r', 10, 62, 118, 188), ('r', 30, 10, 98, 64)],
@@ -61,9 +61,9 @@ SHAPES = {
     'prop': [('e', 'W/2', 'H/2', 18, 12)],
     'vase': [('e', 'W/2', 44, 26, 30), ('r', 44, 72, 84, 122)],
     # the game's table and stove take 2 x 2 cells: top surface at the back (about 6%..55% of the depth), front face down to the floor
-    'table2': [('r', 8, 4, 'W-8', 64), ('r', 16, 64, 'W-16', 156)],
-    'stove': [('r', 8, 4, 'W-8', 32), ('r', 8, 32, 'W-8', 96), ('r', 16, 96, 'W-16', 220), ('e', 80, 64, 22, 14), ('e', 176, 64, 22, 14)],
-    'stoveside': [('r', 8, 4, 'W-8', 32), ('r', 8, 32, 'W-8', 160), ('r', 12, 160, 'W-12', 284)],
+    'table2': [('r', 8, 4, 'W-8', 48), ('r', 16, 48, 'W-16', 124)],
+    'stove': [('r', 8, 4, 'W-8', 24), ('r', 8, 24, 'W-8', 64), ('r', 16, 64, 'W-16', 156), ('e', 60, 44, 20, 12), ('e', 132, 44, 20, 12)],
+    'stoveside': [('r', 8, 4, 'W-8', 24), ('r', 8, 24, 'W-8', 120), ('r', 12, 120, 'W-12', 220)],
     # outdoors and farm
     'tree': [('e', 'W/2', 170, 110, 110), ('r', 112, 280, 144, 500), ('e', 'W/2', 500, 40, 10)],
     'treesmall': [('e', 'W/2', 80, 52, 52), ('r', 56, 130, 72, 244), ('e', 'W/2', 244, 22, 8)],
@@ -84,7 +84,7 @@ SHAPES = {
 }
 FLOOR_HINTS = ('module', 'fridge', 'table', 'chair', 'stool', 'register', 'shelf', 'sign', 'plant', 'rug', 'floorlamp', 'bin', 'crate', 'prop', 'tablelong', 'table2', 'stove', 'stoveside', 'vase', 'tree', 'treesmall', 'rock', 'bush', 'crop1', 'crop2', 'crop3', 'crop4', 'fence', 'coop')
 # how deep (px) and how wide the dashed floor marker is for pieces that are not one cell
-FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 128, 'stove': 128, 'stoveside': 256, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
+FOOT_DEPTH = {'coop': 384, 'rug': None, 'prop': None, 'vase': None, 'rock': None, 'bush': None, 'table2': 128, 'stove': 128, 'stoveside': 192, 'crop1': 256, 'crop2': 256, 'crop3': 256, 'crop4': 256}
 FOOT_WIDTH = {'tree': 128, 'treesmall': 128, 'rock': 128, 'bush': 128}
 def ev(v, w, h):
     return int(eval(str(v), {}, {'W': w - 1, 'H': h})) if isinstance(v, str) else v

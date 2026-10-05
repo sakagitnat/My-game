@@ -13,7 +13,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	# block rectangle: defaults to the whole footprint, empty for a plot, turns with the footprint
-	check(Catalog.block_rect("rest_table_small_01") == Rect2i(0, 0, 4, 2), "a table blocks its whole footprint (2 cells wide, 1 deep)")
+	check(Catalog.block_rect("rest_table_small_01") == Rect2i(0, 0, 3, 2), "a table blocks its whole footprint (1.5 cells wide, 1 deep)")
 	check(Catalog.block_rect("farm_plot_01").size == Vector2i.ZERO, "a plot can be walked over")
 	var back_row := Rect2i(0, 0, 4, 1)   # a 4x2 thing that blocks only its back row
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 1) == Rect2i(1, 0, 1, 4), "a quarter turn: the back row becomes the right column of the 2x4 footprint")
@@ -21,7 +21,7 @@ func run() -> void:
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 3) == Rect2i(0, 0, 1, 4), "three quarters: the left column")
 	check(Catalog.turn_rect(back_row, Vector2i(4, 2), 4) == back_row, "four quarter turns come back to the start")
 	check(Catalog.block_rect("rest_vase_large_01", 1) == Rect2i(0, 0, 2, 2), "a square footprint blocks the same square turned")
-	check(Catalog.size_facing("rest_stove_01", 0) == Vector2i(4, 2) and Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 4), "a stove is two cells wide and one deep (about a block tall), 2 x 4 units turned")
+	check(Catalog.size_facing("rest_stove_01", 0) == Vector2i(3, 2) and Catalog.size_facing("rest_stove_01", 1) == Vector2i(2, 3), "a stove is a cell and a half wide and one deep (about a block tall), 2 x 3 units turned")
 
 	# blocking in the world
 	var g := WorldGrid.new(Vector2i(40, 40))

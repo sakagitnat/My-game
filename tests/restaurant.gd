@@ -42,7 +42,7 @@ func run() -> void:
 	check(not r.has_service() and r.seats().is_empty(), "empty restaurant is closed")
 	gs.place_object("restaurant", Vector2i(27, 27), "rest_table_small_01")
 	check(r.tables() == [Vector2i(26, 27)] and r.seats().size() == 2, "a table gives two seats")
-	check(r.seats()[0].cell == Vector2i(24, 27) and r.seats()[1].cell == Vector2i(30, 27), "seat cells are on opposite sides of the table")
+	check(r.seats()[0].cell == Vector2i(24, 27) and r.seats()[1].cell == Vector2i(29, 27), "seat cells are on opposite sides of the table")
 	check(not r.has_service(), "a table alone does not open the restaurant")
 	r.arrival_timer = 0.0
 	r.tick(5.0)
