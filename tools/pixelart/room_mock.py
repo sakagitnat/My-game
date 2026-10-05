@@ -106,7 +106,7 @@ def build(cols=13, rows=9, k=3):
     # in a row along the back wall: shelf, stove (overlaps the wall by its top 8 px), plant
     put(shelf(), 0 * C + 16, wall + 1 * C + 8)
     put(P['rest_stove_01'], 10 * C, wall + 1 * C + 0)
-    put(plant(), 12 * C - 12, wall + 1 * C)
+    put(plant(), 12 * C - 2, wall + 1 * C)
     put(lamp(), 3 * C + 0, wall + 1 * C + 8)
     # dining: a rug, a table with two chairs on each long side and vases on top
     rx, ry = 3 * C, wall + 3 * C
@@ -131,9 +131,9 @@ def build(cols=13, rows=9, k=3):
         at(piece, x, y)
     # side posts (thick), drawn over the ends of the back wall; the cap is plain
     post = wall_side()
-    stack = Image.new('RGBA', (12, wall + rows * C), (0, 0, 0, 0))
-    for i in range(rows):
-        stack.alpha_composite(post, (0, wall + (i + 1) * C - 96 - C + C))            # one piece per cell, top 32 rows show
+    stack = Image.new('RGBA', (12, wall + rows * C + 96), (0, 0, 0, 0))
+    for i in range(-1, rows):
+        stack.alpha_composite(post, (0, wall + (i + 1) * C - 96))            # one piece more than cells, from a wall height above the first edge
     for px in (PAD - 6, PAD + cols * C - 6):
         im.alpha_composite(stack.crop((0, 0, 12, wall + rows * C)), (px, 0))
     return im.resize((W * k, H * k), Image.NEAREST)
