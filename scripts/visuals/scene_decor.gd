@@ -4,7 +4,7 @@ extends Node2D
 # Drawn from a scene's SceneLayout and the player's land (GameState): the ground kinds the owner painted
 # (road, pavement, floor, sand, dirt), floor built over bought land, the walls on cell edges, and the build grid
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
-const WALL_H := 192.0      # a wall is three blocks (cells) tall (pixel art 32x96 for one cell wide, shown at 2x); a door is two, a counter one
+const WALL_H := 192.0      # a wall is three blocks (cells) tall (pixel art 32x96 for one cell wide, shown at 2x); a door is two and a half, a counter one
 const LOW_H := 32.0
 const SIDE_W := 24.0       # thickness of a wall seen from the side (pixel art 12x96, shown at 2x)
 const WALL_SHADOW := Color(0.12, 0.08, 0.05, 0.3)   # the dark the wall throws on the floor along its foot
@@ -291,9 +291,9 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		draw_rect(Rect2(a + Vector2(31, -138), Vector2(2, 48)), WHITE_FRAME)
 		draw_rect(Rect2(a + Vector2(14, -116), Vector2(36, 2)), WHITE_FRAME)
 	elif kind == "door":
-		draw_rect(Rect2(a + Vector2(8, -130), Vector2(48, 132)), TRIM)   # a door is two blocks (128 px) tall
-		draw_rect(Rect2(a + Vector2(13, -124), Vector2(38, 126)), Color("5b3a22"))
-		draw_circle(a + Vector2(44, -60), 2.5, Color("e8c98a"))
+		draw_rect(Rect2(a + Vector2(8, -162), Vector2(48, 164)), TRIM)   # a door is two and a half blocks (160 px) tall
+		draw_rect(Rect2(a + Vector2(13, -156), Vector2(38, 158)), Color("5b3a22"))
+		draw_circle(a + Vector2(44, -76), 2.5, Color("e8c98a"))
 
 # A window is a plain wall as far as a side wall is concerned: it must not break the strip (the end of a strip shows the rail and the panel).
 func _run_kind(kind: String) -> String:

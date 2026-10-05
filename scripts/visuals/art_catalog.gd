@@ -83,7 +83,7 @@ static func height_blocks(id: String) -> float:
 # Where the top surface of a surface object (a table) lies on its picture, as fractions of the footprint's height from the back:
 # things standing on it are drawn on that band, further back on the table = higher on the screen (art spec: table top at y 8..68 of 128).
 const SURFACE_BAND := {"rest_table_small_01": Vector2(-0.42, -0.06)}   # the table top is the top 16 px of its 48 px picture: above the 1 cell deep footprint
-const DEFAULT_SURFACE_BAND := Vector2(-0.42, -0.06)
+const DEFAULT_SURFACE_BAND := Vector2(-0.22, 0.18)
 const HOVER := 36.0   # a ghost that is not over any table hovers this high, in game pixels
 
 static func surface_band(surface_id: String) -> Vector2:
