@@ -177,6 +177,7 @@ func run() -> void:
 
 	# World + HUD panel
 	gs.reset()
+	gs.day_clock.t = 3.5 / 24.0   # 9:30: open
 	gs.level = 10
 	gs.coins = 5000
 	gs.autosave = false
@@ -193,16 +194,17 @@ func run() -> void:
 	r.arrival_timer = 99999.0
 	r.customers[0].dish = "omelet"
 	hud._refresh_restaurant(true)
-	var buttons: Array = hud.rest_body.find_children("*", "Button", true, false)
+	var not_hours := func(b: Button) -> bool: return b.text != loc.t("BTN_HOURS")   # the hours button sits above the cook button
+	var buttons: Array = hud.rest_body.find_children("*", "Button", true, false).filter(not_hours)
 	check(buttons.size() == 1 and buttons[0].disabled and buttons[0].text.begins_with("Need"), "no eggs: the button says what is missing")
 	gs.inventory.add("egg", 2)
 	hud._refresh_restaurant(false)
-	buttons = hud.rest_body.find_children("*", "Button", true, false)
+	buttons = hud.rest_body.find_children("*", "Button", true, false).filter(not_hours)
 	check(buttons.size() == 1 and not buttons[0].disabled and buttons[0].text == loc.t("BTN_COOK"), "with eggs the button offers to cook")
 	buttons[0].pressed.emit()
 	check(r.is_cooking("omelet") and gs.inventory.count("egg") == 0, "pressing Cook starts the dish")
 	hud._refresh_restaurant(true)
-	buttons = hud.rest_body.find_children("*", "Button", true, false)
+	buttons = hud.rest_body.find_children("*", "Button", true, false).filter(not_hours)
 	check(buttons[0].disabled and buttons[0].text == loc.t("COOK_COOKING"), "while cooking the button says so")
 	world._on_tap(Iso.cell_to_world(Vector2i(15, 15)))
 	check(world.hud.context.visible and world.hud.context_body.find_children("*", "Label", true, false).any(func(l: Label) -> bool: return l.text.contains(loc.t("DISH_OMELET"))), "tapping a cooking stove shows the dish and time left")
@@ -210,7 +212,7 @@ func run() -> void:
 	gs.clock_override = 3020.0
 	r.tick(0.1)
 	hud._refresh_restaurant(false)
-	buttons = hud.rest_body.find_children("*", "Button", true, false)
+	buttons = hud.rest_body.find_children("*", "Button", true, false).filter(not_hours)
 	check(buttons[0].text == loc.t("BTN_SERVE") and not buttons[0].disabled, "when the dish is ready the button serves it")
 	var coins_pre: int = gs.coins
 	buttons[0].pressed.emit()
