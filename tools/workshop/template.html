@@ -362,7 +362,7 @@ function renderScene(){
   }
   // thin side walls (cap sits one wall height up)
   if($('lWall').checked){
-    for(let r=0;r<SH;r++)for(const sx of [OFFX-16,OFFX+SW*CELL-16]){const t=piece('wall_side'),y=OFFY+(r+1)*CELL-WALL_H;if(t)c.drawImage(t,sx,y,32,WALL_H);else{missing.add('wall_side');c.fillStyle='#e3d0a8';c.fillRect(sx,y,32,WALL_H);}}
+    for(let r=0;r<SH;r++)for(const sx of [OFFX-24,OFFX+SW*CELL-24]){const t=piece('wall_side'),y=OFFY+(r+1)*CELL-WALL_H;if(t)c.drawImage(t,sx,y,48,WALL_H);else{missing.add('wall_side');c.fillStyle='#e3d0a8';c.fillRect(sx,y,48,WALL_H);}}
   }
   // objects, further up first
   const objs=SCENE.filter(o=>$(rowKinds[o[5]]).checked).sort((a,b)=>(a[2]+a[4])-(b[2]+b[4])||a[1]-b[1]);

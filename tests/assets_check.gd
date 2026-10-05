@@ -85,7 +85,7 @@ func _check_topdown() -> void:
 				elif f.begins_with("wall_low"):
 					want = Vector2i(32, 16)
 				elif f.begins_with("wall_side"):
-					want = Vector2i(8, 96)
+					want = Vector2i(12, 96)
 				else:
 					want = Vector2i(32, 96)   # a wall is three blocks tall
 			if want != Vector2i.ZERO:

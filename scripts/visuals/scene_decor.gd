@@ -6,7 +6,11 @@ extends Node2D
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
 const WALL_H := 192.0      # a wall is three blocks (cells) tall (pixel art 32x96 for one cell wide, shown at 2x); a door is two, a counter one
 const LOW_H := 32.0
-const SIDE_W := 16.0       # thickness of a wall seen from the side (pixel art 8x96)
+const SIDE_W := 24.0       # thickness of a wall seen from the side (pixel art 12x96, shown at 2x)
+const WALL_SHADOW := Color(0.12, 0.08, 0.05, 0.3)   # the dark the wall throws on the floor along its foot
+const SHADOW_W := 14.0
+const WALL_TOP := Color("f3e4d6")   # cap of a side wall post
+const WALL_CAP_EDGE := Color("9ea5ac")
 const FLOOR_A := Color("ead3a8")
 const FLOOR_B := Color("d9bb8b")
 const ROAD := Color("b79a6a")
@@ -24,7 +28,7 @@ const GRID := Color(1, 1, 1, 0.34)
 
 # Art ids tried first; when no such file is in assets/td, the code-drawn colours below are used instead.
 # Art is pixel art at 32 px per cell, drawn at 2x (a cell is 64 px). Ground tiles are 32x32, each ground kind can have several variants (_01, _02 ...) picked per
-# cell. Walls: plain wall 32x96, low wall 32x16, side wall 8x96; windows, doors, lamps and paintings are
+# cell. Walls: plain wall 32x96, low wall 32x16, side wall 12x96; windows, doors, lamps and paintings are
 # separate overlays on a plain wall (docs/ART_TOPDOWN.md).
 const TILE_ART := {
 	SceneLayout.Tile.SAND: ["tile_sand_01"],
@@ -244,7 +248,9 @@ func _draw_walls(lay: SceneLayout) -> void:
 		var pb: PackedStringArray = b.split(",")
 		if int(pa[1]) != int(pb[1]):
 			return int(pa[1]) < int(pb[1])
-		return int(pa[0]) < int(pb[0]))
+		if int(pa[0]) != int(pb[0]):
+			return int(pa[0]) < int(pb[0])
+		return pa[2] == "n" and pb[2] != "n")   # at a corner the side wall is drawn last: its post overlaps the end of the front wall
 	for key in keys:
 		var p: PackedStringArray = str(key).split(",")
 		var x := int(p[0])
@@ -270,6 +276,8 @@ func _draw_front_wall(x: int, y: int, kind: String) -> void:
 		if kind != "low":
 			draw_rect(Rect2(a + Vector2(0, -18), Vector2(Iso.TILE_W, 18)), BASEBOARD)
 		draw_rect(Rect2(a + Vector2(0, -h), Vector2(Iso.TILE_W, 7 if kind != "low" else 5)), TRIM)
+	if kind != "door":
+		_draw_floor_shadow(a, a + Vector2(Iso.TILE_W, 0), Vector2(0, SHADOW_W))
 	var overlay := Assets.get_tex(WALL_OVERLAY.get(kind, ""))
 	if overlay != null:
 		# art anchor: the base line is 3/16 of the picture's width above the canvas bottom (24 px of a 128 px design, 6 px of the 32 px pixel art); a window's base sits 84 px up the wall (above a counter, which is 64 px tall), a door's on the floor line
@@ -300,17 +308,26 @@ func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
 	var a := _pt(x - 0.5, y - 0.5)
 	var b := _pt(x - 0.5, end_y + 0.5)
 	var h := LOW_H if kind == "low" else WALL_H
-	var rect := Rect2(Vector2(a.x - SIDE_W * 0.5, a.y - h), Vector2(SIDE_W, b.y - a.y + h))
 	var tex := Assets.get_tex(WALL_SIDE_ART)
+	var side_w := tex.get_width() * 2.0 if tex != null else SIDE_W   # the post is as thick as its art (pixel art shown at 2x)
+	var rect := Rect2(Vector2(a.x - side_w * 0.5, a.y - h), Vector2(side_w, b.y - a.y + h))
+	_draw_floor_shadow(a + Vector2(side_w * 0.5, 0), b + Vector2(side_w * 0.5, 0), Vector2(SHADOW_W, 0))
 	if tex != null and kind != "low":
 		var n := end_y - y + 1
 		for i in n:
 			var yy := b.y - float(n - 1 - i) * Iso.TILE_H
-			draw_texture_rect(tex, Rect2(Vector2(a.x - SIDE_W * 0.5, yy - WALL_H), Vector2(SIDE_W, WALL_H)), false)
+			draw_texture_rect(tex, Rect2(Vector2(a.x - side_w * 0.5, yy - WALL_H), Vector2(side_w, WALL_H)), false)
+		draw_rect(Rect2(a + Vector2(-side_w * 0.5, -WALL_H), Vector2(side_w, 8)), WALL_TOP)   # the cap of the post: the art's top is plain because it repeats
+		draw_rect(Rect2(a + Vector2(-side_w * 0.5, -WALL_H + 8), Vector2(side_w, 2)), WALL_CAP_EDGE)
 	else:
 		draw_rect(rect, WALL_SIDE)
 		draw_rect(Rect2(rect.position + Vector2(0, rect.size.y - 8), Vector2(SIDE_W, 8)), BASEBOARD)
 		draw_rect(Rect2(rect.position, Vector2(SIDE_W, 6)), TRIM)
+
+# A soft dark band on the floor along a wall's foot, from `p0` to `p1`, fading out over `depth`: a wall stands on the floor and shades it.
+func _draw_floor_shadow(p0: Vector2, p1: Vector2, depth: Vector2) -> void:
+	draw_polygon(PackedVector2Array([p0, p1, p1 + depth, p0 + depth]),
+		PackedColorArray([WALL_SHADOW, WALL_SHADOW, Color(WALL_SHADOW, 0.0), Color(WALL_SHADOW, 0.0)]))
 
 # Door mat laid on the floor next to the doorway.
 func _draw_mat(x: int, y: int, side: bool) -> void:
