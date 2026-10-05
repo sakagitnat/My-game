@@ -45,15 +45,14 @@ def floor(tones, seed, joint='w0'):
             # grain: short dark dashes
             for _ in range(1):
                 gx = rnd.randint(a, b - 4); gy = y0 + rnd.randint(2, 5)
-                for d in range(rnd.randint(3, 5)): p.set((gx + d) % 32, gy, tone[2] if rnd.random() < 0.6 else tone[1])
+                for d in range(rnd.randint(3, 5)): p.set((gx + d) % 32, gy, tone[2] if rnd.random() < 0.3 else tone[1])
         for j in xs:                                  # plank joint with two nails
             p.vline(j, y0, y0 + 7, joint)
-            p.set((j + 2) % 32, y0 + 2, joint); p.set((j - 2) % 32, y0 + 5, joint)
     return p.im
 
 # pale driftwood boards (a whitewashed seaside floor): light, so the warm wood furniture stands out from it
-def floor_a(): return floor([('c4', 'c3', 'c2'), ('c4', 'c3', 'c1'), ('c4', 'c2', 'c1')], 1, 'c1')
-def floor_b(): return floor([('c3', 'c2', 'c1'), ('c3', 'c2', 'c0'), ('c2', 'c2', 'c1')], 2, 'c1')
+def floor_a(): return floor([('c4', 'c3', 'c2'), ('c4', 'c3', 'c1'), ('c4', 'c2', 'c1')], 1, 'c2')
+def floor_b(): return floor([('c3', 'c2', 'c1'), ('c3', 'c2', 'c0'), ('c2', 'c2', 'c1')], 2, 'c2')
 
 # ---------- walls ----------
 def planks(p, x0, x1, y0, y1, a, b, hi, seam, w=8):
@@ -78,11 +77,11 @@ def panel(p, x0, x1, y0, y1):
 
 def wall_plain():
     p = Pix(32, 96)
-    planks(p, 0, 31, 4, 59, 'c3', 'c2', 'c4', 'c1')
+    planks(p, 0, 31, 4, 59, 'c1', 'c1', 'c2', 'c0')
     rnd = random.Random(7)
     for _ in range(14):                                           # wood flecks
         x = rnd.randint(0, 31); y = rnd.randint(6, 56)
-        if x % 8 not in (0, 1): p.vline(x, y, y + rnd.randint(1, 3), 'c1')
+        if x % 8 not in (0, 1): p.vline(x, y, y + rnd.randint(1, 3), 'c0')
     p.rect(0, 0, 31, 3, 'c3'); p.hline(0, 31, 0, 'c4'); p.hline(0, 31, 3, 'n1')               # top trim
     p.rect(0, 60, 31, 63, 'c3'); p.hline(0, 31, 60, 'c4'); p.hline(0, 31, 63, 'n0')            # chair rail
     panel(p, 0, 31, 64, 91)                                                                    # framed, recessed blue panel
@@ -100,7 +99,7 @@ def wall_side():
     """Seen from the side: a thick post with a grey-white outline on both edges. The game stacks it a cell at a time, so the top 32 px repeat: nothing across them."""
     p = Pix(8, 96)
     for y in range(96):
-        p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, 5, y, 'c3'); p.set(6, y, 'c2'); p.set(7, y, 'n0')
+        p.set(0, y, 'n0'); p.set(1, y, 'c2'); p.rect(2, y, 5, y, 'c1'); p.set(6, y, 'c0'); p.set(7, y, 'n0')
     p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0'); p.set(0, 60, 'n0'); p.set(7, 60, 'n0')   # chair rail
     for y in range(64, 92):                                                                     # blue panel set into the post, darker than the frame
         p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, 5, y, 'b1'); p.set(6, y, 'c2'); p.set(7, y, 'n0')
