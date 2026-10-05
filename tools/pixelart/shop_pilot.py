@@ -71,18 +71,18 @@ def wall_plain():
     for _ in range(14):                                           # wood flecks
         x = rnd.randint(0, 31); y = rnd.randint(6, 56)
         if x % 8 not in (0, 1): p.vline(x, y, y + rnd.randint(1, 3), 'c1')
-    p.rect(0, 0, 31, 3, 'w3'); p.hline(0, 31, 0, 'w5'); p.hline(0, 31, 3, 'w1')               # top trim
-    p.rect(0, 60, 31, 63, 'w3'); p.hline(0, 31, 60, 'w5'); p.hline(0, 31, 63, 'w1')            # chair rail
+    p.rect(0, 0, 31, 3, 'c3'); p.hline(0, 31, 0, 'c4'); p.hline(0, 31, 3, 'n1')               # top trim
+    p.rect(0, 60, 31, 63, 'c3'); p.hline(0, 31, 60, 'c4'); p.hline(0, 31, 63, 'n0')            # chair rail
     planks(p, 0, 31, 64, 91, 'b2', 'b3', 'b4', 'b0')                                          # blue panelling
     for x in range(0, 32, 8): p.set(x + 4, 70, 'b1'); p.set(x + 4, 82, 'b1')
-    p.rect(0, 92, 31, 95, 'w3'); p.hline(0, 31, 92, 'w5'); p.hline(0, 31, 95, 'w1')           # skirting
+    p.rect(0, 92, 31, 95, 'c3'); p.hline(0, 31, 92, 'c4'); p.hline(0, 31, 95, 'n0')           # skirting
     return p.im
 
 def wall_low():
     p = Pix(32, 16)
-    p.rect(0, 0, 31, 3, 'w3'); p.hline(0, 31, 0, 'w5'); p.hline(0, 31, 3, 'w1')
+    p.rect(0, 0, 31, 3, 'c3'); p.hline(0, 31, 0, 'c4'); p.hline(0, 31, 3, 'n0')
     planks(p, 0, 31, 4, 13, 'b2', 'b3', 'b4', 'b0')
-    p.rect(0, 14, 31, 15, 'w3'); p.hline(0, 31, 15, 'w1')
+    p.rect(0, 14, 31, 15, 'c3'); p.hline(0, 31, 15, 'n0')
     return p.im
 
 def wall_side():
@@ -90,10 +90,10 @@ def wall_side():
     p = Pix(8, 96)
     for y in range(96):
         p.set(0, y, 'c4'); p.rect(1, y, 5, y, 'c3'); p.set(6, y, 'c2'); p.set(7, y, 'c1')
-    p.rect(0, 60, 7, 63, 'w3'); p.hline(0, 7, 60, 'w5'); p.hline(0, 7, 63, 'w1')            # chair rail
+    p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0')            # chair rail
     for y in range(64, 92):
         p.set(0, y, 'b4'); p.rect(1, y, 5, y, 'b3'); p.set(6, y, 'b2'); p.set(7, y, 'b1')
-    p.rect(0, 92, 7, 95, 'w3'); p.hline(0, 7, 92, 'w5'); p.hline(0, 7, 95, 'w1')
+    p.rect(0, 92, 7, 95, 'c3'); p.hline(0, 7, 92, 'c4'); p.hline(0, 7, 95, 'n0')
     return p.im
 
 # ---------- door and window (overlays on a wall; the last 6 rows hang below the base line) ----------
@@ -119,7 +119,7 @@ def door():
 def window():
     p = Pix(32, 32)
     p.rect(3, 2, 28, 25, 'c3')                                                     # white frame
-    p.hline(3, 28, 2, 'c4'); p.vline(3, 2, 25, 'c4'); p.hline(3, 28, 25, 'c0'); p.vline(28, 2, 25, 'c0')
+    p.hline(3, 28, 2, 'c4'); p.vline(3, 2, 25, 'c4'); p.hline(3, 28, 25, 'n0'); p.vline(28, 2, 25, 'n0')
     for (gx0, gy0) in ((5, 4), (16, 4), (5, 14), (16, 14)):                         # four panes
         for y in range(gy0, gy0 + 10 if gy0 == 4 else gy0 + 9):
             for x in range(gx0, gx0 + 9):
@@ -128,8 +128,8 @@ def window():
         p.hline(gx0, gx0 + 8, gy0, 'g0'); p.vline(gx0, gy0, gy0 + 8, 'g0')
         for d in range(4): p.set(gx0 + 6 - d, gy0 + 1 + d, 'c4')                   # glint
     p.rect(14, 3, 15, 24, 'c3'); p.rect(4, 12, 27, 13, 'c3'); p.vline(14, 3, 24, 'c4'); p.hline(4, 27, 12, 'c4')
-    p.rect(1, 26, 30, 28, 'c2'); p.hline(1, 30, 26, 'c4'); p.hline(1, 30, 28, 'c0')   # sill
-    p.hline(2, 29, 29, 'c0')
+    p.rect(1, 26, 30, 28, 'c2'); p.hline(1, 30, 26, 'c4'); p.hline(1, 30, 28, 'n1')   # sill
+    p.hline(2, 29, 29, 'n0')
     return p.im
 
 # ---------- table and stove (2 x 2 cells: top surface seen from above on the upper half, the front on the lower half) ----------
@@ -159,21 +159,21 @@ def table():
 
 def stove():
     p = Pix(64, 64)
-    p.rect(0, 0, 63, 31, 'c2'); p.hline(0, 63, 0, 'c4'); p.vline(0, 0, 31, 'c3'); p.vline(63, 0, 31, 'c0')    # stone rim of the top
+    p.rect(0, 0, 63, 31, 'c2'); p.hline(0, 63, 0, 'c4'); p.vline(0, 0, 31, 'c3'); p.vline(63, 0, 31, 'n1')    # stone rim of the top
     p.rect(3, 3, 60, 28, 's0'); p.hline(3, 60, 3, 's1'); p.hline(3, 60, 28, 'p0' if False else 's1')
     for cx in (18, 45):                                                             # two burners
         p.disc(cx, 16, 10, 's1'); p.disc(cx, 16, 8, 's0'); p.ring(cx, 16, 4, 6, 's2'); p.disc(cx, 16, 2, 's1')
         p.hline(cx - 9, cx + 9, 16, 's1'); p.vline(cx, 7, 25, 's1')
         p.set(cx - 7, 11, 's2'); p.set(cx - 6, 10, 's2')
-    p.rect(0, 32, 63, 36, 'c3'); p.hline(0, 63, 32, 'c4'); p.hline(0, 63, 36, 'c0')                          # front panel with knobs
+    p.rect(0, 32, 63, 36, 'c3'); p.hline(0, 63, 32, 'c4'); p.hline(0, 63, 36, 'n1')                          # front panel with knobs
     for kx in (10, 20, 43, 53):
         p.disc(kx, 34, 2, 'r1'); p.set(kx - 1, 33, 'r2'); p.set(kx + 1, 35, 'r0')
-    p.rect(0, 37, 63, 63, 'c2'); p.vline(0, 37, 63, 'c3'); p.vline(63, 37, 63, 'c0')                          # body
+    p.rect(0, 37, 63, 63, 'c2'); p.vline(0, 37, 63, 'c3'); p.vline(63, 37, 63, 'n1')                          # body
     p.rect(5, 39, 58, 59, 'b1'); p.hline(5, 58, 39, 'b4'); p.vline(5, 39, 59, 'b3'); p.hline(5, 58, 59, 'b0'); p.vline(58, 39, 59, 'b0')   # oven door frame
     p.rect(9, 44, 54, 56, 's0'); p.hline(9, 54, 44, 's1'); p.rect(11, 46, 20, 47, 's1'); p.hline(11, 17, 46, 's2')   # oven window
     p.rect(8, 41, 55, 42, 'r1'); p.hline(8, 55, 41, 'r2'); p.hline(8, 55, 42, 'r0')                            # handle
-    p.rect(0, 61, 63, 63, 'c0'); p.hline(0, 63, 63, 'w1')
-    p.hline(0, 63, 0, 'w1'); p.vline(0, 0, 63, 'w1'); p.vline(63, 0, 63, 'w1')
+    p.rect(0, 61, 63, 63, 'n1'); p.hline(0, 63, 63, 'n0')
+    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 63, 'n0'); p.vline(63, 0, 63, 'n0')
     return p.im
 
 # ---------- vases ----------
@@ -202,7 +202,7 @@ def vase_small():
     vase_shape(p, 8, rows, 'c4', 'c3', 'c1')
     for x in range(4, 12): p.set(x, 10 + (1 if x % 4 in (1, 2) else 0), 'b2')                  # blue wave band
     p.hline(6, 9, 4, 'c2')
-    autoline(p, 'c0')
+    autoline(p, 'n0')
     for x, y, c in ((7, 1, 'p1'), (8, 0, 'p1'), (10, 1, 'y0'), (5, 2, 'p1'), (6, 3, 'l1'), (9, 3, 'l1'), (7, 2, 'l1'), (8, 2, 'l2')): p.set(x, y, c)
     return p.im
 
@@ -217,7 +217,7 @@ def vase_large():
                 wave = 1 if x % 6 in (1, 2, 3) else 0
                 if (y in (18, 24) and wave == 0) or (y in (19, 23) and wave == 1): p.set(x, y, 'b2' if y in (18, 19) else 'b3')
     p.hline(10, 21, 9, 'c2')
-    autoline(p, 'c0')
+    autoline(p, 'n0')
     stems = ((14, 3, 8, 'p1'), (18, 2, 8, 'y0'), (11, 5, 8, 'p1'), (21, 5, 9, 'p0'))
     for fx, fy, ey, col in stems:
         p.vline(fx, fy + 2, ey, 'l1')
@@ -254,7 +254,7 @@ def room(pieces, cols=9, rows=6, k=3):
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, 3 * C - 64 - 6 + 6 - 0 - 6 + 0 + 0)) if False else None
     base = 3 * C                                                                                # the floor line (bottom of the wall)
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 70 + 6))
-    im.alpha_composite(pieces['wdeco_window_01'], (4 * C, base - 42 * 1 - 32 + 6 + 0))        # window base 42 px up the wall
+    im.alpha_composite(pieces['wdeco_window_01'], (4 * C, 3 * C - 96 + 4 + (56 - 28) // 2 - 2))        # window base 42 px up the wall
     for r in range(rows): im.alpha_composite(pieces['wall_side_01'], (0, 0)) if False else None
     im.alpha_composite(pieces['rest_stove_01'], (6 * C, base))                                  # 2 x 2 cells, standing on its bottom edge
     tx, ty = 2 * C, base + 2 * C                                                               # table

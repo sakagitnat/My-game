@@ -5,6 +5,7 @@ P = {
     'out': h('#3b2416'),                       # darkest brown, outlines
     'w0': h('#6e4023'), 'w1': h('#8c5836'), 'w2': h('#a46840'), 'w3': h('#ba774a'), 'w4': h('#c67f4d'), 'w5': h('#d68f58'), 'w6': h('#e8a56f'),   # wood, dark to light
     'c0': h('#b49f8c'), 'c1': h('#d1c1b3'), 'c2': h('#e8d6c7'), 'c3': h('#f2e4d6'), 'c4': h('#fbefda'),                                           # cream, dark to light
+    'n0': h('#9ea5ac'), 'n1': h('#c4c9cd'),                                                                                      # grey-white: outlines of white things
     'b0': h('#2f5170'), 'b1': h('#366c9c'), 'b2': h('#2c79b7'), 'b3': h('#3885c0'), 'b4': h('#5fa6d6'),                                           # blue, dark to light
     'g0': h('#7fb4d2'), 'g1': h('#a3d0e6'), 'g2': h('#cde8f2'),                                                                                  # glass
     's0': h('#333942'), 's1': h('#4d5560'), 's2': h('#6c7580'), 's3': h('#8aa7b9'),                                                              # charcoal / steel
