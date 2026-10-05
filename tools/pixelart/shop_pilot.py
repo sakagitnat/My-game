@@ -96,16 +96,20 @@ def wall_low():
     return p.im
 
 def wall_side():
-    """Seen from the side: a thick post with a grey-white outline on both edges. The game stacks it a cell at a time, so the top 32 px repeat: nothing across them."""
-    p = Pix(8, 96)
+    """Seen from the side: a thick post (12 px = 24 in game) with a grey-white outline on both edges. The game stacks it a cell at a time and draws the cap
+    itself, so the top 32 px repeat: nothing across them. The bottom shows the end of the wall: rail, recessed blue panel, skirting."""
+    W = 12
+    p = Pix(W, 96)
     for y in range(96):
-        p.set(0, y, 'n0'); p.set(1, y, 'c2'); p.rect(2, y, 5, y, 'c1'); p.set(6, y, 'c0'); p.set(7, y, 'n0')
-    p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0'); p.set(0, 60, 'n0'); p.set(7, 60, 'n0')   # chair rail
+        p.set(0, y, 'n0'); p.set(1, y, 'c2'); p.rect(2, y, W - 4, y, 'c1'); p.set(W - 3, y, 'c0'); p.set(W - 2, y, 'c0'); p.set(W - 1, y, 'n0')
+    p.rect(0, 60, W - 1, 63, 'c3'); p.hline(0, W - 1, 60, 'c4'); p.hline(0, W - 1, 63, 'n0'); p.set(0, 60, 'n0'); p.set(W - 1, 60, 'n0')   # chair rail
     for y in range(64, 92):                                                                     # blue panel set into the post, darker than the frame
-        p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, 5, y, 'b1'); p.set(6, y, 'c2'); p.set(7, y, 'n0')
-        if y > 66: p.set(3, y, 'b0'); p.set(4, y, 'b2')
-    p.rect(2, 64, 5, 66, 'b0')                                                                  # shadow under the rail
-    p.rect(0, 92, 7, 95, 'c3'); p.hline(0, 7, 92, 'c4'); p.hline(0, 7, 95, 'n0'); p.set(0, 92, 'n0'); p.set(7, 92, 'n0')   # skirting
+        p.set(0, y, 'n0'); p.set(1, y, 'c4'); p.rect(2, y, W - 3, y, 'b1'); p.set(W - 2, y, 'c2'); p.set(W - 1, y, 'n0')
+        if y > 66:
+            for x in (4, 7): p.set(x, y, 'b0')
+            for x in (5, 8): p.set(x, y, 'b2')
+    p.rect(2, 64, W - 3, 66, 'b0')                                                              # shadow under the rail
+    p.rect(0, 92, W - 1, 95, 'c3'); p.hline(0, W - 1, 92, 'c4'); p.hline(0, W - 1, 95, 'n0'); p.set(0, 92, 'n0'); p.set(W - 1, 92, 'n0')   # skirting
     return p.im
 
 # ---------- door and window (overlays on a wall; the last 6 rows hang below the base line) ----------
@@ -169,7 +173,7 @@ def table():
     p.set(0, 63, T); p.set(63, 63, T)
     return p.im
 
-def stove():
+def _stove_body():
     p = Pix(64, 64)
     p.rect(0, 0, 63, 31, 'c2'); p.hline(0, 63, 0, 'c4'); p.vline(0, 0, 31, 'c3'); p.vline(63, 0, 31, 'n1')    # stone rim of the top
     p.rect(0, 0, 63, 5, 'c1'); p.hline(0, 63, 0, 'n1'); p.hline(0, 63, 1, 'c3'); p.hline(0, 63, 5, 'n0')      # back splash: the stove stands against the wall
@@ -187,6 +191,20 @@ def stove():
     p.rect(8, 41, 55, 42, 'r1'); p.hline(8, 55, 41, 'r2'); p.hline(8, 55, 42, 'r0')                            # handle
     p.rect(0, 61, 63, 63, 'n1'); p.hline(0, 63, 63, 'n0')
     p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 63, 'n0'); p.vline(63, 0, 63, 'n0')
+    return p.im
+
+def stove():
+    """64 x 80: the 2 x 2 cell body (bottom 64 rows, standing on the footprint) with a tiled back splash rising 16 rows above it, so the stove
+    reads as standing against the wall and its top overlaps the wall."""
+    body = _stove_body()
+    p = Pix(64, 80)
+    p.im.alpha_composite(body, (0, 16))
+    p.rect(1, 1, 62, 15, 'c2'); p.hline(1, 62, 1, 'c3')
+    for x in range(1, 63, 8): p.vline(x, 2, 15, 'c1')
+    p.hline(1, 62, 8, 'c1')
+    p.hline(1, 62, 15, 'n0'); p.hline(1, 62, 14, 'c0')
+    p.hline(0, 63, 0, 'n0'); p.vline(0, 0, 15, 'n0'); p.vline(63, 0, 15, 'n0')
+    for x in (16, 47): p.rect(x - 5, 3, x + 5, 6, 's2'); p.hline(x - 5, x + 5, 3, 's3')     # two small pot lids hung on the splash
     return p.im
 
 # ---------- vases ----------
@@ -269,7 +287,7 @@ def room(pieces, cols=9, rows=6, k=3):
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 70 + 6))
     im.alpha_composite(pieces['wdeco_window_01'], (4 * C, 3 * C - 96 + 4 + (56 - 28) // 2 - 2))        # window base 42 px up the wall
     for r in range(rows): im.alpha_composite(pieces['wall_side_01'], (0, 0)) if False else None
-    im.alpha_composite(pieces['rest_stove_01'], (6 * C, base))                                  # 2 x 2 cells, standing on its bottom edge
+    im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 16))                                  # 2 x 2 cells, standing on its bottom edge
     tx, ty = 2 * C, base + 2 * C                                                               # table
     im.alpha_composite(pieces['rest_table_small_01'], (tx, ty))
     im.alpha_composite(pieces['rest_vase_large_01'], (tx + 8, ty + 4))

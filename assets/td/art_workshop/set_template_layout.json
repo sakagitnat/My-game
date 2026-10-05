@@ -25,9 +25,9 @@
    "status": "now",
    "note": "ใช้ในเกมตอนนี้",
    "sheetW": 1920,
-   "sheetH": 1744,
+   "sheetH": 1808,
    "pxW": 480,
-   "pxH": 436,
+   "pxH": 452,
    "categories": [
     "พื้น",
     "ผนัง",
@@ -660,16 +660,16 @@
    "id": "wall_side",
    "folder": "walls",
    "file": "wall_side_01",
-   "w": 32,
+   "w": 48,
    "h": 384,
-   "x": 532,
+   "x": 524,
    "y": 484,
    "category": "ผนัง",
    "label": "ผนังข้าง (แถบเรียบ ไม่มีบัวหรือเส้นขวาง)",
    "hint": "wallside",
    "flags": "",
    "anchor": [
-    16,
+    24,
     384
    ],
    "sheet": "now_shop",
@@ -813,7 +813,7 @@
    "folder": "furniture",
    "file": "rest_stove_01",
    "w": 256,
-   "h": 256,
+   "h": 320,
    "x": 316,
    "y": 1428,
    "category": "ร้าน (ในเกมตอนนี้)",
@@ -822,7 +822,7 @@
    "flags": "",
    "anchor": [
     128,
-    256
+    320
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -832,7 +832,7 @@
    "folder": "furniture",
    "file": "rest_stove_side_01",
    "w": 256,
-   "h": 256,
+   "h": 320,
    "x": 600,
    "y": 1428,
    "category": "ร้าน (ในเกมตอนนี้)",
@@ -841,7 +841,7 @@
    "flags": "",
    "anchor": [
     128,
-    256
+    320
    ],
    "sheet": "now_shop",
    "status": "now"
@@ -851,7 +851,7 @@
    "folder": "furniture",
    "file": "rest_stove_back_01",
    "w": 256,
-   "h": 256,
+   "h": 320,
    "x": 884,
    "y": 1428,
    "category": "ร้าน (ในเกมตอนนี้)",
@@ -860,7 +860,7 @@
    "flags": "",
    "anchor": [
     128,
-    256
+    320
    ],
    "sheet": "now_shop",
    "status": "now"
