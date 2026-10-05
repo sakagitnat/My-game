@@ -64,6 +64,18 @@ def planks(p, x0, x1, y0, y1, a, b, hi, seam, w=8):
         if x % w == 0: p.vline(x, y0, y1, seam)
         if x % w == 1: p.vline(x, y0, y1, hi)
 
+def panel(p, x0, x1, y0, y1):
+    """A blue wainscot panel set into a cream frame: the inside is darker than the frame, shaded along its top and left (it is recessed),
+    and every 32 px a cream stile frames it, so the frame runs all round each panel."""
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1): p.set(x, y, 'b1')
+    for x in range(x0 + 2, x1 - 1):                                                            # vertical boards inside, darker than before
+        if (x - x0) % 8 in (3, 4): p.vline(x, y0 + 3, y1 - 2, 'b0')
+        elif (x - x0) % 8 == 5: p.vline(x, y0 + 3, y1 - 2, 'b2')
+    p.hline(x0, x1, y0, 'n0'); p.hline(x0, x1, y0 + 1, 'b0'); p.hline(x0, x1, y0 + 2, 'b0')   # shadow under the top rail
+    p.vline(x0, y0, y1, 'c3'); p.vline(x0 + 1, y0, y1, 'n1'); p.vline(x1, y0, y1, 'n0'); p.vline(x1 - 1, y0, y1, 'c4')   # stiles of the frame
+    p.hline(x0 + 2, x1 - 2, y1 - 1, 'b2')                                                      # lit lower edge inside
+
 def wall_plain():
     p = Pix(32, 96)
     planks(p, 0, 31, 4, 59, 'c3', 'c2', 'c4', 'c1')
@@ -73,8 +85,7 @@ def wall_plain():
         if x % 8 not in (0, 1): p.vline(x, y, y + rnd.randint(1, 3), 'c1')
     p.rect(0, 0, 31, 3, 'c3'); p.hline(0, 31, 0, 'c4'); p.hline(0, 31, 3, 'n1')               # top trim
     p.rect(0, 60, 31, 63, 'c3'); p.hline(0, 31, 60, 'c4'); p.hline(0, 31, 63, 'n0')            # chair rail
-    planks(p, 0, 31, 64, 91, 'b2', 'b3', 'b4', 'b0')                                          # blue panelling
-    for x in range(0, 32, 8): p.set(x + 4, 70, 'b1'); p.set(x + 4, 82, 'b1')
+    panel(p, 0, 31, 64, 91)                                                                    # framed, recessed blue panel
     p.rect(0, 92, 31, 95, 'c3'); p.hline(0, 31, 92, 'c4'); p.hline(0, 31, 95, 'n0')           # skirting
     return p.im
 
@@ -92,7 +103,7 @@ def wall_side():
         p.set(0, y, 'c4'); p.rect(1, y, 5, y, 'c3'); p.set(6, y, 'c2'); p.set(7, y, 'c1')
     p.rect(0, 60, 7, 63, 'c3'); p.hline(0, 7, 60, 'c4'); p.hline(0, 7, 63, 'n0')            # chair rail
     for y in range(64, 92):
-        p.set(0, y, 'b4'); p.rect(1, y, 5, y, 'b3'); p.set(6, y, 'b2'); p.set(7, y, 'b1')
+        p.set(0, y, 'c4'); p.rect(1, y, 5, y, 'b1'); p.set(6, y, 'b0'); p.set(7, y, 'n0')
     p.rect(0, 92, 7, 95, 'c3'); p.hline(0, 7, 92, 'c4'); p.hline(0, 7, 95, 'n0')
     return p.im
 
