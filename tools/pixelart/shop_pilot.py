@@ -132,6 +132,29 @@ def door():
     p.rect(1, 64, 30, 66, 'c1'); p.hline(1, 30, 64, 'c3'); p.hline(1, 30, 66, 'c0')   # threshold stone
     return p.im
 
+def door_open():
+    """The same door swung open into the room: the frame stays, the opening shows the dim room and its floor, the leaf is seen edge-on at the hinge side,
+    narrow and a little shorter at its far edge (perspective)."""
+    p = Pix(32, 70)
+    p.rect(0, 0, 31, 63, 'w2')
+    p.hline(0, 31, 0, 'w5'); p.hline(0, 31, 1, 'w4'); p.hline(0, 31, 3, 'w1')
+    p.vline(0, 0, 63, 'w4'); p.vline(1, 0, 63, 'w3'); p.vline(31, 0, 63, 'w1'); p.vline(30, 0, 63, 'w1'); p.vline(2, 4, 63, 'w1')
+    p.rect(3, 4, 28, 63, 'w0')                                                    # the dim room behind
+    p.rect(3, 4, 28, 20, 'w1'); p.rect(3, 21, 28, 26, 'w0')
+    p.rect(3, 50, 28, 63, 'c1'); p.hline(3, 28, 50, 'c0'); p.rect(3, 56, 28, 63, 'c2')   # the floor inside, lighter near the door
+    for x in range(3, 29, 8): p.vline(x, 50, 63, 'c0')
+    for x in range(3, 12):                                                         # the leaf, hinged on the left: its far edge is shorter
+        t = (x - 3) / 8.0
+        top = 4 + int(round(4 * t)); bot = 63 - int(round(5 * t))
+        for y in range(top, bot + 1): p.set(x, y, 'b2' if x % 4 else 'b0')
+        p.set(x, top, 'b4'); p.set(x, bot, 'b0')
+    p.vline(11, 8, 58, 'b0'); p.vline(10, 9, 57, 'b3')
+    p.disc(7, 18, 2, 'r1'); p.set(7, 18, 'g1')                                      # porthole, foreshortened
+    p.rect(9, 33, 9, 37, 'r0'); p.set(9, 33, 'r2')                                  # handle
+    p.rect(3, 12, 4, 14, 'r0'); p.rect(3, 48, 4, 50, 'r0')                          # hinges
+    p.rect(1, 64, 30, 66, 'c1'); p.hline(1, 30, 64, 'c3'); p.hline(1, 30, 66, 'c0')   # threshold stone
+    return p.im
+
 def window():
     p = Pix(32, 32)
     p.rect(3, 2, 28, 25, 'c3')                                                     # white frame
@@ -247,7 +270,7 @@ def vase_large():
 
 PIECES = {
     'tile_floor_01': floor_a, 'tile_floor_02': floor_b, 'wall_plain_01': wall_plain, 'wall_low_01': wall_low, 'wall_side_01': wall_side,
-    'wdeco_door_01': door, 'wdeco_window_01': window, 'rest_table_small_01': table, 'rest_stove_01': stove,
+    'wdeco_door_01': door, 'wdeco_door_open_01': door_open, 'wdeco_window_01': window, 'rest_table_small_01': table, 'rest_stove_01': stove,
     'rest_vase_small_01': vase_small, 'rest_vase_large_01': vase_large,
 }
 
@@ -274,6 +297,7 @@ def room(pieces, cols=9, rows=6, k=3):
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, 3 * C - 64 - 6 + 6 - 0 - 6 + 0 + 0)) if False else None
     base = 3 * C                                                                                # the floor line (bottom of the wall)
     im.alpha_composite(pieces['wdeco_door_01'], (1 * C, base - 70 + 6))
+    im.alpha_composite(pieces['wdeco_door_open_01'], (3 * C, base - 70 + 6))
     im.alpha_composite(pieces['wdeco_window_01'], (4 * C, 3 * C - 96 + 4 + (56 - 28) // 2 - 2))        # window base 42 px up the wall
     for r in range(rows): im.alpha_composite(pieces['wall_side_01'], (0, 0)) if False else None
     im.alpha_composite(pieces['rest_stove_01'], (6 * C, base - 8))                                  # 2 x 2 cells, standing on its bottom edge
