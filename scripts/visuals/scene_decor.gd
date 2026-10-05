@@ -319,7 +319,8 @@ func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
 	_draw_floor_shadow(a + Vector2(side_w * 0.5, 0), b + Vector2(side_w * 0.5, 0), Vector2(SHADOW_W, 0))
 	if tex != null and kind != "low":
 		var n := end_y - y + 1
-		for i in n:
+		# one more piece than cells, starting one cell higher: the strip runs from a wall height above its first edge to the foot of its last cell
+		for i in range(-1, n):
 			var yy := b.y - float(n - 1 - i) * Iso.TILE_H
 			draw_texture_rect(tex, Rect2(Vector2(a.x - side_w * 0.5, yy - WALL_H), Vector2(side_w, WALL_H)), false)
 		draw_rect(Rect2(a + Vector2(-side_w * 0.5, -WALL_H), Vector2(side_w, 8)), WALL_TOP)   # the cap of the post: the art's top is plain because it repeats
