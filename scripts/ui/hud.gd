@@ -17,6 +17,7 @@ signal reset_confirmed
 
 const MODAL_MAX_WIDTH := 640.0
 
+var in_3d := false   # shown over the 3D world: the menu offers the 2D view instead of the 3D one
 var zone: String = "restaurant"
 var root: Control
 var level_label: Label
@@ -792,9 +793,9 @@ func _build_settings() -> void:
 	edit.pressed.connect(func() -> void: edit_map_requested.emit())
 	modal_body.add_child(edit)
 	var world3d := Button.new()
-	world3d.text = Loc.t("BTN_3D_PILOT")
+	world3d.text = Loc.t("BTN_BACK_2D" if in_3d else "BTN_3D_PILOT")
 	world3d.custom_minimum_size = Vector2(0, 60)
-	world3d.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/world3d.tscn"))
+	world3d.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/world.tscn" if in_3d else "res://scenes/world3d.tscn"))
 	modal_body.add_child(world3d)
 	var test := Button.new()
 	test.text = Loc.t("BTN_TEST_COINS") % GameState.TEST_GRANT

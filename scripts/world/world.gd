@@ -7,6 +7,9 @@ const START_VIEW_WIDTH := 1000.0
 const NONE := WorldGrid.NONE
 
 var zone: String = "restaurant"
+# Set by the 3D world before this node enters the tree: the 3D world then draws everything and sends taps here; this node
+# keeps the game logic, the HUD and placement, and hides its own 2D drawing.
+var host_3d: Node = null
 var camera: Camera2D
 var hud: Hud
 var view := ViewState.new()
@@ -53,6 +56,9 @@ func _ready() -> void:
 	add_child(hud)
 	hud.edit_map_requested.connect(func() -> void:
 		hud.close_modal()
+		if host_3d != null:   # the map editor works on the 2D map: go there first
+			get_tree().change_scene_to_file("res://scenes/world.tscn")
+			return
 		hud.ask_confirm(Loc.t("CONFIRM_EDIT_MAP"), open_editor))
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
@@ -71,6 +77,17 @@ func _ready() -> void:
 	GameState.restaurant.customer_left.connect(func(_id: int) -> void: hud.show_message("MSG_CUSTOMER_LEFT"))
 	Loc.changed.connect(_on_state_changed)
 	set_zone("restaurant")
+	if host_3d != null:
+		_hide_2d()
+
+# Under the 3D world: the 2D ground, sea and light layers stay hidden (they are drawn in 3D instead).
+func _hide_2d() -> void:
+	renderer.visible = false
+	decor.visible = false
+	for n in renderer.get_children():
+		if n is CanvasLayer:
+			n.visible = false
+	hud.in_3d = true
 
 # ---------------------------------------------------------------- backdrop
 
@@ -95,6 +112,9 @@ func _redraw_all() -> void:
 	if renderer == null:
 		return
 	_sync_view()
+	if host_3d != null:
+		host_3d.view_changed()
+		return
 	renderer.refresh()
 	decor.queue_redraw()
 
@@ -182,6 +202,8 @@ func _fmt_time(seconds: int) -> String:
 	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
 
 func _screen_of(world_pos: Vector2) -> Vector2:
+	if host_3d != null:
+		return host_3d.screen_of(world_pos)
 	return get_canvas_transform() * world_pos
 
 # [message key, argument] for a failed placement code.
@@ -568,6 +590,8 @@ func _selected_exists() -> bool:
 	return (g.tops if selected_top else g.objects).has(selected_origin)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if host_3d != null:
+		return   # the 3D world reads the input and calls _on_tap
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			touches[event.index] = event.position
