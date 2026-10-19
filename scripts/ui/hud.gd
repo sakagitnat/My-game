@@ -791,6 +791,11 @@ func _build_settings() -> void:
 	edit.custom_minimum_size = Vector2(0, 60)
 	edit.pressed.connect(func() -> void: edit_map_requested.emit())
 	modal_body.add_child(edit)
+	var world3d := Button.new()
+	world3d.text = Loc.t("BTN_3D_PILOT")
+	world3d.custom_minimum_size = Vector2(0, 60)
+	world3d.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/world3d.tscn"))
+	modal_body.add_child(world3d)
 	var test := Button.new()
 	test.text = Loc.t("BTN_TEST_COINS") % GameState.TEST_GRANT
 	test.custom_minimum_size = Vector2(0, 60)

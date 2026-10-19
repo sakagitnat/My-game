@@ -38,6 +38,9 @@ var pinch_dist := 0.0
 var pinched := false
 
 func _ready() -> void:
+	# the web build opens the 3D preview straight away from a link ending ?view=3d
+	if OS.has_feature("web") and str(JavaScriptBridge.eval("location.search", true)).contains("view=3d"):
+		get_tree().change_scene_to_file.call_deferred("res://scenes/world3d.tscn")
 	camera = Camera2D.new()
 	add_child(camera)
 	renderer = WorldRenderer.new()
