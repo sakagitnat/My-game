@@ -1,0 +1,750 @@
+<title>Salvora</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap">
+<style>
+/* Layout: a seaside diorama in the middle, a written welcome on the left, the working panel (farm, kitchen, barn) on the right. Dark theme = the same island at night. */
+:root {
+  --paper: #f6eee1; --card: #fffaf1; --card-2: #f8efe0; --ink: #3a2a21; --muted: #8b7465; --line: #eadbc6; --shadow: rgba(110, 70, 40, .35);
+  --tomato: #d4473a; --tomato-ink: #ad3125; --tomato-soft: #f8ddd5; --sea: #2c8a86; --leaf: #6c9845; --sun: #efbd4a; --good: #4f8a3a; --warn: #c98a1d;
+  --s-sky: #f6eee1; --s-sea1: #9fd3cc; --s-sea2: #6fb8b1; --s-foam: #ffffff; --s-sand: #ecd2a0; --s-dirt: #b58a5c; --s-grass: #a9c77a; --s-grass2: #94b766;
+  --s-red: #c9473a; --s-cream: #f3e6cf; --s-teal: #3f8f86; --s-trim: #f7efe0; --s-glass: #bfe0e3; --s-wood: #c99563; --s-soil: #8a5f3c; --s-leaf: #7fae4f; --s-leaf2: #5f8f3a;
+  --s-stars: 0; --s-night: 0;
+  --f-script: "Charm", "Itim", cursive; --f-body: "IBM Plex Sans Thai Looped", "Noto Sans Thai", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #1c1613; --card: #28201b; --card-2: #2f2620; --ink: #f2e5d4; --muted: #b29b88; --line: #3d3029; --shadow: rgba(0, 0, 0, .6);
+  --tomato: #ec6a5a; --tomato-ink: #f28b7c; --tomato-soft: #4a2723; --sea: #5bb7ae; --leaf: #93c169; --sun: #f3cd6b; --good: #8cc46e; --warn: #e7b04c;
+  --s-sky: #1c1613; --s-sea1: #20425a; --s-sea2: #183349; --s-foam: #9fc3d6; --s-sand: #a88d64; --s-dirt: #6e5238; --s-grass: #5d7a45; --s-grass2: #4f6b3a;
+  --s-red: #9e3a30; --s-cream: #bfae95; --s-teal: #2f6d67; --s-trim: #d9cbb4; --s-glass: #ffd36e; --s-wood: #8f6a46; --s-soil: #5c3f29; --s-leaf: #5d8a3c; --s-leaf2: #456d2c;
+  --s-stars: 1; --s-night: .28; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #1c1613; --card: #28201b; --card-2: #2f2620; --ink: #f2e5d4; --muted: #b29b88; --line: #3d3029; --shadow: rgba(0, 0, 0, .6);
+  --tomato: #ec6a5a; --tomato-ink: #f28b7c; --tomato-soft: #4a2723; --sea: #5bb7ae; --leaf: #93c169; --sun: #f3cd6b; --good: #8cc46e; --warn: #e7b04c;
+  --s-sky: #1c1613; --s-sea1: #20425a; --s-sea2: #183349; --s-foam: #9fc3d6; --s-sand: #a88d64; --s-dirt: #6e5238; --s-grass: #5d7a45; --s-grass2: #4f6b3a;
+  --s-red: #9e3a30; --s-cream: #bfae95; --s-teal: #2f6d67; --s-trim: #d9cbb4; --s-glass: #ffd36e; --s-wood: #8f6a46; --s-soil: #5c3f29; --s-leaf: #5d8a3c; --s-leaf2: #456d2c;
+  --s-stars: 1; --s-night: .28; color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--tomato); outline-offset: 2px; }
+
+.app { max-width: 1340px; margin: 0 auto; padding-block: 14px 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 14px; }
+
+/* Header */
+.top { display: flex; align-items: center; gap: 12px 24px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand svg { width: 38px; height: 38px; flex: none; }
+.brand .name { font-family: var(--f-script); font-weight: 700; font-size: 32px; line-height: 1; }
+.brand .sub { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+.tabs { display: flex; gap: 2px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.tabs button { background: none; border: 0; padding: 8px 14px; font-size: 13px; letter-spacing: .06em; color: var(--muted); cursor: pointer; border-radius: 10px; position: relative; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--tomato-ink); font-weight: 600; }
+.tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; border-radius: 2px; background: var(--tomato); }
+.stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; }
+.chip svg { width: 16px; height: 16px; }
+.lvl { display: inline-flex; align-items: center; gap: 8px; }
+.lvl .track { width: 56px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.lvl .fill { height: 100%; background: var(--leaf); border-radius: 3px; transition: width .4s; }
+.speed { cursor: pointer; }
+.speed[aria-pressed="true"] { background: var(--tomato); border-color: var(--tomato); color: #fff; }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: 200px minmax(0, 1fr) 372px; gap: 18px; align-items: start; }
+.left { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
+.hello { font-family: var(--f-script); font-size: 40px; line-height: 1.15; text-wrap: balance; margin: 0; }
+.hello em { color: var(--tomato); font-style: normal; }
+.tag { font-size: 10px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; margin: 0; }
+.side-nav { display: flex; flex-direction: column; gap: 8px; }
+.side-nav button { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; text-align: left; box-shadow: 0 2px 0 var(--line); transition: transform .15s; }
+.side-nav button:hover { transform: translateX(2px); }
+.side-nav button svg { width: 16px; height: 16px; flex: none; }
+.side-nav button .n { margin-left: auto; min-width: 18px; height: 18px; border-radius: 9px; background: var(--tomato); color: #fff; font-size: 10px; display: grid; place-items: center; letter-spacing: 0; padding: 0 5px; }
+.side-nav button[aria-current="true"] { background: var(--tomato); color: #fff; border-color: var(--tomato); box-shadow: 0 2px 0 var(--tomato-ink); }
+.side-nav button[aria-current="true"] .n { background: #fff; color: var(--tomato-ink); }
+.note { font-family: var(--f-script); font-size: 18px; line-height: 1.3; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); }
+
+.scene-wrap { position: relative; min-width: 0; }
+.scene { width: 100%; height: auto; display: block; }
+.scene [data-act] { cursor: pointer; }
+.scene .hit:hover { filter: brightness(1.08); }
+.toasts { position: absolute; left: 0; right: 0; top: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.toast { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 8px 20px -12px var(--shadow); animation: toast 2.6s ease forwards; }
+.toast.big { background: var(--tomato); color: #fff; border-color: var(--tomato); font-size: 15px; }
+@keyframes toast { 0% { opacity: 0; transform: translateY(-6px); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-10px); } }
+.legend { position: absolute; left: 6px; bottom: 6px; font-family: var(--f-script); font-size: 16px; color: var(--muted); pointer-events: none; }
+
+/* Panel */
+.panel { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: 0 14px 30px -24px var(--shadow); min-width: 0; }
+.head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.head h3 { margin: 0; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
+.head .more { margin-left: auto; font-size: 11px; letter-spacing: .12em; color: var(--muted); background: none; border: 0; cursor: pointer; text-transform: uppercase; }
+.head .more:hover { color: var(--tomato-ink); }
+.head .count { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.head svg { width: 14px; height: 14px; color: var(--leaf); }
+
+.special { background: linear-gradient(120deg, var(--tomato-soft), var(--card) 70%); display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 6px; align-items: center; }
+.special .eyebrow { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.special h2 { font-family: var(--f-script); font-size: 30px; line-height: 1.1; color: var(--tomato-ink); margin: 4px 0 2px; text-wrap: balance; }
+.special p { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+.special .art svg { width: 120px; height: 120px; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--tomato); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .06em; padding: 7px 14px; border-radius: 999px; cursor: pointer; box-shadow: 0 2px 0 var(--tomato-ink); white-space: nowrap; }
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: translateY(1px); box-shadow: none; }
+.btn.ghost { background: var(--card-2); color: var(--ink); box-shadow: 0 2px 0 var(--line); border: 1px solid var(--line); }
+.btn.green { background: var(--good); box-shadow: 0 2px 0 color-mix(in srgb, var(--good) 70%, #000); }
+.btn:disabled { background: var(--line); color: var(--muted); box-shadow: none; cursor: not-allowed; filter: none; }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tile { background: var(--card-2); border-radius: 12px; padding: 6px 4px 8px; text-align: center; border: 1px solid transparent; }
+.tile svg { width: 100%; max-width: 64px; height: auto; aspect-ratio: 1; }
+.tile .t { font-size: 11px; line-height: 1.3; }
+.tile .p { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 3px; }
+.tile .p svg { width: 11px; height: 11px; }
+
+.rows { display: flex; flex-direction: column; gap: 8px; }
+.row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px; border-radius: 12px; background: var(--card-2); }
+.row .ic { width: 44px; height: 44px; border-radius: 10px; background: var(--card); display: grid; place-items: center; }
+.row .ic svg { width: 38px; height: 38px; }
+.row .nm { font-weight: 600; font-size: 13px; line-height: 1.3; }
+.row .sm { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--leaf); border-radius: 3px; }
+.bar.pat i { background: var(--sun); }
+.bar.pat.low i { background: var(--tomato); }
+.ing { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.ing span { font-size: 10px; padding: 1px 7px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.ing span.miss { color: var(--tomato-ink); border-color: var(--tomato); }
+
+.plots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.plot { border: 1px solid var(--line); background: var(--card-2); border-radius: 14px; padding: 8px 6px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .15s; }
+.plot:hover { transform: translateY(-2px); }
+.plot svg { width: 48px; height: 48px; }
+.plot .nm { font-size: 12px; font-weight: 600; }
+.plot .sm { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plot .bar { width: 80%; }
+.plot.ready { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--card)); }
+.plot.ready .sm { color: var(--good); font-weight: 600; }
+.plot.pick { border-color: var(--tomato); border-style: dashed; }
+.picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.picker button { border: 1px solid var(--line); background: var(--card-2); border-radius: 12px; padding: 8px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; }
+.picker button svg { width: 40px; height: 40px; }
+.picker button .sm { font-size: 10px; color: var(--muted); }
+.picker button:disabled { opacity: .5; cursor: not-allowed; }
+.counter { display: flex; gap: 6px; flex-wrap: wrap; min-height: 44px; align-items: center; }
+.counter .slot { width: 44px; height: 44px; border-radius: 10px; background: var(--card-2); border: 1px dashed var(--line); display: grid; place-items: center; }
+.counter .slot svg { width: 38px; height: 38px; }
+.empty { font-size: 12px; color: var(--muted); padding: 6px 2px; }
+.cap { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.cap .bar { flex: 1; margin: 0; height: 7px; }
+.statgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
+.statgrid b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.statgrid span { font-size: 11px; color: var(--muted); }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+
+/* Footer */
+.foot { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px 16px; }
+.foot .b { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.foot .b svg { width: 20px; height: 20px; }
+.foot .q { flex: 1; text-align: center; font-family: var(--f-script); font-size: 18px; color: var(--muted); min-width: 0; }
+.foot nav { display: flex; gap: 4px; }
+.foot nav button { width: 36px; height: 36px; border-radius: 10px; border: 0; background: none; cursor: pointer; color: var(--muted); display: grid; place-items: center; }
+.foot nav button svg { width: 18px; height: 18px; }
+.foot nav button[aria-current="true"] { color: var(--tomato); background: var(--tomato-soft); }
+.demo-note { font-size: 11px; color: var(--muted); text-align: center; }
+
+/* Scene animation */
+.wave { animation: wave 4s ease-in-out infinite; }
+@keyframes wave { 0%, 100% { transform: translate(0, 0); opacity: .25; } 50% { transform: translate(6px, -2px); opacity: .9; } }
+.foam { stroke-dasharray: 6 9; animation: foam 6s linear infinite; }
+@keyframes foam { to { stroke-dashoffset: -60; } }
+.smoke { animation: smoke 5s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes smoke { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 15% { opacity: .55; } 100% { transform: translate(18px, -70px) scale(1.8); opacity: 0; } }
+.gull { animation: gull 26s linear infinite; }
+@keyframes gull { from { transform: translate(-80px, 0); } to { transform: translate(720px, -40px); } }
+.flap { animation: flap .6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes flap { to { transform: scaleY(.4); } }
+.leaf { animation: leaf 14s linear infinite; }
+@keyframes leaf { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: .9; } 100% { transform: translate(220px, 260px) rotate(540deg); opacity: 0; } }
+.bob { animation: bob 1.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+.boat { animation: boat 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes boat { 50% { transform: rotate(3deg) translateY(1px); } }
+@media (prefers-reduced-motion: reduce) { .wave, .foam, .smoke, .gull, .flap, .leaf, .bob, .boat, .toast { animation: none !important; } .smoke, .leaf { opacity: 0; } }
+
+@media (max-width: 1120px) {
+  .stage { grid-template-columns: minmax(0, 1fr) 352px; }
+  .left { grid-column: 1 / -1; flex-direction: row; align-items: center; flex-wrap: wrap; padding-top: 0; gap: 8px 20px; }
+  .hello { font-size: 30px; }
+  .side-nav, .note { display: none; }
+}
+@media (max-width: 780px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .tabs { order: 3; flex-basis: 100%; justify-content: space-between; }
+  .stats { margin-left: auto; }
+  .foot .q { display: none; }
+  .foot nav { margin-left: auto; }
+}
+@media (max-width: 420px) {
+  .brand .name { font-size: 26px; }
+  .tabs button { padding: 8px 8px; }
+  .special { grid-template-columns: minmax(0, 1fr) 84px; }
+  .special .art svg { width: 84px; height: 84px; }
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#i-tomato"/></svg>
+      <div><div class="name">Salvora</div><div class="sub">ร้านริมหาด · ฟาร์มเล็ก ๆ</div></div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main class="stage">
+    <aside class="left">
+      <h1 class="hello">อาหารดี ๆ <em>เริ่มจาก</em> ฟาร์มเล็ก ๆ</h1>
+      <p class="tag">ฟาร์ม · ทะเล · ครัวอุ่น ๆ</p>
+      <nav class="side-nav" id="sidenav"></nav>
+      <div class="note">ปลูกเอง ทำเอง<br>เสิร์ฟริมทะเล</div>
+    </aside>
+
+    <div class="scene-wrap">
+      <svg class="scene" id="scene" viewBox="0 0 640 560" role="img" aria-label="เกาะ Salvora: ร้านอาหารสองชั้นริมหาด แปลงผัก เล้าไก่ และท่าเรือ"></svg>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+      <div class="legend">แตะแปลง ลูกค้า หรือเล้าไก่บนเกาะได้เลย</div>
+    </div>
+
+    <section class="panel" id="panel"></section>
+  </main>
+
+  <footer class="foot">
+    <div class="b"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#i-tomato"/></svg>Salvora</div>
+    <div class="q">ข้าวสาลีจากแปลง ไข่จากเล้า ซุปร้อน ๆ ริมหาด</div>
+    <nav id="footnav"></nav>
+  </footer>
+  <div class="demo-note">ต้นแบบหน้าตาจากเกม Salvora · ตัวเลขเวลาและราคาตาม catalog.gd · เริ่มจากข้อมูลตัวอย่าง เซฟในเบราว์เซอร์นี้</div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-tomato">
+      <circle cx="32" cy="37" r="21" fill="#de4a3b"/>
+      <path d="M14 40 a18 16 0 0 0 36 0 a20 14 0 0 1 -36 0z" fill="#b8352a" opacity=".5"/>
+      <ellipse cx="24" cy="30" rx="6" ry="4" fill="#fff" opacity=".45" transform="rotate(-25 24 30)"/>
+      <path d="M32 18 l4 -3 l2 6 l7 0 l-5 4 l3 5 l-7 -2 l-4 4 l-4 -4 l-7 2 l3 -5 l-5 -4 l7 0 l2 -6z" fill="#4f8a3a"/>
+      <path d="M32 18 q1 -6 5 -9" stroke="#4f8a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
+    <g id="i-coin">
+      <circle cx="8" cy="8" r="7" fill="#efbd4a" stroke="#c48f22" stroke-width="1.4"/>
+      <circle cx="8" cy="8" r="3.6" fill="none" stroke="#c48f22" stroke-width="1.2"/>
+    </g>
+    <g id="i-heart"><path d="M8 14 C2 9.5 1 6.5 3 4 C5 2 7 3 8 5 C9 3 11 2 13 4 C15 6.5 14 9.5 8 14z" fill="#d4473a"/></g>
+  </defs>
+</svg>
+
+<script>
+"use strict";
+// ---------- Game rules (mirrors scripts/core/catalog.gd and GameState) ----------
+const CROPS = {
+  wheat:   { th: "ข้าวสาลี", time: 60,  seed: 2,  xp: 1, level: 1 },
+  tomato:  { th: "มะเขือเทศ", time: 180, seed: 6,  xp: 3, level: 2 },
+  cabbage: { th: "กะหล่ำปลี", time: 300, seed: 10, xp: 5, level: 3 },
+};
+const COOP = { feed: "wheat", time: 120, xp: 3 };
+const RECIPES = {
+  wheat_porridge: { th: "โจ๊กข้าวสาลี", note: "ข้าวสาลีต้มนุ่ม โรยขิง", ing: { wheat: 2 }, time: 15, price: 14, xp: 2, level: 1 },
+  omelet:         { th: "ไข่เจียว", note: "ไข่จากเล้า ทอดฟู ๆ", ing: { egg: 2 }, time: 20, price: 40, xp: 4, level: 2 },
+  tomato_soup:    { th: "ซุปมะเขือเทศ", note: "มะเขือเทศสุก ขนมปังข้าวสาลี", ing: { tomato: 2, wheat: 1 }, time: 25, price: 60, xp: 6, level: 2 },
+  cabbage_salad:  { th: "สลัดกะหล่ำปลี", note: "กะหล่ำกรอบ น้ำสลัดมะนาว", ing: { cabbage: 2 }, time: 30, price: 100, xp: 8, level: 3 },
+};
+const ITEMS = {
+  wheat: { th: "ข้าวสาลี", sell: 4 }, tomato: { th: "มะเขือเทศ", sell: 14 }, cabbage: { th: "กะหล่ำปลี", sell: 25 },
+  egg: { th: "ไข่", sell: 10 }, wood: { th: "ไม้", sell: 3 }, stone: { th: "หิน", sell: 3 },
+};
+const REST = { arrival: 20, patience: 75, tip: 0.25, counter: 6 };
+const BARN_CAP = 60, SEATS = 3, STOVES = 2, PLOTS = 6;
+const xpForNext = lv => 30 + 20 * (lv - 1);
+const SAVE_KEY = "salvora-cozy-v1";
+
+// ---------- State ----------
+function freshState() {
+  // Demo start: a running shop so the first view shows something happening.
+  return {
+    t: 1000, real: Date.now(), speed: 1, tab: "home", pick: null, confirmReset: false,
+    coins: 500, xp: 12, level: 2, rep: 5, served: 0, nextId: 3,
+    inv: { wheat: 8, tomato: 3, cabbage: 0, egg: 3, wood: 2, stone: 1 },
+    plots: [{ crop: "wheat", t0: 930 }, { crop: "tomato", t0: 910 }, { crop: "wheat", t0: 975 }, null, { crop: "tomato", t0: 990 }, null],
+    coop: { t0: 960 }, stoves: [{ dish: "omelet", t0: 992 }, null], counter: ["tomato_soup"],
+    customers: [{ id: 1, dish: "tomato_soup", t0: 985, seat: 0, hue: 18 }, { id: 2, dish: "omelet", t0: 995, seat: 2, hue: 200 }],
+    nextCust: 1012,
+  };
+}
+let S;
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      const away = Math.min(6 * 3600, Math.max(0, (Date.now() - (s.real || Date.now())) / 1000));
+      s.t += away; // crops keep growing while the game is closed, like the Godot version
+      s.real = Date.now(); s.pick = null; s.confirmReset = false;
+      return s;
+    }
+  } catch (e) { /* storage unavailable: start fresh */ }
+  return freshState();
+}
+function save() { try { S.real = Date.now(); localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const barnUsed = () => Object.values(S.inv).reduce((a, b) => a + b, 0);
+function fmt(sec) { sec = Math.max(0, Math.ceil(sec)); if (sec < 60) return sec + " วิ"; const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + String(s).padStart(2, "0") + " นาที"; }
+const coin = n => `<svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-coin"/></svg>${n}`;
+function plotState(p) { if (!p) return "empty"; return S.t - p.t0 >= CROPS[p.crop].time ? "ready" : "growing"; }
+function coopState() { if (!S.coop) return "idle"; return S.t - S.coop.t0 >= COOP.time ? "ready" : "busy"; }
+function canCook(id) { const r = RECIPES[id]; if (S.level < r.level) return "level"; for (const k in r.ing) if ((S.inv[k] || 0) < r.ing[k]) return "ing"; if (S.stoves.every(Boolean)) return "stove"; return "ok"; }
+
+let toastBox;
+function toast(msg, big) { const d = document.createElement("div"); d.className = "toast" + (big ? " big" : ""); d.textContent = msg; toastBox.appendChild(d); setTimeout(() => d.remove(), 2700); }
+function addXp(n) {
+  S.xp += n;
+  while (S.xp >= xpForNext(S.level)) { S.xp -= xpForNext(S.level); S.level += 1; S.coins += 20 * S.level; toast(`เลเวล ${S.level}! +${20 * S.level} เหรียญ`, true); }
+}
+
+// ---------- Actions ----------
+const ACT = {
+  tab(el) { S.tab = el.dataset.tab; S.pick = null; S.confirmReset = false; },
+  plot(el) {
+    const i = +el.dataset.i, p = S.plots[i], st = plotState(p);
+    if (st === "ready") {
+      if (barnUsed() >= BARN_CAP) { toast("โกดังเต็ม ขายของก่อนนะ"); return; }
+      S.inv[p.crop] += 1; S.plots[i] = null; addXp(CROPS[p.crop].xp);
+      toast(`+1 ${CROPS[p.crop].th} · +${CROPS[p.crop].xp} XP`);
+    } else if (st === "empty") { S.tab = "farm"; S.pick = i; }
+    else { S.tab = "farm"; toast(`${CROPS[p.crop].th} อีก ${fmt(CROPS[p.crop].time - (S.t - p.t0))}`); }
+  },
+  plant(el) {
+    const c = el.dataset.crop, def = CROPS[c];
+    if (S.pick == null || S.level < def.level || S.coins < def.seed) return;
+    S.coins -= def.seed; S.plots[S.pick] = { crop: c, t0: S.t }; toast(`ปลูก${def.th} −${def.seed} เหรียญ`); S.pick = null;
+  },
+  unpick() { S.pick = null; },
+  coop() {
+    const st = coopState();
+    if (st === "ready") {
+      if (barnUsed() >= BARN_CAP) { toast("โกดังเต็ม ขายของก่อนนะ"); return; }
+      S.inv.egg += 1; S.coop = null; addXp(COOP.xp); toast(`+1 ไข่ · +${COOP.xp} XP`);
+    } else if (st === "idle") {
+      if (S.inv.wheat < 1) { toast("ต้องมีข้าวสาลี 1 ชิ้น"); S.tab = "farm"; return; }
+      S.inv.wheat -= 1; S.coop = { t0: S.t }; toast("ไก่ได้กินข้าวสาลีแล้ว");
+    } else { S.tab = "farm"; }
+  },
+  cook(el) {
+    const id = el.dataset.r; if (canCook(id) !== "ok") return;
+    const r = RECIPES[id]; for (const k in r.ing) S.inv[k] -= r.ing[k];
+    S.stoves[S.stoves.indexOf(null)] = { dish: id, t0: S.t }; toast(`เริ่มทำ${r.th}`);
+  },
+  serve(el) {
+    const c = S.customers.find(x => x.id === +el.dataset.id); if (!c) return;
+    const k = S.counter.indexOf(c.dish);
+    if (k < 0) { toast(`ลูกค้าอยากได้${RECIPES[c.dish].th} ไปทำที่ครัวก่อน`); S.tab = "kitchen"; return; }
+    const r = RECIPES[c.dish], left = clamp01(1 - (S.t - c.t0) / REST.patience), tip = Math.round(r.price * REST.tip * left);
+    S.counter.splice(k, 1); S.customers = S.customers.filter(x => x !== c);
+    S.coins += r.price + tip; S.rep += 1; S.served += 1; addXp(r.xp);
+    toast(`+${r.price + tip} เหรียญ${tip ? ` (ทิป ${tip})` : ""} · +${r.xp} XP`);
+  },
+  sell(el) {
+    const k = el.dataset.k, n = el.dataset.n === "all" ? S.inv[k] : 1; if (!n || S.inv[k] < n) return;
+    S.inv[k] -= n; S.coins += n * ITEMS[k].sell; toast(`ขาย${ITEMS[k].th} ${n} ชิ้น +${n * ITEMS[k].sell} เหรียญ`);
+  },
+  speed() { S.speed = S.speed === 1 ? 5 : 1; toast(S.speed === 5 ? "เร่งเวลา ×5" : "เวลาปกติ"); },
+  askReset() { S.confirmReset = true; },
+  cancelReset() { S.confirmReset = false; },
+  reset() { S = freshState(); toast("เริ่มเกาะใหม่แล้ว"); },
+};
+
+// ---------- Simulation ----------
+function step() {
+  for (let i = 0; i < STOVES; i++) {
+    const s = S.stoves[i];
+    if (s && S.t - s.t0 >= RECIPES[s.dish].time && S.counter.length < REST.counter) {
+      S.counter.push(s.dish); S.stoves[i] = null; toast(`${RECIPES[s.dish].th} พร้อมเสิร์ฟ`);
+    }
+  }
+  for (const c of S.customers.slice()) {
+    if (S.t - c.t0 >= REST.patience) { S.customers = S.customers.filter(x => x !== c); S.rep = Math.max(0, S.rep - 1); toast("ลูกค้ารอนานเกินไปเลยกลับไป"); }
+  }
+  if (S.t >= S.nextCust) {
+    const free = [0, 1, 2].filter(s => !S.customers.some(c => c.seat === s));
+    if (free.length) {
+      const menu = Object.keys(RECIPES).filter(k => RECIPES[k].level <= S.level);
+      S.customers.push({ id: S.nextId++, dish: menu[Math.floor(Math.random() * menu.length)], t0: S.t, seat: free[Math.floor(Math.random() * free.length)], hue: Math.floor(Math.random() * 360) });
+      S.nextCust = S.t + Math.max(8, REST.arrival - S.rep * 0.4);
+    } else S.nextCust = S.t + 5;
+  }
+}
+// A string that changes whenever something visible changes state (not on every timer tick).
+function signature() {
+  return [S.tab, S.pick, S.confirmReset, S.coins, S.xp, S.level, S.rep, S.speed, JSON.stringify(S.inv), S.plots.map(plotState).join(), S.plots.map(p => p && p.crop + Math.floor(clamp01((S.t - p.t0) / CROPS[p.crop].time) * 3)).join(),
+    coopState(), S.stoves.map(s => s && s.dish).join(), S.counter.join(), S.customers.map(c => c.id).join()].join("|");
+}
+
+// ---------- Illustrations ----------
+function grains(cx, top, n, tilt) {
+  let s = "";
+  for (let i = 0; i < n; i++) { const y = top + i * 5, dx = tilt * i * .6; s += `<ellipse cx="${cx - 3 + dx}" cy="${y}" rx="2.4" ry="4.2" fill="#e8c15a" stroke="#b88a2e" stroke-width=".8" transform="rotate(-25 ${cx - 3 + dx} ${y})"/><ellipse cx="${cx + 3 + dx}" cy="${y}" rx="2.4" ry="4.2" fill="#e8c15a" stroke="#b88a2e" stroke-width=".8" transform="rotate(25 ${cx + 3 + dx} ${y})"/>`; }
+  return s;
+}
+const ICON = {
+  wheat: `<g stroke="#a77b2c" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M32 60 C32 46 32 34 32 18"/><path d="M22 58 C23 47 21 38 18 28"/><path d="M42 58 C41 47 43 38 46 28"/></g>${grains(32, 10, 4, 0)}${grains(18, 20, 3, -1)}${grains(46, 20, 3, 1)}`,
+  tomato: `<use href="#i-tomato"/>`,
+  cabbage: `<circle cx="32" cy="38" r="20" fill="#7fb257"/><path d="M14 36 C18 22 28 18 32 18 C38 18 48 24 50 36 C44 30 38 28 32 30 C26 28 20 30 14 36z" fill="#a8d27e"/><circle cx="32" cy="38" r="11" fill="#c6e39b"/><path d="M32 30 V50 M32 40 L24 34 M32 44 L40 37" stroke="#6f9a4a" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  egg: `<ellipse cx="32" cy="36" rx="15" ry="19" fill="#f7ecd6" stroke="#d6bf98" stroke-width="2"/><ellipse cx="26" cy="28" rx="4" ry="6" fill="#fff" opacity=".8"/>`,
+  wood: `<rect x="10" y="26" width="40" height="18" rx="9" fill="#b07a4a"/><ellipse cx="50" cy="35" rx="7" ry="9" fill="#e2b98a" stroke="#9a6638" stroke-width="2"/><ellipse cx="50" cy="35" rx="3" ry="4" fill="none" stroke="#9a6638" stroke-width="1.5"/><path d="M16 31 H38 M20 39 H42" stroke="#8d5c33" stroke-width="1.5"/>`,
+  stone: `<path d="M12 44 C10 34 18 22 30 22 C42 20 54 30 52 42 C50 50 20 52 12 44z" fill="#9fa39b"/><path d="M18 34 C22 27 30 25 38 27" stroke="#c5c8c1" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  sprout: `<path d="M32 50 V36" stroke="#5f8f3a" stroke-width="3" stroke-linecap="round"/><path d="M32 40 C24 40 20 34 20 30 C27 30 32 34 32 40z M32 38 C40 38 44 32 44 28 C37 28 32 32 32 38z" fill="#7fae4f"/><ellipse cx="32" cy="52" rx="16" ry="4" fill="#8a5f3c" opacity=".5"/>`,
+  soil: `<ellipse cx="32" cy="44" rx="22" ry="8" fill="#8a5f3c" opacity=".7"/><path d="M16 42 h6 M28 46 h8 M40 41 h6" stroke="#6b4529" stroke-width="2" stroke-linecap="round"/>`,
+  // Dishes
+  wheat_porridge: `<ellipse cx="32" cy="46" rx="28" ry="9" fill="#f6efe2" stroke="#e0d2bb"/><path d="M10 34 C10 50 20 56 32 56 C44 56 54 50 54 34z" fill="#3f8f86"/><ellipse cx="32" cy="34" rx="22" ry="7" fill="#f2e6c8" stroke="#e0d0a8"/><circle cx="26" cy="33" r="1.4" fill="#d8b75f"/><circle cx="34" cy="35" r="1.4" fill="#d8b75f"/><circle cx="38" cy="32" r="1.2" fill="#d8b75f"/><path d="M30 33 l4 -1" stroke="#7fae4f" stroke-width="2" stroke-linecap="round"/><path d="M24 24 c-3 -4 3 -6 0 -10 M32 22 c-3 -4 3 -6 0 -10 M40 24 c-3 -4 3 -6 0 -10" stroke="#c9b9a4" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>`,
+  omelet: `<ellipse cx="32" cy="42" rx="28" ry="12" fill="#f6efe2" stroke="#e0d2bb"/><path d="M12 40 C14 26 50 24 52 38 C46 44 20 46 12 40z" fill="#f2c84b" stroke="#d9a33a" stroke-width="1.5"/><path d="M18 36 C26 32 38 31 46 34" stroke="#e6b23f" stroke-width="2" fill="none"/><circle cx="24" cy="35" r="1.5" fill="#6c9845"/><circle cx="36" cy="33" r="1.5" fill="#6c9845"/><circle cx="44" cy="44" r="5" fill="#de4a3b"/><circle cx="44" cy="44" r="2.5" fill="#f08a7e"/>`,
+  tomato_soup: `<ellipse cx="32" cy="46" rx="28" ry="9" fill="#f6efe2" stroke="#e0d2bb"/><path d="M10 34 C10 50 20 56 32 56 C44 56 54 50 54 34z" fill="#3f8f86"/><ellipse cx="32" cy="34" rx="22" ry="7" fill="#f6efe2"/><ellipse cx="32" cy="34" rx="19" ry="5.5" fill="#d9483b"/><path d="M26 34 c3 -3 7 1 10 -1" stroke="#fbe7d9" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="38" cy="33" r="1.4" fill="#6c9845"/><path d="M44 18 l12 4 l-4 14 l-12 -4z" fill="#d9a45b" stroke="#b07a3a" stroke-width="1.2"/><path d="M44 18 l12 4 l-1 3 l-12 -4z" fill="#a8702f"/>`,
+  cabbage_salad: `<path d="M8 34 C8 50 20 56 32 56 C44 56 56 50 56 34z" fill="#c58f5a"/><ellipse cx="32" cy="34" rx="24" ry="8" fill="#d9a873"/><ellipse cx="22" cy="30" rx="9" ry="6" fill="#8fc46a"/><ellipse cx="38" cy="28" rx="10" ry="6" fill="#a9d67f"/><ellipse cx="30" cy="34" rx="9" ry="5" fill="#c6e39b"/><circle cx="44" cy="33" r="4.5" fill="#de4a3b"/><circle cx="18" cy="35" r="4" fill="#de4a3b"/><circle cx="44" cy="33" r="2" fill="#f08a7e"/><path d="M28 27 l6 4 M36 25 l4 5" stroke="#6f9a4a" stroke-width="1.4"/>`,
+};
+const svg = (k, cls = "") => `<svg viewBox="0 0 64 64" class="${cls}" aria-hidden="true">${ICON[k]}</svg>`;
+function cropStageIcon(p) {
+  if (!p) return svg("soil");
+  const f = clamp01((S.t - p.t0) / CROPS[p.crop].time);
+  return f >= 1 ? svg(p.crop) : f < 0.5 ? svg("sprout") : `<svg viewBox="0 0 64 64" aria-hidden="true"><g opacity=".75" transform="translate(8 10) scale(.75)">${ICON[p.crop]}</g></svg>`;
+}
+
+// ---------- Isometric diorama ----------
+const K = 21, OX = 320, OY = 118;
+const P = (x, y, z = 0) => [OX + (x - y) * K * 0.866, OY + (x + y) * K * 0.5 - z * K];
+const pts = a => a.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+const poly = (ps, fill, extra = "") => `<polygon points="${pts(ps)}" style="fill:${fill}" ${extra}/>`;
+const shade = (ps, o) => `<polygon points="${pts(ps)}" fill="#000" opacity="${o}" pointer-events="none"/>`;
+function box(x, y, z, w, d, h, c, extra = "") {
+  const T = [P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+  const L = [P(x, y + d, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+  const R = [P(x + w, y, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x + w, y, z + h)];
+  return poly(L, c.left || c.side, extra) + shade(L, .05) + poly(R, c.right || c.side, extra) + shade(R, .18) + (c.top ? poly(T, c.top, extra) : "");
+}
+const qL = (x0, x1, z0, z1, y, fill, o = 0) => poly([P(x0, y, z0), P(x1, y, z0), P(x1, y, z1), P(x0, y, z1)], fill) + (o ? shade([P(x0, y, z0), P(x1, y, z0), P(x1, y, z1), P(x0, y, z1)], o) : "");
+const qR = (y0, y1, z0, z1, x, fill, o = 0) => poly([P(x, y0, z0), P(x, y1, z0), P(x, y1, z1), P(x, y0, z1)], fill) + (o ? shade([P(x, y0, z0), P(x, y1, z0), P(x, y1, z1), P(x, y0, z1)], o) : "");
+function winL(x0, x1, z0, z1, y) { const xm = (x0 + x1) / 2, zm = (z0 + z1) / 2; return qL(x0 - .12, x1 + .12, z0 - .12, z1 + .12, y, "var(--s-trim)") + qL(x0, x1, z0, z1, y, "var(--s-glass)") + `<polyline points="${pts([P(xm, y, z0), P(xm, y, z1)])}" stroke="var(--s-trim)" stroke-width="2" fill="none"/><polyline points="${pts([P(x0, y, zm), P(x1, y, zm)])}" stroke="var(--s-trim)" stroke-width="2" fill="none"/>`; }
+function winR(y0, y1, z0, z1, x) { const ym = (y0 + y1) / 2; return qR(y0 - .12, y1 + .12, z0 - .12, z1 + .12, x, "var(--s-trim)", .12) + qR(y0, y1, z0, z1, x, "var(--s-glass)", .1) + `<polyline points="${pts([P(x, ym, z0), P(x, ym, z1)])}" stroke="var(--s-trim)" stroke-width="2" fill="none"/>`; }
+function roundTree(x, y, s = 1) {
+  const [bx, by] = P(x, y, 0), r = 22 * s;
+  return `<ellipse cx="${bx}" cy="${by + 2}" rx="${r * .8}" ry="${r * .3}" fill="#000" opacity=".12"/><rect x="${bx - 3 * s}" y="${by - 26 * s}" width="${6 * s}" height="${26 * s}" rx="2" style="fill:#7a5534"/>` +
+    `<circle cx="${bx}" cy="${by - 40 * s}" r="${r}" style="fill:var(--s-leaf2)"/><circle cx="${bx - 12 * s}" cy="${by - 32 * s}" r="${r * .7}" style="fill:var(--s-leaf2)"/><circle cx="${bx + 13 * s}" cy="${by - 33 * s}" r="${r * .68}" style="fill:var(--s-leaf)"/>` +
+    `<circle cx="${bx - 4 * s}" cy="${by - 46 * s}" r="${r * .72}" style="fill:var(--s-leaf)"/><circle cx="${bx - 9 * s}" cy="${by - 52 * s}" r="${r * .3}" fill="#fff" opacity=".18"/>`;
+}
+function palm(x, y) {
+  const [bx, by] = P(x, y, 0), tx = bx + 16, ty = by - 92;
+  let f = "";
+  for (const [dx, dy] of [[-44, 6], [-30, -18], [4, -30], [36, -14], [44, 10], [-12, 22], [22, 24]]) f += `<path d="M${tx} ${ty} Q${tx + dx * .5} ${ty + dy * .5 - 18} ${tx + dx} ${ty + dy}" stroke="var(--s-leaf2)" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M${tx} ${ty} Q${tx + dx * .5} ${ty + dy * .5 - 18} ${tx + dx} ${ty + dy}" stroke="var(--s-leaf)" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  return `<ellipse cx="${bx + 6}" cy="${by + 2}" rx="26" ry="8" fill="#000" opacity=".12"/><path d="M${bx - 4} ${by} Q${bx + 2} ${by - 50} ${tx} ${ty}" stroke="#9a7246" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M${bx - 4} ${by} Q${bx + 2} ${by - 50} ${tx} ${ty}" stroke="#b88b58" stroke-width="9" stroke-dasharray="3 6" fill="none"/>${f}<circle cx="${tx - 4}" cy="${ty + 6}" r="5" fill="#7a5534"/><circle cx="${tx + 5}" cy="${ty + 7}" r="5" fill="#6a4829"/>`;
+}
+function bush(x, y, flowers) {
+  const [bx, by] = P(x, y, 0);
+  let s = `<ellipse cx="${bx}" cy="${by - 6}" rx="16" ry="11" style="fill:var(--s-leaf2)"/><ellipse cx="${bx - 4}" cy="${by - 10}" rx="10" ry="8" style="fill:var(--s-leaf)"/>`;
+  if (flowers) s += `<circle cx="${bx - 8}" cy="${by - 9}" r="2.6" fill="#de4a3b"/><circle cx="${bx + 5}" cy="${by - 12}" r="2.6" fill="#f3c34f"/><circle cx="${bx + 9}" cy="${by - 5}" r="2.6" fill="#de4a3b"/>`;
+  return s;
+}
+function umbrella(x, y) {
+  const [bx, by] = P(x, y, 0.15);
+  return `<ellipse cx="${bx}" cy="${by}" rx="14" ry="6" style="fill:var(--s-trim)"/><rect x="${bx - 1.5}" y="${by - 46}" width="3" height="46" fill="#7a5534"/>` +
+    `<path d="M${bx - 30} ${by - 36} Q${bx} ${by - 66} ${bx + 30} ${by - 36} Z" style="fill:var(--s-trim)"/><path d="M${bx - 30} ${by - 36} Q${bx - 14} ${by - 58} ${bx} ${by - 52} L${bx - 10} ${by - 36}Z M${bx + 10} ${by - 36} L${bx} ${by - 52} Q${bx + 14} ${by - 58} ${bx + 30} ${by - 36}Z" style="fill:var(--s-red)"/>` +
+    `<rect x="${bx - 12}" y="${by - 12}" width="24" height="5" rx="2" style="fill:var(--s-wood)"/><rect x="${bx - 1.5}" y="${by - 8}" width="3" height="8" fill="#7a5534"/>`;
+}
+const SEAT_POS = [[3.9, 11.1], [6.0, 11.25], [8.1, 11.1]];
+function customer(c) {
+  const [bx, by] = P(SEAT_POS[c.seat][0], SEAT_POS[c.seat][1], 0.15), shirt = `hsl(${c.hue} 55% 58%)`, hair = `hsl(${(c.hue + 160) % 360} 30% 28%)`;
+  const ready = S.counter.includes(c.dish);
+  return `<g data-act="serve" data-id="${c.id}" class="hit"><title>ลูกค้าอยากได้${RECIPES[c.dish].th}</title>` +
+    `<ellipse cx="${bx}" cy="${by}" rx="10" ry="4" fill="#000" opacity=".15"/><path d="M${bx - 8} ${by - 2} Q${bx - 9} ${by - 20} ${bx} ${by - 21} Q${bx + 9} ${by - 20} ${bx + 8} ${by - 2}Z" fill="${shirt}"/>` +
+    `<circle cx="${bx}" cy="${by - 28}" r="8" fill="#f2c9a5"/><path d="M${bx - 8} ${by - 29} Q${bx - 7} ${by - 39} ${bx} ${by - 38} Q${bx + 8} ${by - 39} ${bx + 8} ${by - 29} Q${bx + 2} ${by - 34} ${bx - 8} ${by - 29}Z" fill="${hair}"/>` +
+    `<circle cx="${bx - 3}" cy="${by - 27}" r="1" fill="#3a2a21"/><circle cx="${bx + 3}" cy="${by - 27}" r="1" fill="#3a2a21"/>` +
+    `<g class="${ready ? "bob" : ""}"><circle cx="${bx}" cy="${by - 58}" r="15" style="fill:var(--card)" stroke="${ready ? "var(--good)" : "var(--line)"}" stroke-width="2"/>` +
+    `<circle cx="${bx}" cy="${by - 58}" r="17.5" fill="none" stroke="var(--sun)" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100 100" data-pat="${c.t0}" transform="rotate(-90 ${bx} ${by - 58})"/>` +
+    `<svg x="${bx - 12}" y="${by - 70}" width="24" height="24" viewBox="0 0 64 64">${ICON[c.dish]}</svg></g></g>`;
+}
+const PLOT_POS = [[10.9, 2.6], [12.6, 2.6], [14.3, 2.6], [10.9, 4.6], [12.6, 4.6], [14.3, 4.6]];
+function plotScene(i) {
+  const [x, y] = PLOT_POS[i], p = S.plots[i], st = plotState(p);
+  let s = `<g data-act="plot" data-i="${i}" class="hit"><title>${p ? CROPS[p.crop].th : "แปลงว่าง: แตะเพื่อปลูก"}</title>` + box(x, y, 0, 1.4, 1.5, 0.22, { top: "var(--s-soil)", side: "var(--s-dirt)" });
+  const [cx, cy] = P(x + .7, y + .75, 0.22);
+  s += `<path d="M${pts([P(x + .2, y + .5, .22)])} L${pts([P(x + 1.2, y + .5, .22)])} M${pts([P(x + .2, y + 1, .22)])} L${pts([P(x + 1.2, y + 1, .22)])}" stroke="#000" opacity=".15" stroke-width="1.5"/>`;
+  if (p) {
+    const f = clamp01((S.t - p.t0) / CROPS[p.crop].time);
+    for (const [dx, dy] of [[.35, .4], [1.05, .4], [.35, 1.1], [1.05, 1.1]]) {
+      const [tx, ty] = P(x + dx, y + dy, .22);
+      if (f < .5) s += `<path d="M${tx} ${ty} v-6 M${tx} ${ty - 4} q-4 -1 -5 -5 q4 0 5 5 q4 -1 5 -5 q-4 0 -5 5" stroke="var(--s-leaf2)" stroke-width="1.6" fill="var(--s-leaf)"/>`;
+      else if (f < 1) s += `<ellipse cx="${tx}" cy="${ty - 7}" rx="6" ry="7" style="fill:var(--s-leaf)"/><ellipse cx="${tx - 2}" cy="${ty - 9}" rx="3" ry="3" fill="#fff" opacity=".15"/>`;
+      else if (p.crop === "wheat") s += `<path d="M${tx - 3} ${ty} l-2 -16 M${tx} ${ty} l0 -18 M${tx + 3} ${ty} l2 -16" stroke="#d9ac45" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="${tx}" cy="${ty - 18}" rx="2.6" ry="5" fill="#ecc75b"/><ellipse cx="${tx - 5}" cy="${ty - 15}" rx="2.4" ry="4.5" fill="#ecc75b"/><ellipse cx="${tx + 5}" cy="${ty - 15}" rx="2.4" ry="4.5" fill="#ecc75b"/>`;
+      else if (p.crop === "tomato") s += `<ellipse cx="${tx}" cy="${ty - 8}" rx="7" ry="8" style="fill:var(--s-leaf2)"/><circle cx="${tx - 3}" cy="${ty - 7}" r="3.4" fill="#de4a3b"/><circle cx="${tx + 3}" cy="${ty - 10}" r="3.4" fill="#e85a48"/><circle cx="${tx + 1}" cy="${ty - 3}" r="3" fill="#de4a3b"/>`;
+      else s += `<circle cx="${tx}" cy="${ty - 6}" r="7" fill="#88bd5e"/><circle cx="${tx}" cy="${ty - 6}" r="4" fill="#c6e39b"/>`;
+    }
+    if (st === "ready") s += `<g class="bob"><circle cx="${cx}" cy="${cy - 34}" r="9" style="fill:var(--good)"/><path d="M${cx - 4} ${cy - 34} l3 3 l5 -6" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>`;
+  } else s += `<g opacity=".7"><circle cx="${cx}" cy="${cy - 2}" r="7" fill="none" stroke="var(--s-trim)" stroke-width="1.6" stroke-dasharray="3 3"/><path d="M${cx - 3} ${cy - 2} h6 M${cx} ${cy - 5} v6" stroke="var(--s-trim)" stroke-width="1.6"/></g>`;
+  return s + "</g>";
+}
+function coopScene() {
+  const x = 11.4, y = 7.4, w = 2.2, d = 1.8, st = coopState();
+  let s = `<g data-act="coop" class="hit"><title>เล้าไก่</title>` + box(x - .5, y - .4, 0, 3.2, 2.8, .08, { top: "var(--s-sand)", side: "var(--s-dirt)" });
+  s += box(x, y, .08, w, d, 1.3, { side: "var(--s-red)" });
+  // roof
+  const a = P(x - .15, y - .15, 1.38), b = P(x + w + .15, y - .15, 1.38), c = P(x + w + .15, y + d / 2, 2.1), e = P(x - .15, y + d / 2, 2.1), f = P(x + w + .15, y + d + .15, 1.38), g = P(x - .15, y + d + .15, 1.38);
+  s += poly([e, c, f, g], "var(--s-trim)") + shade([e, c, f, g], .04) + poly([b, c, f], "var(--s-trim)") + shade([b, c, f], .2);
+  s += qL(x + .8, x + 1.4, .08, .8, y + d, "#3a2a21", .0) + winR(y + .5, y + 1.2, .6, 1.0, x + w);
+  const [hx, hy] = P(x + 1.1, y + d + .9, .08);
+  s += `<g transform="translate(${hx} ${hy})"><ellipse cx="0" cy="0" rx="7" ry="2.5" fill="#000" opacity=".15"/><ellipse cx="0" cy="-7" rx="7" ry="6" fill="#fff6e8"/><circle cx="5" cy="-13" r="4" fill="#fff6e8"/><path d="M8 -14 l3 1 l-3 1z" fill="#efbd4a"/><path d="M4 -17 q1 -3 3 -1" stroke="#de4a3b" stroke-width="2" fill="none"/><circle cx="6" cy="-13.5" r=".9" fill="#3a2a21"/></g>`;
+  const [ix, iy] = P(x + w / 2, y + d / 2, 2.1);
+  if (st === "ready") s += `<g class="bob"><circle cx="${ix}" cy="${iy - 18}" r="12" style="fill:var(--card)" stroke="var(--good)" stroke-width="2"/><svg x="${ix - 9}" y="${iy - 27}" width="18" height="18" viewBox="0 0 64 64">${ICON.egg}</svg></g>`;
+  else if (st === "busy") s += `<circle cx="${ix}" cy="${iy - 18}" r="10" style="fill:var(--card)" stroke="var(--line)"/><circle cx="${ix}" cy="${iy - 18}" r="10" fill="none" stroke="var(--leaf)" stroke-width="3" pathLength="100" stroke-dasharray="0 100" data-coop="1" transform="rotate(-90 ${ix} ${iy - 18})"/>`;
+  return s + "</g>";
+}
+function building() {
+  let s = "";
+  // ground floor (red), band, upper floor (cream), roof terrace
+  s += box(3, 3, 0, 6, 5, 3.2, { side: "var(--s-red)" });
+  s += box(2.9, 2.9, 3.1, 6.2, 5.2, .28, { top: "var(--s-teal)", side: "var(--s-teal)" });
+  s += box(3.2, 3.2, 3.38, 5.6, 4.6, 2.9, { side: "var(--s-cream)" });
+  s += box(3.05, 3.05, 6.28, 5.9, 4.9, .34, { top: "var(--s-trim)", side: "var(--s-teal)" });
+  // brick hints on the cream wall
+  for (const [bx, bz] of [[3.6, 5.9], [4.3, 3.8], [8.2, 4.1], [7.6, 5.95]]) s += qL(bx, bx + .4, bz, bz + .16, 7.8, "#d9b48f");
+  for (const [by, bz] of [[3.7, 4.0], [7.3, 5.8], [6.9, 3.7]]) s += qR(by, by + .4, bz, bz + .16, 8.8, "#d9b48f", .1);
+  // windows, upper floor, with shutters and flower boxes
+  for (const [x0, x1] of [[3.8, 5.0], [7.0, 8.2]]) {
+    s += qL(x0 - .45, x0 - .15, 4.0, 5.6, 7.8, "var(--s-teal)") + qL(x1 + .15, x1 + .45, 4.0, 5.6, 7.8, "var(--s-teal)") + winL(x0, x1, 4.0, 5.6, 7.8);
+    s += box(x0 - .1, 7.8, 3.7, x1 - x0 + .2, .3, .22, { top: "var(--s-soil)", side: "var(--s-wood)" });
+    for (let k = 0; k < 4; k++) { const [fx, fy] = P(x0 + .1 + k * (x1 - x0) / 3.3, 8.0, 4.02); s += `<circle cx="${fx}" cy="${fy - 2}" r="3.2" fill="${k % 2 ? "#de4a3b" : "#f3c34f"}"/>`; }
+  }
+  // balcony door in the middle of the upper floor
+  s += qL(5.55, 6.45, 3.38, 5.7, 7.8, "var(--s-trim)") + qL(5.68, 6.32, 3.38, 5.55, 7.8, "var(--s-teal)") + qL(5.75, 6.25, 4.4, 5.45, 7.8, "var(--s-glass)");
+  s += winR(4.4, 5.6, 4.0, 5.6, 8.8) + winR(6.4, 7.2, 4.4, 5.6, 8.8);
+  // ground floor shop windows on the left face, door on the right face
+  s += winL(3.5, 5.5, .5, 2.3, 8) + winL(6.5, 8.5, .5, 2.3, 8);
+  s += qL(3.3, 8.7, 0, .35, 8, "var(--s-teal)");
+  s += qR(4.5, 5.9, 0, 2.5, 9, "var(--s-trim)", .12) + qR(4.65, 5.75, 0, 2.35, 9, "var(--s-teal)", .15) + qR(4.8, 5.6, 1.2, 2.2, 9, "var(--s-glass)", .1);
+  const [kx, ky] = P(9, 5.45, 1.1); s += `<circle cx="${kx}" cy="${ky}" r="1.8" fill="#efbd4a"/>`;
+  s += winR(6.6, 7.6, .9, 2.3, 9);
+  // sign
+  s += qL(4.1, 7.9, 2.62, 3.06, 8, "var(--s-trim)") + qL(4.1, 7.9, 2.62, 3.06, 8, "#000", 0);
+  const [sx, sy] = P(4.45, 8, 2.72);
+  s += `<text transform="matrix(0.866 0.5 0 1 ${sx} ${sy})" font-family="Charm, cursive" font-weight="700" font-size="10.5" style="fill:var(--s-red)">Salvora · ร้านริมหาด</text>`;
+  // awning over the shop windows, sloping out from the left face
+  const n = 10;
+  for (let k = 0; k < n; k++) {
+    const xa = 3.3 + k * 5.4 / n, xb = xa + 5.4 / n;
+    s += poly([P(xa, 8, 2.56), P(xb, 8, 2.56), P(xb, 9.05, 2.0), P(xa, 9.05, 2.0)], k % 2 ? "var(--s-trim)" : "var(--sun)");
+    s += poly([P(xa, 9.05, 2.0), P(xb, 9.05, 2.0), P((xa + xb) / 2, 9.05, 1.78)], k % 2 ? "var(--s-trim)" : "var(--sun)") + shade([P(xa, 9.05, 2.0), P(xb, 9.05, 2.0), P((xa + xb) / 2, 9.05, 1.78)], .12);
+  }
+  // little hanging sign by the door
+  const [hx, hy] = P(9.35, 4.2, 2.6);
+  s += `<path d="M${hx} ${hy} v6" stroke="#7a5534" stroke-width="1.5"/><circle cx="${hx}" cy="${hy + 13}" r="7" style="fill:var(--s-trim)" stroke="var(--s-teal)" stroke-width="2"/><svg x="${hx - 5}" y="${hy + 8}" width="10" height="10" viewBox="0 0 64 64">${ICON.tomato_soup}</svg>`;
+  // chimney (stove) and the giant tomato on the roof
+  s += box(3.7, 3.7, 6.62, .7, .7, 1.5, { top: "#5a3d2a", side: "var(--s-red)" });
+  const [tx, ty] = P(6.3, 5.8, 6.62);
+  s += `<ellipse cx="${tx}" cy="${ty}" rx="34" ry="10" fill="#000" opacity=".15"/><g transform="translate(${tx - 42} ${ty - 76}) scale(1.32)"><use href="#i-tomato"/></g>`;
+  // rooftop rail posts
+  for (let k = 0; k <= 6; k++) { const [rx, ry] = P(3.1 + k * .97, 7.95, 6.62); s += `<rect x="${rx - 1}" y="${ry - 9}" width="2" height="9" style="fill:var(--s-trim)"/>`; }
+  const [ra, rb] = [P(3.1, 7.95, 7.05), P(8.92, 7.95, 7.05)]; s += `<line x1="${ra[0]}" y1="${ra[1]}" x2="${rb[0]}" y2="${rb[1]}" style="stroke:var(--s-trim)" stroke-width="2"/>`;
+  return s;
+}
+function lamp(x, y) {
+  const [bx, by] = P(x, y, 0);
+  return `<rect x="${bx - 2}" y="${by - 64}" width="4" height="64" fill="#2f3a36"/><rect x="${bx - 5}" y="${by - 4}" width="10" height="5" fill="#2f3a36"/><path d="M${bx - 7} ${by - 64} h14 l-3 -12 h-8z" fill="#2f3a36"/><rect x="${bx - 4}" y="${by - 74}" width="8" height="9" style="fill:var(--s-glass)"/><circle cx="${bx}" cy="${by - 70}" r="16" fill="#ffd36e" style="opacity:var(--s-night)"/>`;
+}
+function islandBase() {
+  let s = "";
+  // foam ring at sea level
+  const ring = [P(-1.3, -1.3, -.95), P(17.3, -1.3, -.95), P(17.3, 17.3, -.95), P(-1.3, 17.3, -.95)];
+  s += `<polygon points="${pts(ring)}" fill="none" style="stroke:var(--s-foam)" stroke-width="3" class="foam" stroke-linejoin="round" opacity=".8"/>`;
+  s += box(-.7, -.7, -1.6, 17.4, 17.4, .9, { top: "var(--s-sand)", side: "var(--s-dirt)" });
+  s += box(0, 0, -.7, 16, 16, .7, { top: "var(--s-grass)", side: "var(--s-grass2)" });
+  // grass speckles
+  for (let i = 0; i < 40; i++) { const x = (i * 7.3) % 16, y = (i * 4.1 + 3) % 16; if ((x > 2.6 && x < 9.4 && y > 2.6 && y < 12) || (x > 10.5 && y < 10)) continue; const [gx, gy] = P(x, y, 0); s += `<path d="M${gx} ${gy} l-2 -4 M${gx} ${gy} l0 -5 M${gx} ${gy} l2 -4" style="stroke:var(--s-leaf2)" stroke-width="1.2" opacity=".6"/>`; }
+  // stone path from the door to the pier
+  for (let k = 0; k < 10; k++) { const yy = 4.8 + k * 1.15; s += poly([P(9.6, yy, 0), P(10.5, yy, 0), P(10.5, yy + .85, 0), P(9.6, yy + .85, 0)], "var(--s-sand)") + shade([P(9.6, yy, 0), P(10.5, yy, 0), P(10.5, yy + .85, 0), P(9.6, yy + .85, 0)], .06); }
+  // pier and boat
+  s += box(9.5, 16.7, -1.0, 1.1, 4.8, .25, { top: "var(--s-wood)", side: "#7a5534" });
+  for (const yy of [17.5, 19.2, 21.0]) { const [px, py] = P(10.6, yy, -1); s += `<rect x="${px - 2}" y="${py - 2}" width="4" height="14" fill="#6a4829"/>`; }
+  const [bx, by] = P(12.2, 19.6, -1.05);
+  s += `<g class="boat"><path d="M${bx - 26} ${by - 8} Q${bx} ${by + 10} ${bx + 26} ${by - 8} Z" style="fill:var(--s-red)"/><path d="M${bx - 26} ${by - 8} H${bx + 26}" style="stroke:var(--s-trim)" stroke-width="3"/><rect x="${bx - 1}" y="${by - 46}" width="2" height="38" fill="#6a4829"/><path d="M${bx + 1} ${by - 44} L${bx + 20} ${by - 14} H${bx + 1}Z" style="fill:var(--s-trim)"/></g>`;
+  return s;
+}
+function deck() {
+  return box(2.8, 8.4, 0, 6.6, 3.6, .15, { top: "var(--s-wood)", side: "#7a5534" }) +
+    [9.0, 9.9, 10.8, 11.7].map(yy => `<polyline points="${pts([P(2.8, yy, .15), P(9.4, yy, .15)])}" stroke="#000" opacity=".12" stroke-width="1" fill="none"/>`).join("");
+}
+function sceneObjects() {
+  let s = islandBase();
+  s += roundTree(1.2, 1.6, 1.05) + roundTree(15.3, .9, .85) + bush(9.8, 1.4, true);
+  for (let i = 0; i < PLOTS; i++) s += plotScene(i);
+  s += building() + coopScene();
+  s += bush(1.4, 6.5, true) + roundTree(1.6, 9.2, .9);
+  s += deck() + umbrella(4.9, 10.2) + umbrella(7.2, 10.2);
+  for (const c of S.customers) s += customer(c);
+  s += lamp(9.2, 8.6) + bush(2.2, 13.6, true) + roundTree(4.8, 14.6, .8) + bush(12.9, 13.0, false) + palm(14.2, 12.8) + bush(7.6, 15.2, true);
+  return s;
+}
+function buildSceneShell() {
+  const sea = [];
+  for (let i = 0; i < 26; i++) {
+    const x = (i * 97) % 640, y = 30 + ((i * 61) % 520);
+    sea.push(`<path d="M${x} ${y} q6 -5 12 0 q6 5 12 0" style="stroke:var(--s-foam)" stroke-width="2" fill="none" stroke-linecap="round" class="wave" style="animation-delay:${(i % 7) * -.6}s"/>`);
+  }
+  const stars = Array.from({ length: 24 }, (_, i) => `<circle cx="${(i * 131) % 640}" cy="${(i * 53) % 200}" r="${i % 3 ? 1 : 1.6}" fill="#fff"/>`).join("");
+  const leaves = Array.from({ length: 6 }, (_, i) => `<ellipse cx="${80 + i * 70}" cy="${40 + (i % 3) * 30}" rx="4" ry="2" fill="${i % 3 ? "#7fae4f" : "#de4a3b"}" class="leaf" style="animation-delay:${i * -2.3}s"/>`).join("");
+  const gull = (y, d) => `<g class="gull" style="animation-delay:${d}s"><g transform="translate(0 ${y})"><path class="flap" d="M0 0 q6 -6 12 0 q6 -6 12 0" stroke="#4a4a4a" stroke-width="2" fill="none" stroke-linecap="round"/></g></g>`;
+  $("scene").innerHTML = `
+    <defs><radialGradient id="seaG" cx="50%" cy="55%" r="70%"><stop offset="0" style="stop-color:var(--s-sea1)"/><stop offset="1" style="stop-color:var(--s-sea2)"/></radialGradient>
+    <radialGradient id="fadeG" cx="50%" cy="50%" r="55%"><stop offset=".72" stop-color="#000" stop-opacity="0"/><stop offset="1" style="stop-color:var(--s-sky)"/></radialGradient></defs>
+    <rect width="640" height="560" fill="url(#seaG)" rx="28"/>
+    <g style="opacity:var(--s-stars)">${stars}</g>
+    <g>${sea.join("")}</g>
+    <g id="objs"></g>
+    <g>${[0, 1, 2].map(i => `<circle cx="${P(4.05, 4.05, 8.2)[0]}" cy="${P(4.05, 4.05, 8.2)[1]}" r="7" fill="#e9e1d6" class="smoke" style="animation-delay:${i * -1.66}s"/>`).join("")}</g>
+    <g>${leaves}</g>
+    ${gull(70, 0)}${gull(110, -9)}
+    <rect width="640" height="560" fill="url(#fadeG)" rx="28" pointer-events="none"/>`;
+}
+
+// ---------- Panels ----------
+const TABS = [
+  { id: "home", th: "หน้าร้าน", ic: `<path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>` },
+  { id: "farm", th: "ฟาร์ม", ic: `<path d="M12 21v-8M12 13c-5 0-7-4-7-7 5 0 7 3 7 7zm0-2c4 0 7-3 7-6-4 0-7 2-7 6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>` },
+  { id: "kitchen", th: "ครัว", ic: `<path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 6c0-2 2-2 2-4M14 6c0-2 2-2 2-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>` },
+  { id: "barn", th: "โกดัง", ic: `<path d="M3 10 12 4l9 6v10H3zM8 20v-6h8v6M8 14l8 6M16 14l-8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>` },
+];
+const ico = t => `<svg viewBox="0 0 24 24" aria-hidden="true">${t.ic}</svg>`;
+function badge(id) {
+  if (id === "farm") return S.plots.filter(p => plotState(p) === "ready").length + (coopState() === "ready" ? 1 : 0);
+  if (id === "kitchen") return S.counter.length;
+  if (id === "home") return S.customers.length;
+  return 0;
+}
+function customersCard() {
+  const rows = S.customers.slice().sort((a, b) => a.seat - b.seat).map(c => {
+    const r = RECIPES[c.dish], ready = S.counter.includes(c.dish);
+    return `<div class="row"><div class="ic">${svg(c.dish)}</div><div><div class="nm">โต๊ะ ${c.seat + 1} · ${r.th}</div><div class="sm">รอได้อีก <span data-left-pat="${c.t0}"></span></div><div class="bar pat" data-patbar="${c.t0}"><i></i></div></div>` +
+      `<button class="btn${ready ? " green" : " ghost"}" data-act="serve" data-id="${c.id}">${ready ? "เสิร์ฟ" : "ไปทำ"}</button></div>`;
+  }).join("");
+  return `<div class="card"><div class="head"><h3>ลูกค้าที่รออยู่</h3><span class="count">${S.customers.length}/${SEATS} โต๊ะ</span></div><div class="rows">${rows || `<div class="empty">ยังไม่มีลูกค้า ลูกค้าคนต่อไปมาเร็ว ๆ นี้</div>`}</div></div>`;
+}
+function panelHome() {
+  const tiles = Object.entries(RECIPES).map(([k, r]) => `<div class="tile">${svg(k)}<div class="t">${r.th}</div><div class="p">${coin(r.price)}</div></div>`).join("");
+  return `<div class="card special"><div><div class="eyebrow">เมนูประจำฤดู</div><h2>ซุปมะเขือเทศริมหาด</h2><p>มะเขือเทศสุกจากแปลง · ขนมปังข้าวสาลีอบใหม่</p>` +
+    `<button class="btn" data-act="tab" data-tab="kitchen">ไปทำที่ครัว →</button></div><div class="art">${svg("tomato_soup")}</div></div>` +
+    customersCard() +
+    `<div class="card"><div class="head"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg><h3>เมนูของร้าน</h3><button class="more" data-act="tab" data-tab="kitchen">ดูทั้งหมด →</button></div><div class="tiles">${tiles}</div></div>` +
+    `<div class="card"><div class="head"><h3>ผลผลิตจากเกาะ</h3><button class="more" data-act="tab" data-tab="barn">ไปโกดัง →</button></div><div class="tiles">${["wheat", "tomato", "cabbage", "egg"].map(k => `<div class="tile">${svg(k)}<div class="t">${ITEMS[k].th}</div><div class="p">มี ${S.inv[k]}</div></div>`).join("")}</div></div>`;
+}
+function panelFarm() {
+  const plots = S.plots.map((p, i) => {
+    const st = plotState(p), cls = st === "ready" ? " ready" : S.pick === i ? " pick" : "";
+    const sub = st === "empty" ? "แตะเพื่อปลูก" : st === "ready" ? "พร้อมเก็บ" : `<span data-left-crop="${i}"></span>`;
+    return `<button class="plot${cls}" data-act="plot" data-i="${i}">${cropStageIcon(p)}<span class="nm">${p ? CROPS[p.crop].th : `แปลง ${i + 1}`}</span><span class="sm">${sub}</span>${st === "growing" ? `<span class="bar" data-cropbar="${i}"><i></i></span>` : ""}</button>`;
+  }).join("");
+  const picker = S.pick == null ? "" : `<div class="card"><div class="head"><h3>ปลูกอะไรในแปลง ${S.pick + 1}?</h3><button class="more" data-act="unpick">ยกเลิก</button></div><div class="picker">` +
+    Object.entries(CROPS).map(([k, c]) => { const lock = S.level < c.level, poor = S.coins < c.seed; return `<button data-act="plant" data-crop="${k}" ${lock || poor ? "disabled" : ""}>${svg(k)}<b>${c.th}</b><span class="sm">${lock ? `ปลดล็อกเลเวล ${c.level}` : `เมล็ด ${c.seed} เหรียญ · ${fmt(c.time)}`}</span></button>`; }).join("") + `</div></div>`;
+  const cs = coopState();
+  const coopRow = `<div class="row"><div class="ic">${svg(cs === "ready" ? "egg" : "wheat")}</div><div><div class="nm">เล้าไก่</div><div class="sm">${cs === "idle" ? "ให้ข้าวสาลี 1 ชิ้น รอ 2 นาทีได้ไข่" : cs === "ready" ? "ไข่พร้อมเก็บแล้ว" : `กำลังฟัก อีก <span data-left-coop></span>`}</div>${cs === "busy" ? `<div class="bar" data-coopbar><i></i></div>` : ""}</div>` +
+    `<button class="btn${cs === "ready" ? " green" : cs === "busy" ? " ghost" : ""}" data-act="coop" ${cs === "busy" || (cs === "idle" && S.inv.wheat < 1) ? "disabled" : ""}>${cs === "ready" ? "เก็บไข่" : cs === "busy" ? "รอ" : "ให้อาหาร"}</button></div>`;
+  return picker + `<div class="card"><div class="head"><h3>แปลงปลูก</h3><span class="count">${S.plots.filter(Boolean).length}/${PLOTS} แปลง</span></div><div class="plots">${plots}</div></div>` +
+    `<div class="card"><div class="head"><h3>สัตว์</h3></div><div class="rows">${coopRow}</div></div>`;
+}
+function panelKitchen() {
+  const stoves = S.stoves.map((s, i) => s
+    ? `<div class="row"><div class="ic">${svg(s.dish)}</div><div><div class="nm">เตา ${i + 1} · ${RECIPES[s.dish].th}</div><div class="sm">${S.t - s.t0 >= RECIPES[s.dish].time ? "เสร็จแล้ว รอที่ว่างบนเคาน์เตอร์" : `อีก <span data-left-stove="${i}"></span>`}</div><div class="bar" data-stovebar="${i}"><i></i></div></div><span></span></div>`
+    : `<div class="row"><div class="ic">${svg("soil")}</div><div><div class="nm">เตา ${i + 1}</div><div class="sm">ว่าง เลือกเมนูด้านล่าง</div></div><span></span></div>`).join("");
+  const recipes = Object.entries(RECIPES).map(([k, r]) => {
+    const why = canCook(k), ing = Object.entries(r.ing).map(([ik, n]) => `<span class="${S.inv[ik] < n ? "miss" : ""}">${ITEMS[ik].th} ${S.inv[ik]}/${n}</span>`).join("");
+    const label = why === "level" ? `เลเวล ${r.level}` : why === "stove" ? "เตาเต็ม" : "ทำ";
+    return `<div class="row"><div class="ic">${svg(k)}</div><div><div class="nm">${r.th} · ${coin(r.price).replace("<svg", '<svg style="width:11px;height:11px;vertical-align:-1px"')}</div><div class="sm">${r.note} · ${fmt(r.time)}</div><div class="ing">${ing}</div></div>` +
+      `<button class="btn" data-act="cook" data-r="${k}" ${why !== "ok" ? "disabled" : ""}>${label}</button></div>`;
+  }).join("");
+  const counter = Array.from({ length: REST.counter }, (_, i) => `<div class="slot">${S.counter[i] ? svg(S.counter[i]) : ""}</div>`).join("");
+  return `<div class="card"><div class="head"><h3>เตา</h3><span class="count">${S.stoves.filter(Boolean).length}/${STOVES}</span></div><div class="rows">${stoves}</div></div>` +
+    `<div class="card"><div class="head"><h3>เคาน์เตอร์</h3><span class="count">${S.counter.length}/${REST.counter}</span></div><div class="counter">${counter}</div></div>` +
+    customersCard() +
+    `<div class="card"><div class="head"><h3>เมนู</h3></div><div class="rows">${recipes}</div></div>`;
+}
+function panelBarn() {
+  const used = barnUsed();
+  const rows = Object.entries(ITEMS).map(([k, it]) => `<div class="row"><div class="ic">${svg(k)}</div><div><div class="nm">${it.th} · ${S.inv[k]} ชิ้น</div><div class="sm">ขายชิ้นละ ${it.sell} เหรียญ</div></div>` +
+    `<div style="display:flex;gap:6px"><button class="btn ghost" data-act="sell" data-k="${k}" data-n="1" ${S.inv[k] < 1 ? "disabled" : ""}>ขาย 1</button><button class="btn" data-act="sell" data-k="${k}" data-n="all" ${S.inv[k] < 1 ? "disabled" : ""}>ทั้งหมด</button></div></div>`).join("");
+  const reset = S.confirmReset
+    ? `<div class="confirm">ลบความคืบหน้าทั้งหมดบนเกาะนี้? <button class="btn" data-act="reset">ลบและเริ่มใหม่</button><button class="btn ghost" data-act="cancelReset">ไม่ใช่</button></div>`
+    : `<button class="btn ghost" data-act="askReset">เริ่มเกาะใหม่</button>`;
+  return `<div class="card"><div class="head"><h3>โกดัง</h3></div><div class="cap"><span>${used}/${BARN_CAP} ชิ้น</span><span class="bar"><i style="width:${used / BARN_CAP * 100}%;${used >= BARN_CAP ? "background:var(--tomato)" : ""}"></i></span></div><div class="rows">${rows}</div></div>` +
+    `<div class="card"><div class="head"><h3>สมุดร้าน</h3></div><div class="statgrid"><div><b>${S.served}</b><span>จานที่เสิร์ฟ</span></div><div><b>${S.rep}</b><span>ชื่อเสียง</span></div><div><b>${S.level}</b><span>เลเวล</span></div></div></div>` +
+    `<div class="card">${reset}</div>`;
+}
+
+function render() {
+  $("tabs").innerHTML = TABS.map(t => `<button role="tab" aria-selected="${S.tab === t.id}" data-act="tab" data-tab="${t.id}">${t.th}</button>`).join("");
+  $("sidenav").innerHTML = TABS.map(t => { const n = badge(t.id); return `<button data-act="tab" data-tab="${t.id}" aria-current="${S.tab === t.id}">${ico(t)}${t.th}${n ? `<span class="n">${n}</span>` : ""}</button>`; }).join("");
+  $("footnav").innerHTML = TABS.map(t => `<button data-act="tab" data-tab="${t.id}" aria-current="${S.tab === t.id}" aria-label="${t.th}">${ico(t)}</button>`).join("");
+  const need = xpForNext(S.level);
+  $("stats").innerHTML = `<span class="chip lvl" title="XP ${S.xp}/${need}">Lv ${S.level}<span class="track"><span class="fill" style="width:${S.xp / need * 100}%;display:block"></span></span></span>` +
+    `<span class="chip" title="เหรียญ">${coin(S.coins)}</span><span class="chip" title="ชื่อเสียง"><svg viewBox="0 0 16 16"><use href="#i-heart"/></svg>${S.rep}</span>` +
+    `<button class="chip speed" data-act="speed" aria-pressed="${S.speed === 5}" title="เร่งเวลาสำหรับลองเล่น">×${S.speed}</button>`;
+  $("panel").innerHTML = { home: panelHome, farm: panelFarm, kitchen: panelKitchen, barn: panelBarn }[S.tab]();
+  $("objs").innerHTML = sceneObjects();
+  tickUI();
+}
+// Per-frame updates of bars and countdowns without rebuilding the DOM.
+function tickUI() {
+  const setBar = (el, f) => { const i = el.querySelector("i"); if (i) i.style.width = (clamp01(f) * 100).toFixed(1) + "%"; };
+  document.querySelectorAll("[data-cropbar]").forEach(el => { const p = S.plots[+el.dataset.cropbar]; if (p) setBar(el, (S.t - p.t0) / CROPS[p.crop].time); });
+  document.querySelectorAll("[data-left-crop]").forEach(el => { const p = S.plots[+el.dataset.leftCrop]; if (p) el.textContent = "อีก " + fmt(CROPS[p.crop].time - (S.t - p.t0)); });
+  document.querySelectorAll("[data-stovebar]").forEach(el => { const s = S.stoves[+el.dataset.stovebar]; if (s) setBar(el, (S.t - s.t0) / RECIPES[s.dish].time); });
+  document.querySelectorAll("[data-left-stove]").forEach(el => { const s = S.stoves[+el.dataset.leftStove]; if (s) el.textContent = fmt(RECIPES[s.dish].time - (S.t - s.t0)); });
+  document.querySelectorAll("[data-patbar]").forEach(el => { const f = 1 - (S.t - +el.dataset.patbar) / REST.patience; setBar(el, f); el.classList.toggle("low", f < .3); });
+  document.querySelectorAll("[data-left-pat]").forEach(el => { el.textContent = fmt(REST.patience - (S.t - +el.dataset.leftPat)); });
+  document.querySelectorAll("[data-pat]").forEach(el => { const f = clamp01(1 - (S.t - +el.dataset.pat) / REST.patience); el.setAttribute("stroke-dasharray", `${(f * 100).toFixed(1)} 100`); el.style.stroke = f < .3 ? "var(--tomato)" : "var(--sun)"; });
+  if (S.coop) {
+    const f = clamp01((S.t - S.coop.t0) / COOP.time);
+    document.querySelectorAll("[data-coopbar]").forEach(el => setBar(el, f));
+    document.querySelectorAll("[data-left-coop]").forEach(el => { el.textContent = fmt(COOP.time - (S.t - S.coop.t0)); });
+    document.querySelectorAll("[data-coop]").forEach(el => el.setAttribute("stroke-dasharray", `${(f * 100).toFixed(1)} 100`));
+  }
+}
+
+// ---------- Boot ----------
+function start(hotData) {
+  S = hotData && hotData.S ? hotData.S : load();
+  toastBox = $("toasts");
+  buildSceneShell();
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-act]"); if (!el || !ACT[el.dataset.act]) return;
+    ACT[el.dataset.act](el); save(); render(); sig = signature();
+  });
+  let last = performance.now(), sig = "", saveAt = 0;
+  render(); sig = signature();
+  function frame(now) {
+    const dt = Math.min(1, (now - last) / 1000); last = now;
+    S.t += dt * S.speed; step();
+    const s2 = signature();
+    if (s2 !== sig) { sig = s2; render(); } else tickUI();
+    if (now > saveAt) { save(); saveAt = now + 3000; }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  window.claude?.hot?.snapshot?.(() => ({ S }));
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
