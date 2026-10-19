@@ -24,7 +24,7 @@ func run() -> void:
 	gs.level = 10
 	gs.coins = 5000
 
-	# The restaurant map: sea along the bottom-left edge only, a country road across the top, the shop near the corner
+	# The restaurant map: a bay below the shop (sea along the bottom edge only), a country road across the top, the shop near the corner
 	var lay: SceneLayout = gs.layout_for("restaurant")
 	var g: WorldGrid = gs.grid("restaurant")
 	check(lay.cells == Vector2i(72, 54) and g.size == lay.cells and lay.area == "any", "the main map is 72x54 cells and takes every item")
@@ -68,7 +68,7 @@ func run() -> void:
 	check(not g.can_buy_parcel(Vector2i(2, 0)) and not g.can_buy_parcel(Vector2i(3, 8)) and not g.can_buy_parcel(Vector2i(6, 1)), "the road, the sea and locked land are not for sale")
 	for p in lay.sale_parcels():
 		check(lay.label_of_parcel(p) == "B", "only blocks marked B are for sale")
-	check(lay.sale_parcels().size() == 31, "thirty-one blocks around the shop and the farm are for sale")
+	check(lay.sale_parcels().size() == 36, "thirty-six blocks around the shop, the garden and the bay are for sale")
 	check(gs.buy_land("restaurant", Vector2i(1, 1) * 6) == "ok" and gs.coins == 4850, "buy the block beside the shop")
 
 	# Floors: the shop is fixed, bought land can be built over and put back
