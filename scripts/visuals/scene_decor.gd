@@ -4,9 +4,9 @@ extends Node2D
 # Drawn from a scene's SceneLayout and the player's land (GameState): the ground kinds the owner painted
 # (road, pavement, floor, sand, dirt), floor built over bought land, the walls on cell edges, and the build grid
 # shown while placing or moving. Reads only. Colours and shapes are code-drawn stand-ins until art arrives.
-const WALL_H := 192.0      # a wall is three blocks (cells) tall (pixel art 32x96 for one cell wide, shown at 2x); a door is two, a counter one
+const WALL_H := 192.0      # a wall is three blocks (cells) tall (art 128x384 for one cell wide, shown at half size); a door is two, a counter one
 const LOW_H := 32.0
-const SIDE_W := 24.0       # thickness of a wall seen from the side (pixel art 12x96, shown at 2x)
+const SIDE_W := 24.0       # thickness of a wall seen from the side (art 48x384, shown at half size)
 const WALL_SHADOW := Color(0.12, 0.08, 0.05, 0.3)   # the dark the wall throws on the floor along its foot
 const SHADOW_W := 14.0
 const WALL_TOP := Color("f3e4d6")   # cap of a side wall post
@@ -56,7 +56,7 @@ var view: ViewState
 var edge_void: SceneVoid
 
 func setup(view_state: ViewState) -> void:
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST   # pixel art: hard pixels, no smoothing
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS   # painted art: smooth
 	view = view_state
 	z_index = -1
 	edge_void = SceneVoid.new()
@@ -314,7 +314,7 @@ func _draw_side_wall(lay: SceneLayout, x: int, y: int, kind: String) -> void:
 	var b := _pt(x - 0.5, end_y + 0.5)
 	var h := LOW_H if kind == "low" else WALL_H
 	var tex := Assets.get_tex(WALL_SIDE_ART)
-	var side_w := tex.get_width() * 2.0 if tex != null else SIDE_W   # the post is as thick as its art (pixel art shown at 2x)
+	var side_w := tex.get_width() * Iso.TILE_W / Iso.ART_CELL if tex != null else SIDE_W   # the post is as thick as its art
 	var rect := Rect2(Vector2(a.x - side_w * 0.5, a.y - h), Vector2(side_w, b.y - a.y + h))
 	_draw_floor_shadow(a + Vector2(side_w * 0.5, 0), b + Vector2(side_w * 0.5, 0), Vector2(SHADOW_W, 0))
 	if tex != null and kind != "low":

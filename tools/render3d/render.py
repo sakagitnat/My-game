@@ -27,11 +27,12 @@ def lin(c):
 
 _mats = {}
 def mat(key, rough=0.8):
+    """A material from a palette key ('w4') or a colour ('#c98a55')."""
     if key not in _mats:
         m = bpy.data.materials.new(key)
         m.use_nodes = True
         b = m.node_tree.nodes['Principled BSDF']
-        b.inputs['Base Color'].default_value = lin(P[key])
+        b.inputs['Base Color'].default_value = lin(P[key] if not key.startswith('#') else tuple(int(key[i:i + 2], 16) for i in (1, 3, 5)))
         b.inputs['Roughness'].default_value = rough
         _mats[key] = m
     return _mats[key]
@@ -65,6 +66,14 @@ class Model:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=r, location=(x, y, z * ZS))
         ob = bpy.context.object; ob.scale = (sx, sy, sz * ZS)
         bpy.ops.object.shade_smooth()
+        return self._own(ob, key)
+    def gable(self, x0, y0, x1, y1, z0, z1, key):
+        """A roof: ridge along x at the middle of y, eaves at z0, ridge at z1 (a prism)."""
+        ym = (y0 + y1) / 2
+        v = [(x0, y0, z0 * ZS), (x1, y0, z0 * ZS), (x1, ym, z1 * ZS), (x0, ym, z1 * ZS), (x0, y1, z0 * ZS), (x1, y1, z0 * ZS)]
+        f = [(0, 1, 2, 3), (3, 2, 5, 4), (0, 3, 4), (1, 5, 2), (0, 4, 5, 1)]
+        me = bpy.data.meshes.new('roof'); me.from_pydata(v, [], f); me.update()
+        ob = bpy.data.objects.new('roof', me); bpy.context.collection.objects.link(ob)
         return self._own(ob, key)
     def limb(self, a, b, r, key):
         """A cylinder from point a to point b (z in blocks)."""
@@ -140,6 +149,26 @@ def character(m, frame=0):
         m.ball(cx + side * 0.17, cy - 0.25, hz - 0.1, 0.04, 'p1', 1.2, 0.4, 0.7)           # blush
     return w, d
 
+def coop(m):
+    """3 x 3 cells, three blocks tall to the ridge: cream walls, a blue gable roof, a wooden door with a ramp, a round window."""
+    w, d = 3.0, 3.0
+    m.box(0.25, 0.7, 0, 2.75, 2.7, 0.12, 'u2')                                           # stone footing
+    m.box(0.3, 0.75, 0.12, 2.7, 2.65, 1.7, 'c3')                                          # walls
+    for x in (0.3, 2.62): m.box(x, 0.73, 0.12, x + 0.08, 0.81, 1.7, 'c4')                 # corner boards
+    for k in range(5):                                                                    # roof: five shingle rows, each a step up the slope
+        t = k / 5
+        m.gable(0.15, 0.55 + t * 1.1, 2.85, 2.85 - t * 1.1, 1.62 + t * 1.13, 2.75, ('b2', 'b3')[k % 2])
+    m.box(0.12, 1.66, 2.68, 2.88, 1.74, 2.8, 'c4')                                        # ridge cap
+    m.box(0.15, 0.53, 1.58, 2.85, 0.6, 1.66, 'c4')                                        # white eave trim
+    m.box(1.15, 0.7, 0.12, 1.85, 0.75, 1.15, 'w3')                                        # door
+    m.box(1.12, 0.68, 1.12, 1.88, 0.74, 1.2, 'c4')
+    for x in (1.33, 1.5, 1.67): m.box(x, 0.69, 0.18, x + 0.02, 0.7, 1.08, 'w2')
+    m.box(1.2, 0.1, 0.0, 1.8, 0.7, 0.08, 'w4')                                            # ramp
+    m.disc_front(2.2, 0.72, 1.3, 0.16, 0.04, 'c4', 20); m.disc_front(2.2, 0.7, 1.3, 0.11, 0.04, 'g1', 20)   # round window
+    m.disc_front(0.75, 0.72, 0.75, 0.13, 0.04, 'w4', 12)                                  # nest box hole
+    m.disc_front(0.75, 0.70, 0.75, 0.09, 0.04, 'w0', 12)
+    return w, d
+
 # Each output: (file name, builder, facing turns: 0 front, 1 left, 2 back, size in px (w, h), frame)
 JOBS = [
     ('rest_table_small_01', table, 0, (48, 32), 0),
@@ -149,6 +178,7 @@ JOBS = [
     ('chair_front', chair, 0, (32, 32), 0),
     ('chair_side', chair, 1, (32, 32), 0),
     ('chair_back', chair, 2, (32, 32), 0),
+    ('farm_coop_01', coop, 0, (96, 144), 0),
 ] + [('cook_down_%d' % f, character, 0, (32, 64), f) for f in range(4)] + [
     ('cook_left_0', character, 1, (32, 64), 0), ('cook_up_0', character, 2, (32, 64), 0),
 ]

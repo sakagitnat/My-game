@@ -90,7 +90,7 @@ func _build() -> void:
 	col.add_child(coin_row)
 	var coin := Panel.new()
 	coin.custom_minimum_size = Vector2(24, 24)
-	coin.add_theme_stylebox_override("panel", UiTheme.box(UiTheme.GOLD, Color("a8761f"), 12, 0, 3))
+	coin.add_theme_stylebox_override("panel", UiTheme.box(Color("f3c445"), Color("b8862e"), 12, 0, 3))   # a gold coin
 	coin_row.add_child(coin)
 	coins_label = Label.new()
 	coin_row.add_child(coins_label)
@@ -153,7 +153,8 @@ func _build() -> void:
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	message_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	message_label.add_theme_color_override("font_color", Color.WHITE)   # over the world, not on a panel
+	message_label.add_theme_color_override("font_outline_color", Color("3a2a21"))
 	message_label.add_theme_constant_override("outline_size", 8)
 	message_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(message_label)
@@ -204,7 +205,7 @@ func _build() -> void:
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(modal)
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.6)
+	dim.color = Color(0.2, 0.13, 0.08, 0.45)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.gui_input.connect(_on_dim_input)
 	modal.add_child(dim)
@@ -863,13 +864,13 @@ func _sync_web_names() -> void:
 var f=document.getElementById('salvora_names');
 if(!f){f=document.createElement('div');f.id='salvora_names';f.className='salvora-in';
 f.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:10;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:5vh 12px;box-sizing:border-box;font-family:sans-serif;';
-f.innerHTML='<div style="width:min(520px,100%%);box-sizing:border-box;background:#1b2428;border:3px solid #c58a50;border-radius:14px;padding:18px;color:#f4ece0;display:flex;flex-direction:column;gap:8px;">'
+f.innerHTML='<div style="width:min(520px,100%%);box-sizing:border-box;background:#fbf3e4;border:3px solid #c9935b;border-radius:14px;padding:18px;color:#4a3226;display:flex;flex-direction:column;gap:8px;">'
 +'<div id="sn_title" style="font-size:26px;"></div><div id="sn_l0" style="font-size:18px;"></div>'
-+'<input id="sn_i0" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #4a5560;border-radius:8px;background:#11171b;color:#f4ece0;outline:0;">'
++'<input id="sn_i0" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #d9b98f;border-radius:8px;background:#fffdf8;color:#4a3226;outline:0;">'
 +'<div id="sn_l1" style="font-size:18px;"></div>'
-+'<input id="sn_i1" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #4a5560;border-radius:8px;background:#11171b;color:#f4ece0;outline:0;">'
-+'<button id="sn_go" style="font-size:20px;height:58px;margin-top:6px;border:1px solid #6f7d8a;border-radius:10px;background:#2c3b41;color:#f4ece0;"></button>'
-+'<button id="sn_lang" style="font-size:18px;height:50px;border:1px solid #6f7d8a;border-radius:10px;background:#2c3b41;color:#f4ece0;"></button></div>';
++'<input id="sn_i1" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:20px;height:54px;box-sizing:border-box;padding:0 12px;border:1px solid #d9b98f;border-radius:8px;background:#fffdf8;color:#4a3226;outline:0;">'
++'<button id="sn_go" style="font-size:20px;height:58px;margin-top:6px;border:1px solid #c9935b;border-radius:10px;background:#fffaf1;color:#4a3226;"></button>'
++'<button id="sn_lang" style="font-size:18px;height:50px;border:1px solid #c9935b;border-radius:10px;background:#fffaf1;color:#4a3226;"></button></div>';
 document.body.appendChild(f);
 var i0=document.getElementById('sn_i0'),i1=document.getElementById('sn_i1'),go=document.getElementById('sn_go');
 window.__sn={done:0,lang:0};

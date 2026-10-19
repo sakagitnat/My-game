@@ -6,6 +6,7 @@ extends RefCounted
 # cells and land is bought in PARCEL x PARCEL blocks (see WorldGrid). One cell is 64 px (art is drawn at 128 px per cell).
 const TILE_W := 64.0
 const TILE_H := 64.0
+const ART_CELL := 128.0   # pixels per cell in the art files (docs/ART_TOPDOWN.md); the game shows a cell at TILE_W
 
 static func cell_to_world(c: Vector2i) -> Vector2:
 	return cell_to_world_f(Vector2(c))

@@ -30,10 +30,10 @@ static func grass_color(vx: int, vy: int) -> Color:
 
 # d: whole cells from this corner to the water (0 on the shoreline itself).
 func _color_at(vx: int, vy: int, d: float) -> Color:
-	var m := Noise2D.value(vx * 0.65, vy * 0.65, 23)
 	var grass := grass_color(vx, vy)
 	var beach := clampf((2.6 - d) / 1.8, 0.0, 1.0)
-	return grass.lerp(SAND_DARK.lerp(SAND_LIGHT, m), beach)
+	var sand := SAND_DARK.lerp(SAND_LIGHT, 0.35 + 0.4 * Noise2D.value(vx * 0.18, vy * 0.18, 31))   # wide soft patches, not per cell
+	return grass.lerp(sand, beach)
 
 func _corner_color(vx: int, vy: int) -> Color:
 	var key := vx * 1000 + vy
