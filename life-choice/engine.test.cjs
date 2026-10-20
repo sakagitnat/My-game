@@ -158,3 +158,53 @@ test('ฉายาของชีวิตขึ้นกับค่าสถ�
 });
 
 console.log('engine tests done');
+
+test('โอกาสผ่านการทดสอบตรงกับการทอย d20 ทุกหน้า', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.stats.wisdom = 4; // โบนัส 2
+  life.stats.luck = 3; // โบนัส 1
+  // ต้องทอยได้อย่างน้อย 10 - 3 = 7 คือ 14 หน้าจาก 20
+  assert.equal(E.checkChance(life, 'wisdom', 10), 14 / 20);
+  assert.equal(E.checkChance(life, 'wisdom', 1), 1);
+  assert.equal(E.checkChance(life, 'wisdom', 40), 0);
+  // นับจากการทอยจริงทุกหน้าแล้วต้องได้ค่าเดียวกัน
+  let pass = 0;
+  for (let face = 0; face < 20; face++) {
+    if (E.rollCheck(life, 'wisdom', 10, () => face / 20).success) pass++;
+  }
+  assert.equal(pass / 20, E.checkChance(life, 'wisdom', 10));
+});
+
+test('ช่วงวัยแบ่งตามอายุ และเหตุการณ์ทุกอันมีชื่อเรื่อง', () => {
+  assert.equal(E.stageOf(5).id, 'child');
+  assert.equal(E.stageOf(13).id, 'youth');
+  assert.equal(E.stageOf(18).id, 'adult');
+  assert.equal(E.stageOf(60).id, 'elder');
+  for (const event of E.EVENTS) assert.ok(event.title, event.id + ' needs a title');
+});
+
+test('ชื่อตัวละครและชนิดของบันทึก', () => {
+  const life = E.createLife('mage', () => 0, 'ไลรา');
+  assert.equal(life.name, 'ไลรา');
+  assert.equal(E.createLife('mage', () => 0).name, 'ผู้ไร้นาม');
+  assert.equal(life.log[0].kind, 'birth');
+  life.current = E.EVENTS[0];
+  E.chooseOption(life, 2, () => 0);
+  assert.equal(life.log.at(-1).kind, 'event');
+  assert.equal(E.summarize(life).name, 'ไลรา');
+});
+
+test('ทุกฉายาใน TITLES ได้มาจาก summarize ได้จริง', () => {
+  const base = { health: 50, gold: 0, reputation: 0, strength: 0, wisdom: 0, charm: 0, luck: 0 };
+  const cases = [{ gold: 300 }, { reputation: 15 }, { wisdom: 12 }, { strength: 12 }, { charm: 12 }, { luck: 12 }, {}];
+  const got = cases.map((c) => E.summarize({ name: 'x', age: 50, cause: '', stats: { ...base, ...c } }).title);
+  assert.deepEqual(got, E.TITLES.map((t) => t.title));
+});
+
+test('ทุกเหตุการณ์ วัย และต้นกำเนิด ชี้ไปที่ฉากที่มีอยู่จริง', () => {
+  const Art = require('./scene.js');
+  for (const event of E.EVENTS) assert.ok(Art.SCENES[event.scene], event.id + ' -> ' + event.scene);
+  for (const stage of E.STAGES) assert.ok(Art.SCENES[Art.STAGE_SCENES[stage.id]], stage.id);
+  for (const origin of E.ORIGINS) assert.ok(Art.SCENES[Art.ORIGIN_SCENES[origin.id]], origin.id);
+  assert.ok(Art.SCENES.title && Art.SCENES.ending);
+});

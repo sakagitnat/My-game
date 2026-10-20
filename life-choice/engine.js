@@ -55,6 +55,8 @@
   const EVENTS = [
     {
       id: 'dragon_hatchling',
+      title: 'มังกรน้อยในกับดัก',
+      scene: 'dragon_vale',
       minAge: 5,
       maxAge: 12,
       text: 'ระหว่างเดินกลับบ้าน คุณพบมังกรน้อยตัวหนึ่งติดอยู่ในกับดักเหล็กข้างทาง มันร้องขอความช่วยเหลือ',
@@ -66,6 +68,8 @@
     },
     {
       id: 'child_tutor',
+      title: 'บทเรียนคาถาแรก',
+      scene: 'tower',
       minAge: 6,
       maxAge: 12,
       text: 'อาจารย์ประจำหมู่บ้านให้ท่องคาถาพื้นฐานจำนวนมากในคราวเดียว',
@@ -84,6 +88,8 @@
     },
     {
       id: 'child_wolves',
+      title: 'เงาหมาป่า',
+      scene: 'forest_night',
       minAge: 7,
       maxAge: 12,
       text: 'ฝูงหมาป่าสองตัวขวางทางกลับบ้าน',
@@ -110,6 +116,8 @@
     },
     {
       id: 'youth_army',
+      title: 'เสียงกลองรบ',
+      scene: 'fortress',
       minAge: 13,
       maxAge: 17,
       text: 'กองทหารประกาศรับอาสาสมัครเยาวชนไปป้องกันด่านชายแดน',
@@ -120,6 +128,8 @@
     },
     {
       id: 'youth_caravan',
+      title: 'ขบวนสินค้าสู่เมืองหลวง',
+      scene: 'road',
       minAge: 14,
       maxAge: 18,
       text: 'พ่อค้าแปลกหน้าเสนองานคุ้มกันขบวนสินค้าไปยังเมืองหลวง',
@@ -138,6 +148,8 @@
     },
     {
       id: 'youth_festival',
+      title: 'เทศกาลเก็บเกี่ยว',
+      scene: 'festival',
       minAge: 14,
       maxAge: 19,
       text: 'เทศกาลเก็บเกี่ยวในหมู่บ้านมีการเต้นรำกลางลาน',
@@ -148,6 +160,8 @@
     },
     {
       id: 'youth_graveyard',
+      title: 'เสียงเรียกจากสุสาน',
+      scene: 'graveyard',
       minAge: 15,
       maxAge: 19,
       text: 'คืนหนึ่งมีเสียงเรียกชื่อคุณดังมาจากสุสานร้างที่ชายป่า',
@@ -166,6 +180,8 @@
     },
     {
       id: 'adult_guild',
+      title: 'สมาคมช่างฝีมือ',
+      scene: 'city',
       minAge: 30,
       maxAge: 60,
       text: 'สมาคมช่างฝีมือเชิญคุณเข้าร่วมเป็นสมาชิกเต็มตัว',
@@ -176,6 +192,8 @@
     },
     {
       id: 'adult_knight_offer',
+      title: 'ตำแหน่งแม่ทัพ',
+      scene: 'fortress',
       minAge: 22,
       maxAge: 45,
       text: 'ผู้ปกครองเมืองเสนอให้คุณเป็นแม่ทัพรักษาป้อมด่านหน้า',
@@ -186,6 +204,8 @@
     },
     {
       id: 'adult_investment',
+      title: 'หอการค้าแห่งใหม่',
+      scene: 'harbor',
       minAge: 20,
       maxAge: 50,
       text: 'เพื่อนเก่าชวนลงทุนในหอการค้าใหม่ที่บอกว่าจะทำกำไรมหาศาล',
@@ -205,6 +225,8 @@
     },
     {
       id: 'adult_relic_quest',
+      title: 'อาวุธแห่งเทพ',
+      scene: 'ruins',
       minAge: 20,
       maxAge: 50,
       text: 'มีผู้ชักชวนให้ร่วมขบวนเดินทางไปค้นหาอาวุธของเทพในซากปรักหักพังโบราณ',
@@ -215,6 +237,8 @@
     },
     {
       id: 'adult_fever',
+      title: 'ไข้ป่าระบาด',
+      scene: 'rain_village',
       minAge: 18,
       maxAge: 60,
       text: 'คุณล้มป่วยด้วยไข้ป่าที่กำลังระบาดในหมู่บ้าน',
@@ -233,6 +257,8 @@
     },
     {
       id: 'adult_dinner',
+      title: 'งานเลี้ยงของนายอำเภอ',
+      scene: 'city',
       minAge: 20,
       maxAge: 45,
       text: 'นายอำเภอเชิญคุณไปทานอาหารค่ำ และแนะนำให้รู้จักกับลูกสาวของเขา',
@@ -243,6 +269,8 @@
     },
     {
       id: 'adult_mine',
+      title: 'เหมืองแร่เรืองแสง',
+      scene: 'cave',
       minAge: 20,
       maxAge: 55,
       text: 'คุณพบทางเข้าเหมืองลับที่มีแร่เวทมนตร์เรืองแสงอยู่ข้างใน',
@@ -261,6 +289,8 @@
     },
     {
       id: 'adult_tax',
+      title: 'ผู้เก็บภาษี',
+      scene: 'city',
       minAge: 25,
       maxAge: 60,
       text: 'ผู้ตรวจการเก็บภาษีมาถึงเมือง และสงสัยว่าบัญชีของคุณไม่ถูกต้อง',
@@ -279,6 +309,8 @@
     },
     {
       id: 'adult_wizard_school',
+      title: 'หอคอยเปิดประตู',
+      scene: 'tower',
       minAge: 18,
       maxAge: 40,
       text: 'หอคอยเวทมนตร์เปิดรับนักเรียนผู้ใหญ่ที่สนใจศาสตร์ลึกลับ',
@@ -289,6 +321,8 @@
     },
     {
       id: 'adult_love',
+      title: 'ความรักและความลับ',
+      scene: 'lake',
       minAge: 20,
       maxAge: 50,
       text: 'คนรักผู้ซื่อสัตย์คนหนึ่งเข้ามาในชีวิต แต่ดูเหมือนเขาจะปิดบังอดีตบางอย่างไว้',
@@ -307,6 +341,8 @@
     },
     {
       id: 'adult_bandit',
+      title: 'ข้อเสนอของโจรป่า',
+      scene: 'camp',
       minAge: 25,
       maxAge: 55,
       text: 'ผู้นำโจรป่าเสนอให้คุณร่วมแผนปล้นขบวนพ่อค้าใหญ่ที่ผ่านทาง',
@@ -325,6 +361,8 @@
     },
     {
       id: 'elder_chronicle',
+      title: 'ตำนานของผู้เฒ่า',
+      scene: 'elder_home',
       minAge: 60,
       maxAge: 95,
       text: 'ผู้เฒ่าในหมู่บ้านขอให้คุณเล่าเรื่องราวชีวิตให้คนรุ่นหลังจดบันทึกไว้',
@@ -335,6 +373,8 @@
     },
     {
       id: 'elder_joint',
+      title: 'ร่างกายที่ร่วงโรย',
+      scene: 'elder_home',
       minAge: 60,
       maxAge: 90,
       text: 'ข้อต่อของคุณเริ่มปวดจนเดินลำบาก',
@@ -345,6 +385,8 @@
     },
     {
       id: 'elder_blessing',
+      title: 'คำอวยพรสุดท้าย',
+      scene: 'village',
       minAge: 60,
       maxAge: 95,
       text: 'เด็กหนุ่มคนหนึ่งขอให้คุณให้พรก่อนเดินทางไปเมืองหลวง',
@@ -388,17 +430,43 @@
     }
   }
 
-  function addLog(life, text) {
-    life.log.push({ age: life.age, text });
+  // ช่วงวัยของชีวิต ใช้แบ่งบทและเลือกฉากพื้นหลัง
+  const STAGES = [
+    { id: 'child', minAge: 0, numeral: 'I', name: 'วัยเยาว์' },
+    { id: 'youth', minAge: 13, numeral: 'II', name: 'วัยหนุ่มสาว' },
+    { id: 'adult', minAge: 18, numeral: 'III', name: 'วัยทำงาน' },
+    { id: 'elder', minAge: 60, numeral: 'IV', name: 'วัยชรา' },
+  ];
+
+  function stageOf(age) {
+    let stage = STAGES[0];
+    for (const s of STAGES) if (age >= s.minAge) stage = s;
+    return stage;
   }
 
-  function createLife(originId, rng = Math.random) {
+  // ฉายาเรียงตามลำดับที่ summarize ตรวจ ตัวสุดท้ายคือค่าเริ่มต้น
+  const TITLES = [
+    { title: 'เศรษฐีแห่งเมืองท่า', test: (s) => s.gold >= 300 },
+    { title: 'ผู้กล้าที่ชาวบ้านจดจำ', test: (s) => s.reputation >= 15 },
+    { title: 'ปราชญ์หอคอย', test: (s) => s.wisdom >= 12 },
+    { title: 'นักรบผู้ผ่านศึก', test: (s) => s.strength >= 12 },
+    { title: 'กวีผู้เป็นที่รัก', test: (s) => s.charm >= 12 },
+    { title: 'ผู้โชคดีแห่งทวีป', test: (s) => s.luck >= 12 },
+    { title: 'ชาวบ้านผู้ซื่อสัตย์', test: () => true },
+  ];
+
+  function addLog(life, text, kind = 'quiet') {
+    life.log.push({ age: life.age, text, kind });
+  }
+
+  function createLife(originId, rng = Math.random, name = '') {
     const origin = ORIGINS.find((o) => o.id === originId);
     if (!origin) throw new Error('unknown origin: ' + originId);
     const stats = { health: 60, gold: 0, reputation: 0, strength: 2, wisdom: 2, charm: 2, luck: 2 };
     applyEffects(stats, origin.effects);
     stats.luck = clamp(stats.luck + Math.floor(rng() * 4), 0, STAT_MAX);
     const life = {
+      name: name || 'ผู้ไร้นาม',
       origin: origin.id,
       age: START_AGE,
       stats,
@@ -408,21 +476,31 @@
       over: false,
       cause: null,
     };
-    addLog(life, 'เกิดเป็น' + origin.name + ' ' + origin.desc);
+    addLog(life, 'เกิดเป็น' + origin.name + ' ' + origin.desc, 'birth');
     return life;
+  }
+
+  function checkBonus(life, stat) {
+    return Math.floor(life.stats[stat] / 2) + Math.floor(life.stats.luck / 3);
   }
 
   function rollCheck(life, stat, dc, rng = Math.random) {
     const roll = Math.floor(rng() * 20) + 1;
-    const bonus = Math.floor(life.stats[stat] / 2) + Math.floor(life.stats.luck / 3);
+    const bonus = checkBonus(life, stat);
     const total = roll + bonus;
     return { stat, roll, bonus, total, dc, success: total >= dc };
+  }
+
+  // โอกาสผ่านการทดสอบ 0..1 จากการทอย d20 ที่ออกแต่ละหน้าเท่ากัน
+  function checkChance(life, stat, dc) {
+    const needed = dc - checkBonus(life, stat);
+    return clamp((21 - needed) / 20, 0, 1);
   }
 
   function die(life, cause) {
     life.over = true;
     life.cause = cause;
-    addLog(life, cause);
+    addLog(life, cause, 'death');
     return { type: 'death', cause };
   }
 
@@ -471,34 +549,32 @@
       result = branch.result;
     }
     life.current = null;
-    addLog(life, result);
+    addLog(life, result, 'event');
     return { result, check, choice };
   }
 
   // สรุปชีวิตเป็นฉายาจากค่าที่สูงที่สุดก่อน
   function summarize(life) {
     const s = life.stats;
-    let title = 'ชาวบ้านผู้ซื่อสัตย์';
-    if (s.gold >= 300) title = 'เศรษฐีแห่งเมืองท่า';
-    else if (s.reputation >= 15) title = 'ผู้กล้าที่ชาวบ้านจดจำ';
-    else if (s.wisdom >= 12) title = 'ปราชญ์หอคอย';
-    else if (s.strength >= 12) title = 'นักรบผู้ผ่านศึก';
-    else if (s.charm >= 12) title = 'กวีผู้เป็นที่รัก';
-    else if (s.luck >= 12) title = 'ผู้โชคดีแห่งทวีป';
-    return { title, age: life.age, cause: life.cause, stats: { ...s } };
+    const { title } = TITLES.find((t) => t.test(s));
+    return { title, name: life.name, age: life.age, cause: life.cause, stats: { ...s } };
   }
 
   return {
     START_AGE,
     MAX_AGE,
     STAT_LABELS,
+    STAGES,
+    TITLES,
     ORIGINS,
     EVENTS,
     QUIET_YEARS,
+    stageOf,
     createLife,
     advanceYear,
     chooseOption,
     rollCheck,
+    checkChance,
     summarize,
   };
 });
