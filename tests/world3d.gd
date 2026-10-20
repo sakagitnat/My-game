@@ -26,8 +26,20 @@ func run() -> void:
 
 	var world = load("res://scenes/world3d.tscn").instantiate()
 	root.add_child(world)
-	for i in 5:
+	check(world.loading != null, "a loading message shows while the world is built")
+	for i in 30:                                      # the world is built over a few frames
+		if world.ready_3d:
+			break
 		await process_frame
+	check(world.ready_3d and world.loading == null, "the world is built and the message is gone")
+	var nature = world.nature_mesh
+	gs.restaurant._spawn()                            # a customer arriving changes the game ...
+	gs.changed.emit()
+	for i in 30:
+		await process_frame
+	check(world.nature_mesh == nature, "... but does not rebuild the scenery")
+	gs.restaurant.customers.clear()
+	gs.restaurant.counter.clear()
 	var meshes := 0
 	for n in world.get_children():
 		if n is MeshInstance3D and n.mesh != null:

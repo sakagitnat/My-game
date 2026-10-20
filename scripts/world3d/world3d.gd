@@ -32,7 +32,12 @@ var camera: Camera3D
 var target := Vector3(18, 0, 14)
 var dist := 15.0
 var mat: Material
-var static_mesh: MeshInstance3D
+var nature_mesh: MeshInstance3D     # the shop's shell, the beach, trees, rocks, sale signs: rebuilt only when they change
+var objects_mesh: MeshInstance3D    # furniture and what stands on it: rebuilt only when it changes
+var _nature_key := 0
+var _objects_key := 0
+var ready_3d := false               # the world is built (it is built over a few frames, with a message on screen)
+var loading: CanvasLayer
 var grass_mm: MultiMeshInstance3D   # grass tufts and flowers on the open lawns
 var flower_mm: MultiMeshInstance3D
 var glow_mesh: MeshInstance3D       # lantern lights
@@ -58,11 +63,17 @@ func _ready() -> void:
 	g = GameState.grid(ZONE)
 	mat = MeshBatch.material()
 	font = load("res://assets/fonts/NotoSansThai_400Regular.ttf")
+	_loading(true)
+	# built in steps with a frame between them: a phone browser runs this slowly, and the message stays on screen meanwhile
+	await get_tree().process_frame
+	await get_tree().process_frame
 	_environment()
 	_camera()
 	_ground()
 	_sea()
+	await get_tree().process_frame
 	_rebuild()
+	await get_tree().process_frame
 	_overlays()
 	_animals()
 	var shade := CanvasLayer.new()
@@ -77,7 +88,34 @@ func _ready() -> void:
 	game = load("res://scenes/world.tscn").instantiate()
 	game.host_3d = self
 	add_child(game)
+	_place_camera()
 	GameState.changed.connect(func() -> void: _dirty = true)
+	_loading(false)
+	ready_3d = true
+
+# "Building the 3D world..." in the middle of the screen while it is built.
+func _loading(on: bool) -> void:
+	if not on:
+		if loading != null:
+			loading.queue_free()
+			loading = null
+		return
+	loading = CanvasLayer.new()
+	loading.layer = 10
+	var bg := ColorRect.new()
+	bg.color = Color("f6eee1")
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading.add_child(bg)
+	var l := Label.new()
+	l.text = Loc.t("LOADING_3D")
+	l.add_theme_font_override("font", font)
+	l.add_theme_font_size_override("font_size", 32)
+	l.add_theme_color_override("font_color", Color("4a3226"))
+	l.set_anchors_preset(Control.PRESET_FULL_RECT)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	loading.add_child(l)
+	add_child(loading)
 
 # ------------------------------------------------------------------ light and sky
 func _environment() -> void:
@@ -244,11 +282,21 @@ func _floor_rect() -> Rect2:
 				first = false
 	return r
 
+# Rebuilds only the parts whose data changed: customers coming and going, coins and crops growing rebuild nothing here.
 func _rebuild() -> void:
-	if static_mesh != null:
-		static_mesh.queue_free()
-	static_mesh = _add_mesh(_static_batch())
-	_lawn()
+	var nk := hash([g.blocked.keys(), g.owned_parcels.keys(), g.sale.keys()])
+	if nk != _nature_key or nature_mesh == null:
+		_nature_key = nk
+		if nature_mesh != null:
+			nature_mesh.queue_free()
+		nature_mesh = _add_mesh(_static_batch())
+		_lawn()
+	var ok := hash([g.objects, g.facings, g.tops])
+	if ok != _objects_key or objects_mesh == null:
+		_objects_key = ok
+		if objects_mesh != null:
+			objects_mesh.queue_free()
+		objects_mesh = _add_mesh(_objects_batch())
 	_crop_key = ""
 	_dynamic_world()
 
@@ -287,7 +335,14 @@ func _static_batch() -> MeshBatch:
 		b.box(Vector3(door_x + 1.0, 0.55, shop.position.y - 0.951), Vector3(door_x + 1.45, 0.6, shop.position.y - 0.95), Props3D.WHITE)
 		_beach(b, shop)
 		_shop_front(b, shop)
-	# placed things that never change shape (plots are dynamic)
+	# trees, rocks and bushes: palms near the beach, leafy trees inland
+	_nature(b)
+	_signs(b)
+	return b
+
+# Placed things that never change shape (plots are drawn with the crops) and what stands on tables.
+func _objects_batch() -> MeshBatch:
+	var b := MeshBatch.new()
 	for origin in g.objects:
 		var id: String = g.objects[origin]
 		if id == "farm_plot_01":
@@ -297,7 +352,9 @@ func _static_batch() -> MeshBatch:
 	for origin in g.tops:
 		var r := _rect_of(origin, g.top_footprints[origin])
 		Props3D.vase(b, Vector3(r.get_center().x, 0.55, r.get_center().y), str(g.tops[origin]) == "rest_vase_large_01")
-	# trees, rocks and bushes: palms near the beach, leafy trees inland
+	return b
+
+func _nature(b: MeshBatch) -> void:
 	for c in g.blocked:
 		var kind: String = g.blocked[c]
 		var at := Vector3(c.x, _corner_height(c.x, c.y), c.y)
@@ -312,7 +369,9 @@ func _static_batch() -> MeshBatch:
 				Props3D.rock(b, at, seed)
 			_:
 				Props3D.bush(b, at, seed)
-	# a sign on every block of land for sale
+
+# A sign on every block of land for sale.
+func _signs(b: MeshBatch) -> void:
 	for py in g.parcel_grid().y:
 		for px in g.parcel_grid().x:
 			if g.can_buy_parcel(Vector2i(px, py)):
@@ -321,7 +380,6 @@ func _static_batch() -> MeshBatch:
 				b.cyl(Vector3(mid.x, h, mid.y), 0.04, 0.9, Props3D.WOOD_DK)
 				b.box(Vector3(mid.x - 0.3, h + 0.6, mid.y - 0.03), Vector3(mid.x + 0.3, h + 0.95, mid.y + 0.03), Color("e8c98a"))
 				b.ball(Vector3(mid.x, h + 0.78, mid.y + 0.05), Vector3(0.09, 0.09, 0.02), Color("f3c445"))
-	return b
 
 # Lanterns along the terrace and the path to the door, flower planters along the front: a café that looks lived in.
 func _shop_front(b: MeshBatch, shop: Rect2) -> void:
@@ -638,6 +696,8 @@ func _sync_guests() -> void:
 		a.arrived.connect(a.queue_free, CONNECT_ONE_SHOT)
 
 func _process(delta: float) -> void:
+	if not ready_3d:
+		return
 	_crop_timer += delta
 	if _crop_timer > 1.0:
 		_crop_timer = 0.0
@@ -651,6 +711,8 @@ func _process(delta: float) -> void:
 
 # ------------------------------------------------------------------ input: drag to move, pinch or wheel to zoom, tap to play
 func _unhandled_input(event: InputEvent) -> void:
+	if not ready_3d:
+		return
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			touches[event.index] = event.position
