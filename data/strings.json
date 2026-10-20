@@ -150,6 +150,7 @@
 	"BTN_EDIT_MAP": {"en": "Edit map", "th": "แต่งแผนที่"},
 	"BTN_3D_PILOT": {"en": "3D view", "th": "มุมมอง 3D"},
 	"BTN_BACK_2D": {"en": "2D view", "th": "มุมมอง 2D"},
+	"LOADING_3D": {"en": "Building the 3D world…", "th": "กำลังสร้างโลก 3D…"},
 	"CONFIRM_EDIT_MAP": {"en": "Edit this scene's map? Things you placed in it are cleared when the map is rebuilt, and money and level stay.", "th": "แต่งแผนที่ฉากนี้ไหม ของที่วางไว้ในฉากจะหายเมื่อสร้างแผนที่ใหม่ ส่วนเงินและเลเวลยังอยู่"},
 	"ED_LEAVE": {"en": "Leave", "th": "ออก"},
 	"ED_UNDO": {"en": "Undo", "th": "ย้อนกลับ"},

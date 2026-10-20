@@ -4,13 +4,17 @@ extends RefCounted
 # Collects many coloured shapes (boxes, balls, cylinders, cones) into one mesh, so the whole static world is a few draw calls
 # (an iPad in a browser cannot afford one draw call per leaf). Every shape carries its colour in its vertices; one material
 # that reads vertex colours draws them all.
+# Speed matters in a browser, where GDScript is slow: each shape in each colour is made once (cached), and placing it is
+# SurfaceTool.append_from, which moves the vertices in native code.
 
 static var _shapes: Dictionary = {}
+static var _coloured: Dictionary = {}   # "kind|colour|lumps" -> ArrayMesh
 
-var verts := PackedVector3Array()
-var normals := PackedVector3Array()
-var colors := PackedColorArray()
-var indices := PackedInt32Array()
+var _st := SurfaceTool.new()
+var _count := 0
+
+func _init() -> void:
+	_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
 static func _shape(kind: String) -> Array:
 	if _shapes.has(kind):
@@ -49,22 +53,37 @@ static func _shape(kind: String) -> Array:
 # Adds `kind` (a unit shape: box 1 x 1 x 1, ball radius 0.5, cylinder radius 0.5 height 1, centred) moved by `xf`.
 # `lumpy` pushes vertices in and out a little (leaves, rocks); `seed` varies the lumps.
 func add(kind: String, xf: Transform3D, col: Color, lumpy: float = 0.0, seed: int = 0) -> void:
+	_st.append_from(_coloured_shape(kind, col, lumpy, seed), 0, xf)
+	_count += 1
+
+# The unit shape in one colour (colours rounded a little, so nearby shades share a mesh), with lumps from one of six patterns.
+static func _coloured_shape(kind: String, col: Color, lumpy: float, seed: int) -> ArrayMesh:
+	var q := Color(snappedf(col.r, 1.0 / 48.0), snappedf(col.g, 1.0 / 48.0), snappedf(col.b, 1.0 / 48.0), snappedf(col.a, 0.05))
+	var pattern := posmod(seed, 6) if lumpy > 0.0 else -1
+	var key := "%s|%s|%d|%.2f" % [kind, q.to_html(true), pattern, lumpy]
+	if _coloured.has(key):
+		return _coloured[key]
 	var a := _shape(kind)
-	var v: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
+	var v: PackedVector3Array = (a[Mesh.ARRAY_VERTEX] as PackedVector3Array).duplicate()
 	var n: PackedVector3Array = a[Mesh.ARRAY_NORMAL]
-	var idx: PackedInt32Array = a[Mesh.ARRAY_INDEX]
-	var base := verts.size()
-	var basis_n := xf.basis.inverse().transposed()
-	for i in v.size():
-		var p := v[i]
-		if lumpy > 0.0:
-			var h := Noise2D.value(p.x * 3.1 + p.y * 1.7 + seed * 0.37, p.z * 3.1 - p.y * 2.3 + seed * 0.11, seed)
-			p += n[i] * (h - 0.5) * lumpy
-		verts.append(xf * p)
-		normals.append((basis_n * n[i]).normalized())
-		colors.append(col)
-	for i in idx:
-		indices.append(base + i)
+	if lumpy > 0.0:
+		for i in v.size():
+			var p := v[i]
+			var h := Noise2D.value(p.x * 3.1 + p.y * 1.7 + pattern * 0.37, p.z * 3.1 - p.y * 2.3 + pattern * 0.11, pattern)
+			v[i] = p + n[i] * (h - 0.5) * lumpy
+	var c := PackedColorArray()
+	c.resize(v.size())
+	c.fill(q)
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = v
+	arr[Mesh.ARRAY_NORMAL] = n
+	arr[Mesh.ARRAY_COLOR] = c
+	arr[Mesh.ARRAY_INDEX] = a[Mesh.ARRAY_INDEX]
+	var m := ArrayMesh.new()
+	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	_coloured[key] = m
+	return m
 
 # Shorthands in world terms: a box between two corners, a ball, an upright cylinder or cone.
 func box(lo: Vector3, hi: Vector3, col: Color) -> void:
@@ -89,18 +108,10 @@ func rod(a: Vector3, b: Vector3, r: float, col: Color) -> void:
 	add("cyl", Transform3D(basis, (a + b) * 0.5), col)
 
 func is_empty() -> bool:
-	return verts.is_empty()
+	return _count == 0
 
 func mesh() -> ArrayMesh:
-	var arr := []
-	arr.resize(Mesh.ARRAY_MAX)
-	arr[Mesh.ARRAY_VERTEX] = verts
-	arr[Mesh.ARRAY_NORMAL] = normals
-	arr[Mesh.ARRAY_COLOR] = colors
-	arr[Mesh.ARRAY_INDEX] = indices
-	var m := ArrayMesh.new()
-	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-	return m
+	return _st.commit()
 
 static var _material: ShaderMaterial
 
