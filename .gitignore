@@ -2,3 +2,5 @@
 build/
 *.keystore
 *.jks
+.bpyenv/
+__pycache__/

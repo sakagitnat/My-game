@@ -15,7 +15,7 @@ from PIL import Image, ImageFilter
 import numpy as np
 
 TILES_DIR = 'assets/td/tiles'
-S = 32                       # a tile is 32 px (one cell of pixel art, shown at 2x)
+S = 128                      # a tile is 128 px (one cell of art, shown at 64); set from the tile itself in `edges`
 DEPTH = 0.42 * S             # how far an edge reaches into the cell (the game's BLEND_DEPTH)
 arg = lambda name, default=None: sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
 
@@ -137,7 +137,9 @@ def cmd_edges():
     kind = sys.argv[2]
     tiles = arg('--tiles', TILES_DIR); out = arg('--out', tiles)
     tile = load(f'{tiles}/tile_{kind}_01.png')
-    assert tile.size == (S, S), f'tile_{kind}_01.png must be {S}x{S}'
+    global S, DEPTH
+    S = tile.size[0]; DEPTH = 0.42 * S
+    assert tile.size == (S, S), f'tile_{kind}_01.png must be square'
     for side in 'nesw':
         piece(tile, edge_mask(side)).save(f'{out}/edge_{kind}_{side}_01.png')
     for corner in ('ne', 'se', 'sw', 'nw'):
