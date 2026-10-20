@@ -5,7 +5,7 @@
   const Art = window.SceneArt;
   const Sound = window.GameSound;
   const SVG_NS = 'http://www.w3.org/2000/svg';
-  const TITLES_KEY = 'chata.titles';
+  const ENDINGS_KEY = 'chata.endings';
   const rng = Math.random;
 
   const STAT_ICONS = {
@@ -126,18 +126,18 @@
     return NAMES[Math.floor(Math.random() * NAMES.length)];
   }
 
-  function loadTitles() {
+  function loadEndings() {
     try {
-      const raw = JSON.parse(localStorage.getItem(TITLES_KEY) || '[]');
+      const raw = JSON.parse(localStorage.getItem(ENDINGS_KEY) || '[]');
       return Array.isArray(raw) ? raw : [];
     } catch (e) {
       return [];
     }
   }
 
-  function saveTitles(list) {
+  function saveEndings(list) {
     try {
-      localStorage.setItem(TITLES_KEY, JSON.stringify(list));
+      localStorage.setItem(ENDINGS_KEY, JSON.stringify(list));
     } catch (e) {
       // บันทึกไม่ได้ก็เล่นต่อได้ตามปกติ
     }
@@ -186,14 +186,14 @@
     title.append(el('span', 'big', 'ชะตา'), el('span', 'small', 'แห่งอาณาจักร'));
     logo.append(el('p', 'logo-kicker', 'เส้นทางชีวิตในดินแดนเวทมนตร์'), title, ornament());
 
-    const unlocked = loadTitles().length;
+    const unlocked = loadEndings().filter((id) => E.ENDINGS.some((e) => e.id === id)).length;
     const actions = el('div', 'title-actions');
     actions.append(
       goldButton('เริ่มการเดินทาง', () => {
         Sound.startMusic();
         renderCreate();
       }),
-      ghostButton('ฉายาที่ปลดล็อก ' + unlocked + ' / ' + E.TITLES.length, openTitles),
+      ghostButton('ตอนจบที่ค้นพบ ' + unlocked + ' / ' + E.ENDINGS.length, openEndings),
       el('p', 'credit', 'ทุกการตัดสินใจ จะกลายเป็นตำนานของคุณ')
     );
     const tools = el('div', 'corner-tools');
@@ -202,16 +202,19 @@
     ui.replaceChildren(screen);
   }
 
-  function openTitles() {
-    const have = loadTitles();
+  // ตอนจบที่ยังไม่ปลดล็อกแสดงเพียงคำใบ้ เพื่อให้รู้ว่ายังมีเส้นทางอะไรรออยู่
+  function openEndings() {
+    const have = loadEndings();
     const list = el('div', 'modal-list');
-    for (const t of E.TITLES) {
-      const owned = have.includes(t.title);
+    for (const e of E.ENDINGS) {
+      const owned = have.includes(e.id);
       const row = el('div', 'title-item' + (owned ? '' : ' locked'));
-      row.append(icon('i-rep'), el('span', null, owned ? t.title : '? ? ?'));
+      const text = el('span', 'title-text');
+      text.append(el('strong', null, owned ? e.title : '? ? ?'), el('small', null, 'คำใบ้: ' + e.hint));
+      row.append(icon(owned ? 'i-rep' : 'i-gem'), text);
       list.append(row);
     }
-    openModal('ฉายาแห่งตำนาน', list);
+    openModal('ตอนจบแห่งตำนาน ' + have.length + ' / ' + E.ENDINGS.length, list);
   }
 
   function openModal(heading, content) {
@@ -313,7 +316,8 @@
     const who = el('div', 'who');
     const name = el('div', 'name', life.name);
     const meta = el('div', 'meta');
-    who.append(name, meta);
+    const meta2 = el('div', 'meta2');
+    who.append(name, meta, meta2);
     const logBtn = el('button', 'icon-btn');
     logBtn.type = 'button';
     logBtn.setAttribute('aria-label', 'บันทึกชีวิต');
@@ -347,6 +351,10 @@
       const s = life.stats;
       const stage = E.stageOf(life.age);
       meta.replaceChildren(document.createTextNode('อายุ '), el('b', null, String(life.age)), document.createTextNode(' ปี · ' + stage.name));
+      const profile = [life.career ? E.CAREERS[life.career].name : 'ยังไม่มีอาชีพ'];
+      if (life.partner) profile.push('มีคู่ชีวิต');
+      if (life.children) profile.push('ลูก ' + life.children + ' คน');
+      meta2.textContent = profile.join(' · ');
       fill.style.width = s.health + '%';
       hp.classList.toggle('low', s.health < 30);
       hpValue.textContent = s.health + '/100';
@@ -472,6 +480,12 @@
       badge.append(el('small', null, 'โอกาส'));
       b.append(badge);
     }
+    const allowed = E.canChoose(life, choice);
+    if (!allowed.ok) {
+      b.disabled = true;
+      b.classList.add('locked');
+      text.append(el('small', 'need', '🔒 ' + allowed.reason));
+    }
     b.addEventListener('click', () => {
       Sound.click();
       for (const other of b.parentNode.children) other.disabled = true;
@@ -505,9 +519,11 @@
       deltas.append(chip);
     });
     if (deltas.childNodes.length) body.push(deltas);
-    const next = goldButton('ใช้ชีวิตต่อไป', () => {
+    if (outcome.over && life.cause !== outcome.result) body.push(el('p', 'death-line', life.cause));
+    const next = goldButton(outcome.over ? 'บทสุดท้าย' : 'ใช้ชีวิตต่อไป', () => {
       next.disabled = true;
-      liveOn();
+      if (outcome.over) endLife();
+      else liveOn();
     });
     body.push(next);
     setPanel(body, title);
@@ -602,22 +618,29 @@
 
   async function endLife() {
     const summary = E.summarize(life);
-    const titles = loadTitles();
-    const isNew = !titles.includes(summary.title);
+    const found = loadEndings();
+    const isNew = !found.includes(summary.ending);
     if (isNew) {
-      titles.push(summary.title);
-      saveTitles(titles);
+      found.push(summary.ending);
+      saveEndings(found);
     }
     Sound.toll();
-    renderer.setScene('ending');
+    renderer.setScene(summary.scene);
     await wait(500);
 
     const scroll = el('div', 'scroll');
     scroll.append(el('p', 'epitaph-kicker', 'ณ ที่แห่งนี้ ขอไว้อาลัยแด่'), el('h1', 'epitaph-name', summary.name));
     const ribbon = el('div', 'ribbon', summary.title);
     scroll.append(ribbon);
-    if (isNew) scroll.append(el('p', 'new-title', 'ปลดล็อกฉายาใหม่!'));
-    scroll.append(el('p', 'epitaph-age', 'สิริอายุ ' + summary.age + ' ปี'), el('p', 'epitaph-cause', summary.cause));
+    if (isNew) scroll.append(el('p', 'new-title', 'ค้นพบตอนจบใหม่! (' + found.length + ' / ' + E.ENDINGS.length + ')'));
+    const profile = [summary.career || 'ไม่มีอาชีพ', summary.partner ? 'มีคู่ชีวิต' : 'ไร้คู่ครอง'];
+    if (summary.children) profile.push('ลูก ' + summary.children + ' คน');
+    scroll.append(
+      el('p', 'ending-text', summary.text),
+      el('p', 'epitaph-age', 'สิริอายุ ' + summary.age + ' ปี'),
+      el('p', 'epitaph-profile', profile.join(' · ')),
+      el('p', 'epitaph-cause', summary.cause)
+    );
     const stats = el('div', 'end-stats');
     for (const key of HUD_STATS) {
       const cell = el('div');

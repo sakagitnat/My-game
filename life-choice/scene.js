@@ -1155,6 +1155,114 @@
         paint(ctx, S, p, L.color, L.rim);
       }
     },
+
+    // ประตูมิติวงรีที่หมุนวน ใช้คู่กับซุ้มโค้งของ ruins ที่ขนาดเดียวกัน
+    portal(ctx, S, L) {
+      const k = ((L.s || 100) * S.u) / 100;
+      const x = L.x * S.W;
+      const y = L.y * S.H - 46 * k;
+      const rx = 20 * k;
+      const ry = 42 * k;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, ry);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.25, L.color);
+      g.addColorStop(1, mix(L.color, '#000000', 0.7));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+      ctx.fill();
+      S.emitters.push({ type: 'portal', x, y, rx, ry, color: L.color, group: S.group });
+    },
+
+    // ผนังคุกหินที่มีหน้าต่างโค้งพร้อมลูกกรง มองเห็นท้องฟ้าผ่านช่องหน้าต่าง
+    wall(ctx, S, L) {
+      const wx = L.wx * S.W;
+      const ww = L.ww * Math.min(S.W, S.H * 1.2);
+      const wh = L.wh * S.H;
+      const top = L.wy * S.H - wh / 2;
+      const bottom = top + wh;
+      const p = new Path2D();
+      p.rect(-S.pad, -2, S.W + 2 * S.pad, S.floor + 4);
+      const win = new Path2D();
+      win.moveTo(wx - ww / 2, bottom);
+      win.lineTo(wx - ww / 2, top + ww / 2);
+      win.arc(wx, top + ww / 2, ww / 2, Math.PI, 0);
+      win.lineTo(wx + ww / 2, bottom);
+      win.closePath();
+      p.addPath(win);
+      const g = ctx.createRadialGradient(wx, L.wy * S.H, ww * 0.4, wx, L.wy * S.H, Math.max(S.W, S.H) * 0.8);
+      g.addColorStop(0, mix(L.color, '#9ab0e0', 0.25));
+      g.addColorStop(1, mix(L.color, '#000000', 0.6));
+      ctx.fillStyle = g;
+      ctx.fill(p, 'evenodd');
+      // ก้อนหินเรียงเป็นแถว
+      ctx.save();
+      ctx.clip(p, 'evenodd');
+      const row = 20 * S.u;
+      ctx.strokeStyle = rgba(L.mortar, 0.7);
+      ctx.lineWidth = Math.max(1, 1.4 * S.u);
+      for (let r = 0, yy = 0; yy < S.floor; r++, yy += row) {
+        ctx.beginPath();
+        ctx.moveTo(-S.pad, yy);
+        ctx.lineTo(S.W + S.pad, yy);
+        ctx.stroke();
+        const brick = 46 * S.u;
+        for (let xx = -S.pad + (r % 2) * brick * 0.5; xx < S.W + S.pad; xx += brick) {
+          ctx.fillStyle = S.rng() < 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.12)';
+          ctx.fillRect(xx + 1, yy + 1, brick - 2, row - 2);
+          ctx.beginPath();
+          ctx.moveTo(xx, yy);
+          ctx.lineTo(xx, yy + row);
+          ctx.stroke();
+        }
+      }
+      const floorY = S.H * (L.floorY || 0.82);
+      const fg = ctx.createLinearGradient(0, floorY, 0, S.floor);
+      fg.addColorStop(0, 'rgba(0,0,0,0.35)');
+      fg.addColorStop(1, 'rgba(0,0,0,0.75)');
+      ctx.fillStyle = fg;
+      ctx.fillRect(-S.pad, floorY, S.W + 2 * S.pad, S.floor - floorY);
+      ctx.restore();
+      // ขอบหน้าต่างและลูกกรง
+      ctx.strokeStyle = mix(L.color, '#c8d4f0', 0.35);
+      ctx.lineWidth = 5 * S.u;
+      ctx.stroke(win);
+      const bars = L.bars || 5;
+      for (let i = 1; i < bars; i++) {
+        const bx = wx - ww / 2 + (i * ww) / bars;
+        ctx.fillStyle = '#0b0a10';
+        ctx.fillRect(bx - 2.2 * S.u, top, 4.4 * S.u, wh);
+        ctx.fillStyle = 'rgba(200,215,255,0.35)';
+        ctx.fillRect(bx - 2.2 * S.u, top, 1.2 * S.u, wh);
+      }
+      ctx.fillStyle = '#0b0a10';
+      ctx.fillRect(wx - ww / 2, top + wh * 0.55, ww, 3.5 * S.u);
+      if (L.torch) {
+        const tx = L.torch * S.W;
+        const ty = S.H * 0.5;
+        ctx.fillStyle = '#2a1a10';
+        ctx.fillRect(tx - 2 * S.u, ty, 4 * S.u, 22 * S.u);
+        ctx.fillRect(tx - 7 * S.u, ty, 14 * S.u, 4 * S.u);
+        S.emitters.push({ type: 'fire', x: tx, y: ty - 2 * S.u, size: 7 * S.u, group: S.group });
+      }
+    },
+
+    // เสาธงรบที่ปักอยู่กลางสนามรบ
+    banners(ctx, S, L) {
+      for (const it of L.items) {
+        const x = it.x * S.W;
+        const y = (it.y ?? L.y) * S.H;
+        const h = it.h * S.u;
+        ctx.fillStyle = L.pole || '#1a1014';
+        ctx.fillRect(x - 1.4 * S.u, y - h, 2.8 * S.u, h);
+        ctx.beginPath();
+        ctx.moveTo(x - 3 * S.u, y - h);
+        ctx.lineTo(x, y - h - 9 * S.u);
+        ctx.lineTo(x + 3 * S.u, y - h);
+        ctx.fill();
+        S.emitters.push({ type: 'flag', x: x + 1.4 * S.u, y: y - h + 2 * S.u, w: 34 * S.u, h: 22 * S.u, color: it.color, group: S.group });
+      }
+    },
   };
 
   function column(ctx, S, L, x, y, k, h, broken) {
@@ -1720,6 +1828,79 @@
       particles: [{ type: 'skylanterns', count: 26 }, { type: 'fireflies', count: 16, y0: 0.6, y1: 0.95, color: '#ffe0a0' }],
       post: { vignette: 0.6, grade: '#ffa060', gradeAlpha: 0.04 },
     },
+
+    battlefield: {
+      sky: { stops: [[0, '#1a1220'], [0.45, '#4a2430'], [0.75, '#a8443a'], [1, '#e08a4a']], sun: { x: 0.72, y: 0.44, r: 26, color: '#ffcf90', glow: '#ff6a3a' } },
+      clouds: { count: 6, light: '#a0503e', shade: '#2a1418', y0: 0.04, y1: 0.3, scale: 1.7 },
+      haze: '#8a4a44',
+      layers: [
+        { type: 'range', group: 'far', y: 0.52, amp: 0.1, freq: 3, color: '#3a2030', fade: 0.5, rim: '#ff9a5a', rimAlpha: 0.4, facets: 0.1 },
+        { type: 'castle', group: 'far', x: 0.18, y: 0.53, size: 110, color: '#2a1626', windows: '#ff7a3a', flags: '#c94a4a' },
+        { type: 'range', group: 'mid', y: 0.63, amp: 0.03, color: '#24141e', fade: 0.1, solid: true },
+        { type: 'banners', group: 'mid', y: 0.63, items: [{ x: 0.32, h: 120, color: '#c0303a' }, { x: 0.56, h: 150, color: '#2a5ab0' }, { x: 0.8, h: 110, color: '#c0303a' }] },
+        { type: 'crowd', group: 'mid', x0: 0.05, x1: 0.95, y: 0.64, count: 18, dance: 0.15, scale: 1.3, color: '#120a10', rim: '#ff8a4a', fireX: 0.72 },
+        { type: 'range', group: 'near', y: 0.76, amp: 0.02, color: '#0e080c', fade: 0, solid: true },
+      ],
+      particles: [{ type: 'smoke', count: 12 }, { type: 'embers', count: 40 }],
+      rays: { x: 0.72, y: 0.44, color: '#ffb070', alpha: 0.05 },
+      post: { vignette: 0.6, grade: '#ff6030', gradeAlpha: 0.08 },
+    },
+
+    portal: {
+      sky: { stops: [[0, '#07051a'], [0.5, '#1a1240'], [1, '#3a2060']], stars: 200, aurora: '#b06aff', auroraAlpha: 0.08 },
+      haze: '#3a2a6a',
+      layers: [
+        { type: 'range', group: 'far', y: 0.55, amp: 0.12, freq: 3, color: '#1e1640', fade: 0.4, facets: 0.1, rim: '#b48aff', rimAlpha: 0.3 },
+        { type: 'range', group: 'mid', y: 0.68, amp: 0.03, color: '#141030', fade: 0, solid: true },
+        { type: 'ruins', group: 'mid', y: 0.68, color: '#5a4a7a', shade: '#2a2040', items: [{ type: 'arch', x: 0.5, s: 260 }, { type: 'column', x: 0.14, s: 180, h: 70, broken: true }, { type: 'column', x: 0.86, s: 200, h: 90 }, { type: 'block', x: 0.28, s: 120 }] },
+        { type: 'portal', group: 'mid', x: 0.5, y: 0.68, s: 260, color: '#b48aff' },
+        { type: 'rocks', group: 'near', color: '#0a0818', rim: 'rgba(180,140,255,0.45)', items: [{ x: 0.08, y: 0.84, s: 200 }, { x: 0.94, y: 0.86, s: 180 }] },
+      ],
+      particles: [{ type: 'dust', count: 40, color: '#c8a8ff' }, { type: 'wisps', count: 6, color: '#b48aff', y0: 0.3, y1: 0.7 }],
+      post: { vignette: 0.6, grade: '#a070ff', gradeAlpha: 0.08 },
+    },
+
+    prison: {
+      sky: { stops: [[0, '#0a1028'], [1, '#2a3a60']], stars: 140, moon: { x: 0.5, y: 0.24, r: 18, color: '#eef2ff', glow: '#a8c0ff' } },
+      haze: '#1a2440',
+      layers: [
+        { type: 'range', group: 'far', y: 0.36, amp: 0.05, color: '#1a2444', fade: 0.3 },
+        { type: 'wall', group: 'near', color: '#2c2834', mortar: '#141218', wx: 0.5, wy: 0.26, ww: 0.3, wh: 0.24, bars: 5, torch: 0.16, floorY: 0.84 },
+      ],
+      rays: { x: 0.5, y: 0.24, color: '#bcd0ff', alpha: 0.06, spread: 0.3 },
+      particles: [{ type: 'dust', count: 28, color: '#c8d8ff' }],
+      post: { vignette: 0.75, grade: '#4a6aa0', gradeAlpha: 0.08 },
+    },
+
+    dragon_sky: {
+      sky: { stops: [[0, '#2a3a7a'], [0.4, '#8a6aa0'], [0.7, '#f0a080'], [1, '#ffd8a0']], sun: { x: 0.24, y: 0.5, r: 30, color: '#fff2d0', glow: '#ffb080' } },
+      clouds: { count: 6, light: '#ffe0c0', shade: '#b07a9a', y0: 0.08, y1: 0.38 },
+      haze: '#f0b8a0',
+      layers: [
+        { type: 'range', group: 'far', y: 0.54, amp: 0.1, freq: 3, color: '#7a5a8a', snow: '#ffe8e0', facets: 0.12, fade: 0.55, bumps: [{ x: 0.7, w: 0.14, h: 0.14, sharp: 1.3 }] },
+        { type: 'range', group: 'mid', y: 0.6, amp: 0.045, freq: 9, rough: 0.35, contrast: 1.4, color: '#f6d6cc', bottom: '#b88aa8', rim: '#ffffff', rimAlpha: 0.75, fade: 0, solid: true },
+        { type: 'range', group: 'near', y: 0.72, amp: 0.05, freq: 7, rough: 0.35, contrast: 1.4, color: '#e2b4bc', bottom: '#7a5a80', rim: '#fff4ec', rimAlpha: 0.65, fade: 0, solid: true },
+      ],
+      dragon: { y: 0.36, size: 160, speed: 0.016, color: '#2a1a3a' },
+      particles: [{ type: 'birds', count: 3, y0: 0.15, y1: 0.3 }],
+      rays: { x: 0.24, y: 0.5, color: '#ffe0b0', alpha: 0.06 },
+      post: { vignette: 0.4, grade: '#ff9a80', gradeAlpha: 0.06 },
+    },
+
+    royal: {
+      sky: { stops: [[0, '#0a0a2a'], [0.6, '#2a1e5a'], [1, '#6a3a6a']], stars: 130 },
+      haze: '#4a2a6a',
+      layers: [
+        { type: 'city', group: 'far', x0: -0.05, x1: 1.05, y: 0.62, h: 100, color: '#241a40', lit: 0.3 },
+        { type: 'castle', group: 'mid', x: 0.5, y: 0.6, size: 250, color: '#1c1434', rim: 'rgba(255,200,120,0.5)', windows: '#ffd27a', flags: '#e0b040' },
+        { type: 'lanterns', group: 'mid', strings: [[-0.05, 0.56, 0.32, 0.6, 0.04], [0.68, 0.6, 1.05, 0.56, 0.04]], count: 7 },
+        { type: 'range', group: 'near', y: 0.74, amp: 0.01, color: '#0e0a1a', fade: 0, solid: true },
+        { type: 'crowd', group: 'near', x0: 0.03, x1: 0.97, y: 0.75, count: 16, dance: 0.6, scale: 1.2, color: '#08060e', rim: '#ffb070', fireX: 0.5 },
+      ],
+      fireworks: true,
+      particles: [{ type: 'dust', count: 18, color: '#ffd890' }],
+      post: { vignette: 0.55, grade: '#ffb060', gradeAlpha: 0.05 },
+    },
   };
 
   // ฉากพื้นหลังของแต่ละช่วงวัย และฉากตัวอย่างของต้นกำเนิด
@@ -1878,6 +2059,14 @@
         p.size = (4 + r() * 3) * S.u;
         p.life = Infinity;
         break;
+      case 'smoke':
+        p.x = fresh ? r() * W : -S.W * 0.2;
+        p.y = lerp(0.15, 0.7, r()) * H;
+        p.vx = (6 + r() * 10) * S.u;
+        p.size = (70 + r() * 90) * S.u;
+        p.phase = r() * TAU;
+        p.life = Infinity;
+        break;
       case 'skylanterns': {
         const depth = r();
         p.x = r() * W;
@@ -1935,6 +2124,10 @@
         p.x += p.vx * dt;
         p.y += Math.sin(p.t * 0.8 + p.phase) * 4 * S.u * dt;
         return p.x < W + 40;
+      case 'smoke':
+        p.x += p.vx * dt;
+        p.y += Math.sin(p.t * 0.3 + p.phase) * 2 * S.u * dt;
+        return p.x < W + p.size;
       case 'skylanterns':
         p.x += (p.vx + Math.sin(p.t * 0.6 + p.phase) * 3 * S.u) * dt;
         p.y += p.vy * dt;
@@ -2012,6 +2205,9 @@
         ctx.lineTo(p.x + p.vx * 0.012, p.y + p.len);
         ctx.stroke();
         break;
+      case 'smoke':
+        drawGlow(ctx, p.x, p.y, p.size, '#2a1a1e', 0.28, 0);
+        break;
       case 'birds': {
         const f = Math.sin(t * 9 + p.phase) * p.size * 0.6;
         ctx.globalAlpha = 0.85;
@@ -2087,6 +2283,21 @@
       case 'crystal':
         drawGlow(ctx, x, y, e.r * (1 + 0.1 * Math.sin(t * 1.8 + e.phase)), e.color, 0.4 + 0.12 * Math.sin(t * 2.3 + e.phase), 0);
         break;
+      case 'portal': {
+        drawGlow(ctx, x, y, e.ry * 2.6, e.color, 0.4 + 0.1 * Math.sin(t * 1.5), 0);
+        ctx.lineWidth = Math.max(1.5, e.rx * 0.08);
+        for (let i = 0; i < 6; i++) {
+          const f = 1 - i * 0.13;
+          const a0 = t * (0.9 + i * 0.35) * (i % 2 ? -1 : 1) + i;
+          ctx.globalAlpha = 0.5 - i * 0.05;
+          ctx.strokeStyle = i % 2 ? '#ffffff' : e.color;
+          ctx.beginPath();
+          ctx.ellipse(x, y, e.rx * f, e.ry * f, 0, a0, a0 + Math.PI * 1.3);
+          ctx.stroke();
+        }
+        drawGlow(ctx, x, y, e.rx * 1.1, '#ffffff', 0.55 + 0.15 * Math.sin(t * 3), 0.2);
+        break;
+      }
       case 'beacon': {
         drawGlow(ctx, x, y, e.r * 3, e.color, 0.9, 0.3);
         const a = t * 0.9;

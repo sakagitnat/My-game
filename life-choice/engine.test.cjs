@@ -121,19 +121,20 @@ test('อายุครบ 100 ปีจะจบชีวิตอย่าง
   assert.equal(life.age, E.MAX_AGE);
 });
 
-test('เหตุการณ์ไม่ถูกเล่นซ้ำ และไม่ให้เหตุการณ์นอกช่วงอายุ', () => {
+test('เหตุการณ์ที่ไม่ใช่แบบซ้ำได้ ไม่ถูกเล่นซ้ำ และไม่เกิดนอกช่วงอายุ', () => {
   const life = E.createLife('warrior', () => 0);
   const seen = new Set();
-  for (let i = 0; i < 80 && !life.over; i++) {
+  for (let i = 0; i < 95 && !life.over; i++) {
     const step = E.advanceYear(life, sequence([0.1, 0.9, 0.3]));
     if (step.type === 'event') {
-      assert.ok(!seen.has(step.event.id), 'repeated ' + step.event.id);
+      if (!step.event.repeatable) assert.ok(!seen.has(step.event.id), 'repeated ' + step.event.id);
       assert.ok(life.age >= step.event.minAge && life.age <= step.event.maxAge);
       seen.add(step.event.id);
-      E.chooseOption(life, 0, () => 0);
+      const pick = step.event.choices.findIndex((c) => E.canChoose(life, c).ok);
+      E.chooseOption(life, pick, () => 0.99);
     }
   }
-  assert.ok(seen.size > 0);
+  assert.ok(seen.size > 3);
 });
 
 test('ต้องเลือกเหตุการณ์ก่อนจึงจะขยับปีต่อได้ และเลือกตัวเลือกที่ไม่มีอยู่ไม่ได้', () => {
@@ -146,15 +147,17 @@ test('ต้องเลือกเหตุการณ์ก่อนจึ�
   assert.equal(step.event, E.EVENTS[0]);
 });
 
-test('ฉายาของชีวิตขึ้นกับค่าสถานะที่สูงที่สุด', () => {
+test('ตอนจบตามค่าสถานะ เลือกจากค่าที่โดดเด่นตามลำดับ', () => {
   const life = E.createLife('merchant', () => 0);
+  life.age = 50;
   life.stats.gold = 400;
-  assert.equal(E.summarize(life).title, 'เศรษฐีแห่งเมืองท่า');
+  assert.equal(E.summarize(life).ending, 'rich');
   life.stats.gold = 0;
-  life.stats.wisdom = 15;
-  assert.equal(E.summarize(life).title, 'ปราชญ์หอคอย');
+  life.stats.wisdom = 18;
+  assert.equal(E.summarize(life).ending, 'sage');
   life.stats.wisdom = 2;
-  assert.equal(E.summarize(life).title, 'ชาวบ้านผู้ซื่อสัตย์');
+  assert.equal(E.summarize(life).ending, 'villager');
+  assert.match(E.summarize(life).text, /ผู้ไร้นาม/);
 });
 
 console.log('engine tests done');
@@ -194,11 +197,16 @@ test('ชื่อตัวละครและชนิดของบัน�
   assert.equal(E.summarize(life).name, 'ไลรา');
 });
 
-test('ทุกฉายาใน TITLES ได้มาจาก summarize ได้จริง', () => {
-  const base = { health: 50, gold: 0, reputation: 0, strength: 0, wisdom: 0, charm: 0, luck: 0 };
-  const cases = [{ gold: 300 }, { reputation: 15 }, { wisdom: 12 }, { strength: 12 }, { charm: 12 }, { luck: 12 }, {}];
-  const got = cases.map((c) => E.summarize({ name: 'x', age: 50, cause: '', stats: { ...base, ...c } }).title);
-  assert.deepEqual(got, E.TITLES.map((t) => t.title));
+test('ตอนจบมีรหัสไม่ซ้ำ ข้อความ คำใบ้ และตอนจบสุดท้ายรับทุกกรณี', () => {
+  const ids = E.ENDINGS.map((e) => e.id);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const e of E.ENDINGS) {
+    assert.ok(e.title && e.text && e.hint, e.id);
+    assert.ok(e.forced || typeof e.test === 'function', e.id);
+  }
+  const last = E.ENDINGS[E.ENDINGS.length - 1];
+  assert.equal(last.test({}), true);
+  assert.ok(E.ENDINGS.length >= 25);
 });
 
 test('ทุกเหตุการณ์ วัย และต้นกำเนิด ชี้ไปที่ฉากที่มีอยู่จริง', () => {
@@ -207,4 +215,188 @@ test('ทุกเหตุการณ์ วัย และต้นกำเ
   for (const stage of E.STAGES) assert.ok(Art.SCENES[Art.STAGE_SCENES[stage.id]], stage.id);
   for (const origin of E.ORIGINS) assert.ok(Art.SCENES[Art.ORIGIN_SCENES[origin.id]], origin.id);
   assert.ok(Art.SCENES.title && Art.SCENES.ending);
+});
+
+// ---------- ระบบเส้นเรื่อง อาชีพ ครอบครัว และตอนจบ ----------
+
+function at(life, eventId) {
+  const event = E.EVENTS.find((e) => e.id === eventId);
+  life.current = event;
+  return event;
+}
+
+test('ข้อมูลเนื้อเรื่องเชื่อมกันครบ: ธงที่ถูกใช้ต้องมีที่มา อาชีพและตอนจบที่อ้างถึงต้องมีอยู่จริง', () => {
+  const setFlags = new Set();
+  const outcomes = [];
+  for (const e of E.EVENTS) {
+    for (const c of e.choices) {
+      outcomes.push(c);
+      if (c.check) outcomes.push(c.check.pass, c.check.fail);
+    }
+  }
+  for (const o of outcomes) for (const f of o.set || []) setFlags.add(f);
+  for (const e of E.EVENTS) {
+    const w = e.when || {};
+    for (const f of [...(w.flags || []), ...(w.anyFlags || []), ...(w.notFlags || [])]) assert.ok(setFlags.has(f), e.id + ' needs flag ' + f + ' that nothing sets');
+    for (const c of [].concat(w.career ?? [], w.notCareer ?? [])) if (c !== null) assert.ok(E.CAREERS[c], e.id + ' career ' + c);
+  }
+  for (const o of outcomes) {
+    if (o.career) assert.ok(E.CAREERS[o.career], 'career ' + o.career);
+    if (o.ending) assert.ok(E.ENDINGS.find((x) => x.id === o.ending && x.forced), 'ending ' + o.ending);
+    if (o.die) assert.ok(o.die.cause && o.die.tag);
+  }
+  // ตอนจบที่บังคับด้วยเหตุการณ์ ต้องมีเหตุการณ์ที่พาไปถึง
+  for (const ending of E.ENDINGS.filter((x) => x.forced)) assert.ok(outcomes.some((o) => o.ending === ending.id), ending.id + ' unreachable');
+});
+
+test('เส้นเรื่องมังกร: ช่วยมังกรตอนเด็ก ทำให้มังกรกลับมาหาและได้ขี่มังกร', () => {
+  const life = E.createLife('warrior', () => 0);
+  at(life, 'dragon_hatchling');
+  E.chooseOption(life, 0, () => 0);
+  assert.ok(life.flags.dragon_friend);
+  const returnEvent = E.EVENTS.find((e) => e.id === 'dragon_return');
+  life.age = 30;
+  assert.equal(E.isEligible(life, returnEvent), true);
+  at(life, 'dragon_return');
+  E.chooseOption(life, 0, () => 0);
+  assert.equal(life.career, 'dragonrider');
+  // ชนะศึกเหนือเมฆาจะได้ตอนจบพิเศษทันที
+  life.stats.strength = 20;
+  at(life, 'dragon_war');
+  const out = E.chooseOption(life, 0, () => 0.99);
+  assert.equal(out.over, true);
+  assert.equal(E.summarize(life).ending, 'dragon_legend');
+});
+
+test('เหตุการณ์ที่ต้องมีเงื่อนไข จะไม่เกิดถ้ายังไม่ถึงเงื่อนไข', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.age = 30;
+  const returnEvent = E.EVENTS.find((e) => e.id === 'dragon_return');
+  assert.equal(E.isEligible(life, returnEvent), false);
+  const kingRule = E.EVENTS.find((e) => e.id === 'king_rule');
+  assert.equal(E.isEligible(life, kingRule), false);
+  life.career = 'king';
+  assert.equal(E.isEligible(life, kingRule), true);
+});
+
+test('ตัวเลือกที่ต้องใช้ทองจะเลือกไม่ได้เมื่อเงินไม่พอ และบอกเหตุผล', () => {
+  const life = E.createLife('wanderer', () => 0);
+  life.age = 25;
+  const event = at(life, 'adult_wizard_school');
+  const status = E.canChoose(life, event.choices[0]);
+  assert.equal(status.ok, false);
+  assert.match(status.reason, /ทอง 40/);
+  assert.throws(() => E.chooseOption(life, 0), /not available/);
+  life.stats.gold = 50;
+  E.chooseOption(life, 0, () => 0);
+  assert.equal(life.career, 'mage');
+  assert.equal(life.stats.gold, 10);
+});
+
+test('อาชีพให้รายได้ในปีที่สงบ', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.age = 30;
+  life.career = 'merchant';
+  life.seen = E.EVENTS.map((e) => e.id);
+  const before = life.stats.gold;
+  // ไม่มีเหตุการณ์ (0.9 ไม่ผ่านเกณฑ์) แล้วโยนเข้าปีของอาชีพ (0.1)
+  const step = E.advanceYear(life, sequence([0.9, 0.1]));
+  assert.equal(step.type, 'quiet');
+  assert.equal(step.text, E.CAREERS.merchant.quiet);
+  assert.equal(life.stats.gold, before + E.CAREERS.merchant.yearly.gold);
+});
+
+test('ครอบครัว: แต่งงานแล้วมีลูกได้ไม่เกินสามคน', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.age = 25;
+  at(life, 'adult_marriage');
+  E.chooseOption(life, 0, () => 0);
+  assert.equal(life.partner, true);
+  const born = E.EVENTS.find((e) => e.id === 'child_born');
+  for (let i = 0; i < 3; i++) {
+    life.lastSeen = {};
+    assert.equal(E.isEligible(life, born), true);
+    at(life, 'child_born');
+    E.chooseOption(life, 0, () => 0);
+  }
+  assert.equal(life.children, 3);
+  life.lastSeen = {};
+  assert.equal(E.isEligible(life, born), false);
+});
+
+test('เหตุการณ์ที่เกิดซ้ำได้ ต้องเว้นช่วงตามที่กำหนด', () => {
+  const life = E.createLife('warrior', () => 0);
+  const fair = E.EVENTS.find((e) => e.id === 'market_fair');
+  life.age = 20;
+  life.lastSeen.market_fair = 18;
+  assert.equal(E.isEligible(life, fair), false);
+  life.age = 18 + fair.cooldown;
+  assert.equal(E.isEligible(life, fair), true);
+});
+
+test('ความตายจากเหตุการณ์ใช้ตอนจบตามสาเหตุ', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.age = 40;
+  life.career = 'knight';
+  life.stats.strength = 0;
+  life.stats.luck = 0;
+  at(life, 'knight_coup');
+  const out = E.chooseOption(life, 0, () => 0);
+  assert.equal(out.over, true);
+  assert.equal(life.deathTag, 'executed');
+  assert.equal(E.summarize(life).ending, 'executed');
+});
+
+test('บาดเจ็บจนสุขภาพหมดในเหตุการณ์ ทำให้ตายทันที', () => {
+  const life = E.createLife('warrior', () => 0);
+  life.age = 30;
+  life.stats.health = 10;
+  life.stats.strength = 0;
+  life.stats.luck = 0;
+  at(life, 'adult_mine');
+  const out = E.chooseOption(life, 0, () => 0);
+  assert.equal(out.over, true);
+  assert.equal(life.deathTag, 'wounds');
+});
+
+test('ตอนจบตามเส้นทางชีวิตมาก่อนตอนจบตามค่าสถานะ', () => {
+  const life = E.createLife('merchant', () => 0);
+  life.age = 70;
+  life.stats.gold = 999;
+  life.flags.king = true;
+  assert.equal(E.summarize(life).ending, 'good_king');
+  life.flags.tyrant = true;
+  assert.equal(E.summarize(life).ending, 'tyrant');
+  const young = E.createLife('mage', () => 0);
+  young.age = 20;
+  young.flags.king = true;
+  assert.equal(E.summarize(young).ending, 'died_young');
+});
+
+test('ทุกตอนจบชี้ไปที่ฉากที่มีอยู่จริง', () => {
+  const Art = require('./scene.js');
+  for (const ending of E.ENDINGS) assert.ok(Art.SCENES[ending.scene], ending.id + ' -> ' + ending.scene);
+});
+
+test('เล่นสุ่มหลายร้อยชีวิตจนจบได้เสมอ และได้ตอนจบหลากหลาย', () => {
+  let seed = 7;
+  const rng = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  const endings = new Set();
+  for (let run = 0; run < 400; run++) {
+    const origin = E.ORIGINS[run % E.ORIGINS.length].id;
+    const life = E.createLife(origin, rng);
+    for (let guard = 0; guard < 200 && !life.over; guard++) {
+      const step = E.advanceYear(life, rng);
+      if (step.type === 'event') {
+        const open = step.event.choices.map((c, i) => i).filter((i) => E.canChoose(life, step.event.choices[i]).ok);
+        E.chooseOption(life, open[Math.floor(rng() * open.length)], rng);
+      }
+    }
+    assert.ok(life.over, 'life did not end');
+    endings.add(E.summarize(life).ending);
+  }
+  assert.ok(endings.size >= 15, 'only ' + endings.size + ' endings: ' + [...endings].join(','));
 });
