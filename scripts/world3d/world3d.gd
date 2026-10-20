@@ -50,12 +50,14 @@ var _dirty := false
 var _dirty_timer := 0.0
 var chef: Animal
 var guests: Dictionary = {}         # customer id -> Animal
-var labels: Dictionary = {}         # customer id -> Label3D (the order above the guest)
+var labels: Dictionary = {}         # customer id -> the order bubble above the guest (Node3D: text and a patience bar)
 var touches: Dictionary = {}
 var pinch_dist := 0.0
 var pressing := false
 var dragged := false
 var press_pos := Vector2.ZERO
+var ghost_drag := false             # the finger went down on the thing being placed: dragging moves it, not the view
+var ghost_grab := Vector2i.ZERO     # from the unit under the finger to the ghost's unit, kept while dragging
 var font: Font
 
 func _ready() -> void:
@@ -164,8 +166,11 @@ func _camera() -> void:
 	camera.fov = 32.0
 	camera.far = 400.0
 	add_child(camera)
-	var sc := lay.start_cell()
-	target = Vector3(sc.x + 2.0, 0, sc.y + 4.0)
+	# the first view: the whole shop, with the garden starting at the right
+	var shop := _floor_rect()
+	var sc := shop.get_center() if shop.size != Vector2.ZERO else Vector2(lay.start_cell())
+	target = Vector3(sc.x + 3.5, 0, sc.y + 0.5)
+	dist = 24.0
 	_place_camera()
 
 func _place_camera() -> void:
@@ -668,32 +673,108 @@ func _sync_guests() -> void:
 			a.walk_along([Vector3(door.x, 0.05, door.z - 1.2), Vector3(door.x, 0.1, door.z + 1.2), Vector3(door.x, 0.1, aisle.z), aisle, seat] as Array[Vector3])
 			var face := PI * 0.5 if int(c.index) == 0 else -PI * 0.5
 			a.arrived.connect(func() -> void: a.rotation.y = face, CONNECT_ONE_SHOT)
-			var l := Label3D.new()
-			l.font = font
-			l.font_size = 40
-			l.outline_size = 10
-			l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			l.no_depth_test = true
-			l.pixel_size = 0.006
-			add_child(l)
-			labels[id] = l
-		var label: Label3D = labels[id]
+			labels[id] = _bubble()
+		var bubble: Node3D = labels[id]
 		var a2: Animal = guests[id]
-		label.visible = not a2.is_walking()
-		label.position = a2.position + Vector3(0, 1.45, 0)
-		label.text = Loc.t(Catalog.RECIPES[c.dish].name)            # green when the dish is ready on the counter
-		label.modulate = Color("4f8f3a") if c.served_ready else (Color("c8432f") if float(c.patience_frac) < 0.3 else Color("4a3226"))
-		label.outline_modulate = Color("fffaf1")
+		bubble.visible = not a2.is_walking()
+		bubble.position = a2.position + Vector3(0, 1.55, 0)
+		bubble.basis = camera.basis.scaled(Vector3.ONE * clampf(dist / 14.0, 0.8, 1.8))   # faces the camera, readable when far
+		var st := _order_state(c)
+		var dish_l: Label3D = bubble.get_node("Dish")
+		var dish_name := Loc.t(Catalog.RECIPES[c.dish].name)
+		if dish_l.text != dish_name:
+			dish_l.text = dish_name
+		var state_l: Label3D = bubble.get_node("State")
+		if state_l.text != st[0]:
+			state_l.text = st[0]
+		state_l.modulate = st[1]
+		var frac := clampf(float(c.patience_frac), 0.0, 1.0)
+		var fill: MeshInstance3D = bubble.get_node("Fill")
+		(fill.mesh as QuadMesh).size = Vector2(BAR_W * frac, 0.09)
+		(fill.mesh as QuadMesh).center_offset = Vector3(-BAR_W * 0.5 * (1.0 - frac), 0, 0)
+		(fill.material_override as StandardMaterial3D).albedo_color = UiTheme.GOOD if frac > 0.5 else (UiTheme.GOLD if frac > 0.25 else UiTheme.BAD)
 	for id in guests.keys():                                          # served or tired of waiting: walk out to the road
 		if seen.has(id):
 			continue
 		var a: Animal = guests[id]
 		guests.erase(id)
-		(labels[id] as Label3D).queue_free()
+		(labels[id] as Node3D).queue_free()
 		labels.erase(id)
 		a.position.y = 0.1
 		a.walk_along([Vector3(door.x, 0.1, a.position.z - 0.8), Vector3(door.x, 0.1, door.z + 1.0), Vector3(door.x, 0.05, door.z - 1.2), Vector3(door.x + randf_range(-4.0, 4.0), 0.0, 0.8)] as Array[Vector3])
 		a.arrived.connect(a.queue_free, CONNECT_ONE_SHOT)
+
+const CARD := Vector2(1.36, 0.62)     # the order card over a guest, in metres at the normal zoom
+const BAR_W := 1.1
+
+# The card over a guest, always facing the camera: their dish, what to do about it, and how long they will still wait.
+func _bubble() -> Node3D:
+	var n := Node3D.new()
+	_quad(n, "Card", CARD, Vector3.ZERO, Color("fffaf1f2"), 0)
+	_quad(n, "Back", Vector2(BAR_W, 0.09), Vector3(0, -0.2, 0), Color("e6d6bd"), 1)
+	_quad(n, "Fill", Vector2(BAR_W, 0.09), Vector3(0, -0.2, 0), UiTheme.GOOD, 2)
+	for part in [["Dish", 0.14, 40], ["State", -0.05, 34]]:
+		var l := Label3D.new()
+		l.name = part[0]
+		l.font = font
+		l.font_size = part[2]
+		l.outline_size = 0
+		l.modulate = UiTheme.TEXT
+		l.no_depth_test = true
+		l.pixel_size = 0.005
+		l.position = Vector3(0, part[1], 0)
+		l.render_priority = 3
+		n.add_child(l)
+	add_child(n)
+	return n
+
+func _quad(parent: Node3D, node_name: String, size: Vector2, at: Vector3, col: Color, prio: int) -> void:
+	var q := QuadMesh.new()
+	q.size = size
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.no_depth_test = true
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.albedo_color = col
+	m.render_priority = prio
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = q
+	mi.position = at
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+
+# [what the bubble says, its colour] for a customer: ready to serve, cooking, tap to cook, or what is missing.
+func _order_state(c: Dictionary) -> Array:
+	var r := GameState.restaurant
+	if c.served_ready:
+		return [Loc.t("ORDER_TAP_SERVE"), UiTheme.GOOD]
+	if r.is_cooking(c.dish):
+		return [Loc.t("ORDER_COOKING"), UiTheme.TEXT]
+	var can := r.can_cook(c.dish)
+	if can == "ok":
+		return [Loc.t("ORDER_TAP_COOK"), Color("b85c14")]
+	if can == "no_ingredients" and game != null:
+		return [Loc.t("ORDER_NEED") % game.hud._missing_text(r.missing(c.dish)), UiTheme.BAD]
+	return [Loc.t("ORDER_WAIT"), UiTheme.MUTED]
+
+# The seated guest under a tap (their body or their bubble), or -1.
+func guest_at(screen: Vector2) -> int:
+	var best := -1
+	var best_d := INF
+	for id in guests:
+		var a: Animal = guests[id]
+		if a.is_walking() or camera.is_position_behind(a.position):
+			continue
+		var foot := camera.unproject_position(a.position)
+		var top := camera.unproject_position(a.position + Vector3(0, 1.6, 0))
+		var d := screen.distance_to(Geometry2D.get_closest_point_to_segment(screen, foot, top))
+		if d < maxf(36.0, foot.distance_to(top) * 0.4) and d < best_d:
+			best = id
+			best_d = d
+	return best
 
 func _process(delta: float) -> void:
 	if not ready_3d:
@@ -735,10 +816,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				pressing = true
 				dragged = touches.size() >= 2
 				press_pos = event.position
+				ghost_drag = touches.size() < 2 and _on_ghost(_ground_at(event.position))
+				if ghost_drag:
+					ghost_grab = game.ghost_cell - _unit_at(_ground_at(event.position))
 			else:
-				if pressing and not dragged:
+				if pressing and not dragged and not ghost_drag:
 					_tap(event.position)
 				pressing = false
+				ghost_drag = false
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			dist /= 1.1
 			_place_camera()
@@ -746,6 +831,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			dist *= 1.1
 			_place_camera()
 	elif event is InputEventMouseMotion and pressing and touches.size() < 2:
+		if ghost_drag:                                             # the thing being placed follows the finger
+			if game.placing_id == "":
+				ghost_drag = false
+				return
+			var u := _unit_at(_ground_at(event.position)) + ghost_grab
+			if u != game.ghost_cell and g.in_bounds(Iso.cell_of_unit(u)):
+				game.set_ghost(u)
+			return
 		if not dragged and event.position.distance_to(press_pos) > TAP_SLOP:
 			dragged = true
 		if dragged:
@@ -759,8 +852,31 @@ func _pan(rel: Vector2) -> void:
 	var k := dist / get_viewport().get_visible_rect().size.y * 0.75
 	target -= Vector3(rel.x, 0, rel.y / sin(PITCH)) * k
 
-# A tap goes to the first thing along the line of sight: tall things (a tree's crown, a stove) before the ground behind them.
+# Where the line of sight under `screen` meets the ground.
+func _ground_at(screen: Vector2) -> Vector3:
+	var o := camera.project_ray_origin(screen)
+	var d := camera.project_ray_normal(screen)
+	return o + d * ((0.0 - o.y) / d.y) if absf(d.y) > 0.001 else target
+
+# The unit (half cell) a ground point is in.
+func _unit_at(p: Vector3) -> Vector2i:
+	return Iso.world_to_unit(_to_2d(p))
+
+# Whether a ground point is on (or right next to) the thing being placed.
+func _on_ghost(p: Vector3) -> bool:
+	if game == null or game.placing_id == "":
+		return false
+	var sz: Vector2i = Catalog.size_facing(game.placing_id, game.placing_facing)
+	return _rect_of(GameState.footprint_origin(game.ghost_cell, sz), sz).grow(0.6).has_point(Vector2(p.x, p.z))
+
+# A tap on a seated guest cooks or serves their order; anything else goes to the first thing along the line of sight:
+# tall things (a tree's crown, a stove) before the ground behind them.
 func _tap(screen: Vector2) -> void:
+	if game != null and game.placing_id == "":
+		var id := guest_at(screen)
+		if id >= 0:
+			game.tap_customer(id, screen)
+			return
 	tap_ground(_pick(screen))
 
 func _pick(screen: Vector2) -> Vector3:

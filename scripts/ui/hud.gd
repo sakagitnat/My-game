@@ -5,6 +5,7 @@ signal zone_toggled
 signal edit_map_requested
 signal item_picked(id: String)
 signal crop_chosen(crop: String)
+signal dish_chosen(dish: String)
 signal move_requested
 signal rotate_requested
 signal placement_rotated
@@ -47,6 +48,12 @@ var context: PanelContainer
 var context_body: VBoxContainer
 var zone_button: Button
 var rest_panel: PanelContainer
+var goal_panel: PanelContainer
+var goal_text: Label
+var goal_bar: ProgressBar
+var goal_count: Label
+var goal_claim: Button
+var _goal_done := false
 var rest_body: VBoxContainer
 var _rest_sig := ""
 var _rest_bars: Dictionary = {}
@@ -106,8 +113,14 @@ func _build() -> void:
 	xp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	xp_bar.add_child(xp_label)
 
+	_build_goal()
+
+	# the restaurant: open or closed, reputation, the counter (and in the 2D view the list of orders), at the top in the middle
 	rest_panel = PanelContainer.new()
-	rest_panel.position = Vector2(12, 112)
+	rest_panel.anchor_left = 0.5
+	rest_panel.anchor_right = 0.5
+	rest_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	rest_panel.offset_top = 12
 	rest_panel.visible = false
 	root.add_child(rest_panel)
 	rest_body = VBoxContainer.new()
@@ -220,6 +233,65 @@ func _build() -> void:
 	modal_body.add_theme_constant_override("separation", 10)
 	modal_panel.add_child(modal_body)
 
+# The goal card under the status: what to do next, how far along, and a claim button when it is done.
+func _build_goal() -> void:
+	goal_panel = PanelContainer.new()
+	goal_panel.position = Vector2(12, 112)
+	root.add_child(goal_panel)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	goal_panel.add_child(col)
+	var head := Label.new()
+	head.name = "Head"
+	head.add_theme_font_size_override("font_size", 16)
+	head.add_theme_color_override("font_color", UiTheme.GOLD)
+	col.add_child(head)
+	goal_text = Label.new()
+	goal_text.custom_minimum_size = Vector2(280, 0)
+	goal_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal_text.add_theme_font_size_override("font_size", 19)
+	col.add_child(goal_text)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	goal_bar = ProgressBar.new()
+	goal_bar.custom_minimum_size = Vector2(200, 16)
+	goal_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	goal_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	goal_bar.show_percentage = false
+	row.add_child(goal_bar)
+	goal_count = Label.new()
+	goal_count.add_theme_font_size_override("font_size", 16)
+	row.add_child(goal_count)
+	goal_claim = Button.new()
+	goal_claim.custom_minimum_size = Vector2(0, 52)
+	goal_claim.add_theme_stylebox_override("normal", UiTheme.box(UiTheme.GOOD, UiTheme.GOOD.darkened(0.3), 12, 10))
+	goal_claim.add_theme_color_override("font_color", Color.WHITE)
+	goal_claim.pressed.connect(_on_claim_goal)
+	col.add_child(goal_claim)
+
+func _refresh_goal() -> void:
+	var info := GameState.goal_info()
+	(goal_panel.find_child("Head", true, false) as Label).text = Loc.t("GOAL_TITLE")
+	goal_text.text = Loc.t(info.text) % info.target
+	goal_bar.max_value = info.target
+	goal_bar.value = info.progress
+	goal_count.text = "%d/%d" % [info.progress, info.target]
+	goal_claim.text = Loc.t("GOAL_CLAIM") % info.coins
+	goal_claim.visible = info.done
+	if info.done and not _goal_done:          # just finished: a little hop so the eye goes there
+		var tw := goal_panel.create_tween()
+		goal_panel.pivot_offset = goal_panel.size * 0.5
+		tw.tween_property(goal_panel, "scale", Vector2(1.08, 1.08), 0.15)
+		tw.tween_property(goal_panel, "scale", Vector2.ONE, 0.2)
+	_goal_done = info.done
+
+func _on_claim_goal() -> void:
+	var coins: int = GameState.goal_info().coins
+	if GameState.claim_goal() == "ok":
+		show_message("MSG_GOAL_DONE", coins)
+		float_text("+%d" % coins, goal_panel.position + Vector2(goal_panel.size.x * 0.5, goal_panel.size.y), UiTheme.GOLD)
+
 func _corner_button(preset: int, size: Vector2) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = size
@@ -264,6 +336,7 @@ func refresh() -> void:
 	var msg := Loc.t(message_key)
 	message_label.text = msg % message_arg if message_arg != null else msg
 	_refresh_restaurant(true)
+	_refresh_goal()
 	if GameState.ask_names and not GameState.has_names() and modal_kind != "names":
 		open_modal("names")
 	if modal.visible:
@@ -370,16 +443,27 @@ func _refresh_restaurant(force: bool) -> void:
 		Loc.t("REST_COUNTER") % [r.counter.size(), int(Catalog.RESTAURANT.counter_slots)]]
 	head.add_theme_font_size_override("font_size", 18)
 	head.add_theme_color_override("font_color", UiTheme.GOLD)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rest_body.add_child(head)
 	var hours_row := HBoxContainer.new()
 	hours_row.add_theme_constant_override("separation", 10)
 	hours_label = Label.new()
 	hours_label.add_theme_font_size_override("font_size", 16)
 	hours_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hours_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hours_row.add_child(hours_label)
+	if not is_open:                                   # closed: sleep until the shop opens instead of waiting
+		var sleep := Button.new()
+		sleep.name = "Sleep"
+		sleep.text = Loc.t("BTN_SLEEP") % ("%d:00" % GameState.shop_hours.open_hour)
+		sleep.custom_minimum_size = Vector2(0, 44)
+		sleep.pressed.connect(func() -> void:
+			if GameState.sleep_until_open() == "ok":
+				show_message("MSG_SLEPT"))
+		hours_row.add_child(sleep)
 	var hours_btn := Button.new()
 	hours_btn.text = Loc.t("BTN_HOURS")
-	hours_btn.custom_minimum_size = Vector2(120, 44)
+	hours_btn.custom_minimum_size = Vector2(110, 44)
 	hours_btn.pressed.connect(open_modal.bind("hours"))
 	hours_row.add_child(hours_btn)
 	rest_body.add_child(hours_row)
@@ -391,6 +475,9 @@ func _refresh_restaurant(force: bool) -> void:
 		setup.custom_minimum_size = Vector2(300, 0)
 		rest_body.add_child(setup)
 		return
+	if in_3d:
+		rest_panel.reset_size()
+		return                                        # in 3D the orders float over the guests, who are tapped to cook and serve
 	if not r.counter.is_empty():
 		var names: Array = []
 		for d in r.counter:
@@ -508,6 +595,25 @@ func show_context(info: Dictionary) -> void:
 			b.custom_minimum_size = Vector2(112, 68)
 			b.pressed.connect(func() -> void: crop_chosen.emit(c.id))
 			cr.add_child(b)
+	var dishes: Array = info.get("dishes", [])
+	if not dishes.is_empty():
+		var dl := Label.new()
+		dl.text = Loc.t("CHOOSE_DISH")
+		dl.add_theme_font_size_override("font_size", 18)
+		context_body.add_child(dl)
+		var grid := GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", 8)
+		grid.add_theme_constant_override("v_separation", 8)
+		context_body.add_child(grid)
+		for d in dishes:
+			var b := Button.new()
+			b.text = d.text
+			b.disabled = not d.enabled
+			b.custom_minimum_size = Vector2(200, 68)
+			b.add_theme_font_size_override("font_size", 17)
+			b.pressed.connect(func() -> void: dish_chosen.emit(d.id))
+			grid.add_child(b)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	context_body.add_child(actions)

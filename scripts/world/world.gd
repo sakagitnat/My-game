@@ -64,6 +64,7 @@ func _ready() -> void:
 	hud.zone_toggled.connect(func() -> void: set_zone("farm" if zone == "restaurant" else "restaurant"))
 	hud.item_picked.connect(start_placement)
 	hud.crop_chosen.connect(_on_crop_chosen)
+	hud.dish_chosen.connect(_on_dish_chosen)
 	hud.action_pressed.connect(_on_action_pressed)
 	hud.move_requested.connect(_on_move_requested)
 	hud.rotate_requested.connect(_on_rotate_requested)
@@ -194,8 +195,7 @@ func _on_leveled_up(new_level: int) -> void:
 	hud.float_text(Loc.t("LEVEL_FMT") % new_level, get_viewport_rect().size * Vector2(0.5, 0.35), UiTheme.GOLD)
 
 func _on_reset() -> void:
-	GameState.reset()
-	GameState.save_game()
+	GameState.new_game()
 	set_zone("restaurant")
 	GameState.changed.emit()
 
@@ -459,6 +459,16 @@ func _context_info(origin: Vector2i) -> Dictionary:
 		else:
 			var dish: String = g.states[origin].dish
 			info.status = Loc.t("STATUS_STOVE_BUSY") % [Loc.t(Catalog.RECIPES[dish].name), _fmt_time(GameState.seconds_left(zone, origin))]
+		var dishes: Array = []
+		for d in Catalog.RECIPES:
+			var rd: Dictionary = Catalog.RECIPES[d]
+			var parts: Array = []
+			for item in rd.ingredients:
+				parts.append("%s %d/%d" % [Loc.t(Catalog.ITEMS[item].name), GameState.inventory.count(item), int(rd.ingredients[item])])
+			var locked := GameState.level < int(rd.level)
+			dishes.append({"id": d, "text": (Loc.t("LOCKED_LV") % rd.level) if locked else "%s\n%s" % [Loc.t(rd.name), ", ".join(parts)],
+				"enabled": GameState.restaurant.can_cook(d) == "ok"})
+		info.dishes = dishes
 	elif id == "farm_coop_01":
 		if prog < 0.0:
 			info.status = Loc.t("STATUS_COOP_IDLE")
@@ -473,6 +483,41 @@ func _on_crop_chosen(crop: String) -> void:
 	var origin := selected_origin
 	_do_interact(origin, crop)
 	_deselect()
+
+func _on_dish_chosen(dish: String) -> void:
+	_cook(dish)
+	_deselect()
+
+# Starts `dish` on a free stove, or says why it cannot.
+func _cook(dish: String) -> void:
+	var r := GameState.cook_dish(dish)
+	match r:
+		"ok": hud.show_message("MSG_COOKING", Loc.t(Catalog.RECIPES[dish].name))
+		"no_ingredients": hud.show_message("ORDER_NEED", hud._missing_text(GameState.restaurant.missing(dish)))
+		"busy": hud.show_message("COOK_STOVES_BUSY")
+		"counter_full": hud.show_message("COOK_COUNTER_FULL")
+		"no_stove": hud.show_message("REST_NEEDS_SETUP")
+		"level": hud.show_message("COOK_LEVEL", int(Catalog.RECIPES[dish].level))
+		_: hud.show_message("MSG_INVALID")
+
+# A tap on a guest (in the 3D world): serve their dish when it is on the counter, else cook it, else say what is missing.
+# `at` is where the guest is on screen, for the coins that float up.
+func tap_customer(id: int, at: Vector2) -> void:
+	_deselect()
+	var r := GameState.restaurant
+	for c in r.customers:
+		if c.id != id:
+			continue
+		if r.counter.has(c.dish):
+			var res := GameState.serve_customer(id)
+			if res.result == "ok":
+				hud.show_message("MSG_SERVED", [res.price + res.tip, res.tip])
+				hud.float_text("+%d" % (res.price + res.tip), at, UiTheme.GOLD)
+		elif r.is_cooking(c.dish):
+			hud.show_message("MSG_COOKING", Loc.t(Catalog.RECIPES[c.dish].name))
+		else:
+			_cook(c.dish)
+		return
 
 func _on_action_pressed() -> void:
 	if selected_land != NONE:

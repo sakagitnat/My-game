@@ -38,11 +38,15 @@ var spawn_obstacles: bool = true
 var restaurant_active: bool = true
 var restaurant: Restaurant = Restaurant.new(self)
 var layouts: Dictionary = {}
+# Running counts of what the player has done (harvested, cooked, served...), for the goals.
+var stats: Dictionary = {}
+var goals := Goals.new()
 
 func _ready() -> void:
 	load_default_layouts()
 	reset()
-	load_game()
+	if not load_game():
+		_starter_kit()
 
 func _process(delta: float) -> void:
 	day_clock.tick(delta)
@@ -78,7 +82,95 @@ func reset() -> void:
 	shop_hours.reset()
 	player_name = ""
 	restaurant_name = ""
+	stats.clear()
+	goals.reset()
 
+# A brand-new game, ready to play at once: the shop open in the morning with a stove and two tables, a garden of four
+# plots (two of them with wheat about ripe) and a little wheat in the barn, enough for the first dish.
+func new_game() -> void:
+	reset()
+	_starter_kit()
+	_commit()
+
+const STARTER_GROWN := 0.85   # how far the starter wheat has grown
+
+func _starter_kit() -> void:
+	day_clock.t = (float(shop_hours.open_hour) - DayClock.START_HOUR) / 24.0   # the opening hour of the first day
+	var lay := layout_for("restaurant")
+	var shop := Rect2i()
+	for y in lay.cells.y:
+		for x in lay.cells.x:
+			if lay.tile_at(Vector2i(x, y)) == SceneLayout.Tile.FLOOR:
+				shop = Rect2i(x, y, 1, 1) if shop.size == Vector2i.ZERO else shop.merge(Rect2i(x, y, 1, 1))
+	if shop.size == Vector2i.ZERO:
+		return
+	var u0 := shop.position * Iso.SUB
+	_starter_place(u0 + Vector2i(3, 2), "rest_stove_01")
+	_starter_place(u0 + Vector2i(6, 11), "rest_table_small_01")
+	_starter_place(u0 + Vector2i(16, 11), "rest_table_small_01")
+	_starter_place(u0 + Vector2i(16, 11), "rest_vase_small_01")
+	# the garden: the first starting block east of the shop with open ground, plots of 2 x 2 cells with a cell between
+	var g := grid("restaurant")
+	var plots := 0
+	for p in lay.starts:
+		if plots >= 4 or p.x * WorldGrid.PARCEL < shop.end.x:
+			continue
+		for oy in [1, 4]:
+			for ox in [1, 4]:
+				var c: Vector2i = p * WorldGrid.PARCEL + Vector2i(ox, oy)
+				if plots < 4 and _starter_place(c * Iso.SUB + Vector2i.ONE, "farm_plot_01"):
+					if plots < 2:
+						var origin := g.origin_at(c * Iso.SUB)
+						g.states[origin] = {"crop": "wheat", "t": now() - float(Catalog.CROPS.wheat.time) * STARTER_GROWN}
+					plots += 1
+	inventory.add("wheat", 4)
+
+# Puts a starter piece down for free, without XP. False if it does not fit there.
+func _starter_place(c: Vector2i, id: String) -> bool:
+	var sz := Catalog.size_of(id)
+	if check_place("restaurant", c, id) != "ok":
+		return false
+	if Catalog.is_top(id):
+		grid("restaurant").place_top(footprint_origin(c, sz), id, sz)
+	else:
+		grid("restaurant").place(footprint_origin(c, sz), id, sz, 0)
+	return true
+
+# One more of something done (see Goals).
+func bump(stat: String, n: int = 1) -> void:
+	stats[stat] = int(stats.get(stat, 0)) + n
+
+# The goal on the HUD: {id, text (a strings key, %d for the target), progress, target, done, coins, xp}.
+func goal_info() -> Dictionary:
+	var gl := goals.current()
+	return {"id": gl.id, "text": gl.text, "progress": goals.progress(self), "target": int(gl.n),
+		"done": goals.is_done(self), "coins": int(gl.coins), "xp": int(gl.xp)}
+
+# Takes a finished goal's reward and starts the next goal. "ok" or "not_done".
+func claim_goal() -> String:
+	if not goals.is_done(self):
+		return "not_done"
+	var gl := goals.current()
+	coins += int(gl.coins)
+	add_xp(int(gl.xp))
+	goals.advance(self)
+	_commit()
+	return "ok"
+
+# Sleeps through the closed hours: the clock jumps to the next opening time. Crops and stoves keep their real-time clocks,
+# so sleeping only skips the quiet wait for customers. "ok" or "open" (the shop is open: nothing to skip).
+func sleep_until_open() -> String:
+	if shop_open():
+		return "open"
+	var want := (float(shop_hours.open_hour) - DayClock.START_HOUR) / 24.0
+	want = fposmod(want, 1.0)
+	if want <= day_clock.t:
+		day_clock.days += 1
+	day_clock.t = want
+	shop_hours.override = ""
+	restaurant.arrival_timer = 2.0
+	_commit()
+	return "ok"
 # A fresh grid for one scene from its map: starting blocks, blocks for sale, the map's trees, rocks and objects.
 # The map editor calls this after every edit; whatever the player had placed there is gone.
 func build_zone(zone: String) -> void:
@@ -199,6 +291,7 @@ func buy_land(zone: String, c: Vector2i) -> String:
 		return "no_coins"
 	coins -= cost
 	g.buy_parcel(parcel)
+	bump("land")
 	add_xp(LAND_XP)
 	_commit()
 	return "ok"
@@ -576,6 +669,8 @@ func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
 		if inventory.add(st.crop, int(crop.yield)) == 0:
 			return "full"
 		g.states.erase(c)
+		bump("harvested")
+		bump("harvested_" + str(st.crop))
 		add_xp(int(crop.xp))
 		_commit()
 		return "harvested"
@@ -590,6 +685,7 @@ func _interact_plot(zone: String, c: Vector2i, seed_id: String) -> String:
 		return "no_coins"
 	coins -= cost
 	g.states[c] = {"crop": seed_id, "t": now()}
+	bump("planted")
 	_commit()
 	return "planted"
 
@@ -601,6 +697,7 @@ func _interact_coop(zone: String, c: Vector2i) -> String:
 		if inventory.add(Catalog.COOP.product, 1) == 0:
 			return "full"
 		g.states.erase(c)
+		bump("eggs")
 		add_xp(int(Catalog.COOP.xp))
 		_commit()
 		return "collected"
@@ -614,6 +711,8 @@ func _interact_coop(zone: String, c: Vector2i) -> String:
 func cook_dish(dish: String) -> String:
 	var result := restaurant.cook(dish)
 	if result == "ok":
+		bump("cooked")
+		bump("cooked_" + dish)
 		_commit()
 	return result
 
@@ -621,6 +720,7 @@ func cook_dish(dish: String) -> String:
 func serve_customer(id: int) -> Dictionary:
 	var result := restaurant.serve(id)
 	if result.result == "ok":
+		bump("served")
 		_commit()
 	return result
 
@@ -681,7 +781,7 @@ func save_game() -> bool:
 	for z in grids:
 		g[z] = grids[z].to_dict()
 	return SaveStore.write(save_path, {
-		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "clock": day_clock.to_dict(), "hours": shop_hours.to_dict(), "restaurant": restaurant.to_dict()})
+		"coins": coins, "xp": xp, "level": level, "language": language, "player_name": player_name, "restaurant_name": restaurant_name, "grids": g, "inventory": inventory.to_dict(), "stash": stash, "clock": day_clock.to_dict(), "hours": shop_hours.to_dict(), "restaurant": restaurant.to_dict(), "stats": stats, "goals": goals.to_dict()})
 
 func load_game() -> bool:
 	var d := SaveStore.read(save_path)
@@ -716,4 +816,11 @@ func load_game() -> bool:
 	var rest = d.get("restaurant", {})
 	if rest is Dictionary:
 		restaurant.load_dict(rest)
+	stats.clear()
+	var sd = d.get("stats", {})
+	if sd is Dictionary:
+		for k in sd:
+			stats[str(k)] = maxi(0, int(sd[k]))
+	var gd2 = d.get("goals", {})
+	goals.load_dict(gd2 if gd2 is Dictionary else {})
 	return true
