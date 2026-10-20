@@ -2,6 +2,7 @@
   'use strict';
 
   const E = window.LifeEngine;
+  const A = window.LifeArt;
   const app = document.getElementById('app');
   const rng = Math.random;
 
@@ -16,6 +17,13 @@
     return node;
   }
 
+  // ใช้เฉพาะกับ SVG ที่ฝังอยู่ในไฟล์ art.js เท่านั้น ไม่รับข้อความจากผู้เล่น
+  function svgNode(markup) {
+    const holder = el('div');
+    holder.innerHTML = markup;
+    return holder.firstElementChild;
+  }
+
   function button(className, label, onClick) {
     const node = el('button', className);
     node.type = 'button';
@@ -28,9 +36,22 @@
     app.replaceChildren(...children);
   }
 
-  function statCell(label, value) {
+  function header() {
+    const wrap = el('div');
+    wrap.append(el('h1', null, 'ชะตาแห่งอาณาจักร'), svgNode(A.ORNAMENT));
+    return wrap;
+  }
+
+  function sceneBanner(age) {
+    const stage = A.stageOf(age);
+    const scene = el('div', 'scene');
+    scene.append(svgNode(A.sceneSvg(stage)), el('span', 'scene-label', A.STAGE_TITLES[stage]));
+    return scene;
+  }
+
+  function statCell(key, value) {
     const cell = el('div');
-    cell.append(document.createTextNode(label + ' '), el('b', null, String(value)));
+    cell.append(svgNode(A.statIcon(key)), document.createTextNode(E.STAT_LABELS[key] + ' '), el('b', null, String(value)));
     return cell;
   }
 
@@ -58,18 +79,17 @@
   function renderStart() {
     life = null;
     view = null;
-    const intro = [
-      el('h1', null, 'ชะตาแห่งอาณาจักร'),
-      el('p', 'subtitle', 'เลือกจุดเริ่มต้นของชีวิต แล้วตัดสินใจทุกปีตั้งแต่วัยเยาว์จนถึงบั้นปลาย'),
-    ];
+    const intro = el('p', 'subtitle', 'เลือกจุดเริ่มต้นของชีวิต แล้วตัดสินใจทุกปีตั้งแต่วัยเยาว์จนถึงบั้นปลาย');
     const origins = E.ORIGINS.map((origin) => {
       const node = el('button', 'origin');
       node.type = 'button';
-      node.append(el('strong', null, origin.name), el('span', null, origin.desc));
+      const text = el('div');
+      text.append(el('strong', null, origin.name), el('span', null, origin.desc));
+      node.append(svgNode(A.originIcon(origin.id)), text);
       node.addEventListener('click', () => startLife(origin.id));
       return node;
     });
-    render([...intro, ...origins]);
+    render([header(), intro, ...origins]);
   }
 
   function startLife(originId) {
@@ -96,22 +116,22 @@
   function renderStatsCard() {
     const s = life.stats;
     const card = el('div', 'card');
-    card.append(el('div', 'hint', 'สุขภาพ ' + s.health + ' / 100'), healthBar(s.health));
+    card.append(el('div', 'hint', E.STAT_LABELS.health + ' ' + s.health + ' / 100'), healthBar(s.health));
     const grid = el('div', 'stats');
     grid.append(
-      statCell(E.STAT_LABELS.strength, s.strength),
-      statCell(E.STAT_LABELS.wisdom, s.wisdom),
-      statCell(E.STAT_LABELS.charm, s.charm),
-      statCell(E.STAT_LABELS.luck, s.luck),
-      statCell(E.STAT_LABELS.gold, s.gold),
-      statCell(E.STAT_LABELS.reputation, s.reputation)
+      statCell('strength', s.strength),
+      statCell('wisdom', s.wisdom),
+      statCell('charm', s.charm),
+      statCell('luck', s.luck),
+      statCell('gold', s.gold),
+      statCell('reputation', s.reputation)
     );
     card.append(grid);
     return card;
   }
 
   function eventCard() {
-    const card = el('div', 'card');
+    const card = el('div', 'card parchment');
     card.append(el('h2', null, 'เกิดขึ้นกับคุณ'), el('p', null, life.current.text));
     life.current.choices.forEach((choice, index) => {
       const node = button('btn', choice.label, () => choose(index));
@@ -129,7 +149,12 @@
     if (view && view.kind === 'result') {
       const check = view.check;
       if (check) {
-        card.append(el('p', 'roll', 'ทอย d20 ได้ ' + check.roll + ' + โบนัส ' + check.bonus + ' = ' + check.total + ' (ต้องได้ ' + check.dc + ' ขึ้นไป)'));
+        const roll = el('div', 'roll');
+        roll.append(
+          svgNode(A.diceSvg()),
+          el('span', null, 'ทอยได้ ' + check.roll + ' + โบนัส ' + check.bonus + ' = ' + check.total + ' (ต้องได้ ' + check.dc + ')')
+        );
+        card.append(roll, el('p', check.success ? 'pass' : 'fail', check.success ? 'ผ่านการทดสอบ' : 'ไม่ผ่านการทดสอบ'));
       }
       card.append(el('p', 'result', view.text));
     } else if (view && view.kind === 'quiet') {
@@ -140,14 +165,13 @@
   }
 
   function renderGame() {
-    const children = [
-      el('h1', null, 'ชะตาแห่งอาณาจักร'),
+    render([
+      sceneBanner(life.age),
       el('p', 'year', 'อายุ ' + life.age + ' ปี'),
       renderStatsCard(),
       life.current ? eventCard() : continueCard(),
       logCard(life.log.slice(-6)),
-    ];
-    render(children);
+    ]);
   }
 
   function renderEnd() {
@@ -155,7 +179,7 @@
     const statsCard = el('div', 'card');
     const grid = el('div', 'stats');
     for (const key of Object.keys(E.STAT_LABELS)) {
-      grid.append(statCell(E.STAT_LABELS[key], summary.stats[key]));
+      grid.append(statCell(key, summary.stats[key]));
     }
     statsCard.append(grid);
 
@@ -170,10 +194,11 @@
     fullLog.append(list);
 
     render([
+      sceneBanner(summary.age),
       el('h1', null, 'จบชีวิตแล้ว'),
+      svgNode(A.ORNAMENT),
       el('p', 'title', summary.title),
-      el('p', null, 'คุณมีชีวิตอยู่รวม ' + summary.age + ' ปี'),
-      el('p', 'hint', summary.cause),
+      el('p', 'end-ending', 'คุณมีชีวิตอยู่รวม ' + summary.age + ' ปี · ' + summary.cause),
       statsCard,
       fullLog,
       button('btn primary', 'เริ่มชีวิตใหม่', renderStart),
