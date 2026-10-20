@@ -102,10 +102,16 @@ func mesh() -> ArrayMesh:
 	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 	return m
 
-# One material for everything batched: the colour is in the vertices.
-static func material(rough: float = 0.85) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.vertex_color_use_as_albedo = true
-	m.vertex_color_is_srgb = true            # the colours are written as everyone reads them (sRGB)
-	m.roughness = rough
-	return m
+static var _material: ShaderMaterial
+
+# One material for everything batched: the colour is in the vertices (sRGB); shaders/toon3d.gdshader gives the soft
+# painted light. A vertex alpha below 1 makes leaves sway.
+static func material() -> ShaderMaterial:
+	if _material == null:
+		_material = ShaderMaterial.new()
+		_material.shader = load("res://shaders/toon3d.gdshader")
+	return _material
+
+# A colour that sways in the wind (leaves, stalks): `amount` 0..1.
+static func swaying(c: Color, amount: float = 0.5) -> Color:
+	return Color(c.r, c.g, c.b, 1.0 - amount * 0.5)

@@ -210,13 +210,21 @@ static func coop(b: MeshBatch, at: Vector3, w: float, d: float) -> void:
 static func tree(b: MeshBatch, at: Vector3, seed: int, small: bool) -> void:
 	var p := Pen.new(b, at, seed % 4)
 	var s := 0.65 if small else 1.0
-	p.cyl(Vector3.ZERO, 0.11 * s, 1.0 * s, TRUNK)
+	p.cyl(Vector3.ZERO, 0.12 * s, 1.0 * s, TRUNK)
+	for k in 3:                                                               # roots
+		var a := k * 2.1 + seed
+		p.rod(Vector3(cos(a) * 0.05, 0.12, sin(a) * 0.05) * s, Vector3(cos(a) * 0.22, 0.0, sin(a) * 0.22) * s, 0.05 * s, TRUNK.darkened(0.1))
 	p.rod(Vector3(0, 0.7 * s, 0), Vector3(-0.3, 1.15, 0.05) * s, 0.05 * s, TRUNK)
-	var greens := [LEAF, LEAF_LT, LEAF_DK, LEAF]
-	var clumps := [[0.0, 1.55, 0.0, 0.62], [-0.38, 1.3, 0.1, 0.45], [0.4, 1.3, -0.05, 0.45], [0.05, 1.95, 0.05, 0.42], [0.0, 1.25, 0.35, 0.4]]
+	p.rod(Vector3(0, 0.8 * s, 0), Vector3(0.3, 1.2, -0.05) * s, 0.05 * s, TRUNK)
+	var dark := LEAF_DK.lerp(Color("2f6b45"), 0.3)
+	var mid := LEAF.lerp(Color("4f9a50"), 0.2 * (seed % 3))
+	var light := LEAF_LT.lerp(Color("b5d66e"), 0.25)
+	# shaded clumps underneath, lighter ones on top where the sun falls
+	var clumps := [[0.0, 1.35, 0.0, 0.62, dark], [-0.45, 1.3, 0.12, 0.42, dark], [0.45, 1.3, -0.05, 0.44, dark], [0.0, 1.3, 0.4, 0.42, mid],
+		[-0.2, 1.75, 0.05, 0.52, mid], [0.3, 1.7, 0.15, 0.45, mid], [0.05, 2.05, 0.0, 0.42, light], [-0.32, 1.95, 0.25, 0.3, light], [0.35, 2.0, -0.1, 0.3, light]]
 	for i in clumps.size():
 		var c: Array = clumps[i]
-		p.ball(Vector3(c[0], c[1], c[2]) * s, Vector3.ONE * float(c[3]) * s, greens[(i + seed) % 4].lerp(Color("a6d06a"), 0.08 * (seed % 3)), 0.25, seed * 7 + i)
+		p.ball(Vector3(c[0], c[1], c[2]) * s, Vector3.ONE * float(c[3]) * s, MeshBatch.swaying(c[4]), 0.28, seed * 7 + i)
 
 static func palm(b: MeshBatch, at: Vector3, seed: int) -> void:
 	var p := Pen.new(b, at, seed % 4)
@@ -233,16 +241,16 @@ static func palm(b: MeshBatch, at: Vector3, seed: int) -> void:
 		var prev := top
 		for j in 3:
 			var nxt := top + dir * (0.35 * (j + 1)) + Vector3(0, 0.12 - 0.14 * j * j * 0.5, 0)
-			p.rod(prev, nxt, 0.07 - j * 0.015, LEAF if j % 2 == 0 else LEAF_LT)
+			p.rod(prev, nxt, 0.07 - j * 0.015, MeshBatch.swaying(LEAF if j % 2 == 0 else LEAF_LT, 0.8))
 			prev = nxt
 	for k in 3:
 		p.ball(top + Vector3(cos(k * 2.1) * 0.12, -0.1, sin(k * 2.1) * 0.12), Vector3.ONE * 0.08, Color("6b4a2c"))
 
 static func bush(b: MeshBatch, at: Vector3, seed: int) -> void:
 	var p := Pen.new(b, at)
-	p.ball(Vector3(0, 0.28, 0), Vector3(0.38, 0.3, 0.34), LEAF, 0.3, seed)
-	p.ball(Vector3(-0.25, 0.2, 0.1), Vector3(0.25, 0.2, 0.24), LEAF_LT, 0.3, seed + 1)
-	p.ball(Vector3(0.25, 0.2, 0.05), Vector3(0.24, 0.2, 0.24), LEAF_DK, 0.3, seed + 2)
+	p.ball(Vector3(0, 0.28, 0), Vector3(0.38, 0.3, 0.34), MeshBatch.swaying(LEAF, 0.3), 0.3, seed)
+	p.ball(Vector3(-0.25, 0.2, 0.1), Vector3(0.25, 0.2, 0.24), MeshBatch.swaying(LEAF_LT, 0.3), 0.3, seed + 1)
+	p.ball(Vector3(0.25, 0.2, 0.05), Vector3(0.24, 0.2, 0.24), MeshBatch.swaying(LEAF_DK, 0.3), 0.3, seed + 2)
 	for k in 6:
 		var a := k * 1.1 + seed
 		p.ball(Vector3(cos(a) * 0.3, 0.3 + 0.08 * (k % 3), 0.25), Vector3.ONE * 0.035, Color("c8343a"))

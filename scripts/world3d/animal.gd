@@ -89,7 +89,7 @@ func _build() -> void:
 			b.ball(Vector3(0, 0.36, -0.2), Vector3(0.05, 0.05, 0.03), fur)
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.mesh()
-	mi.material_override = MeshBatch.material(0.7)
+	mi.material_override = MeshBatch.material()
 	body.add_child(mi)
 	# legs (and little arms) on pivots so they can swing
 	for spec in [[-0.1, 0.16, 0.06, 0.16, true], [0.1, 0.16, 0.06, 0.16, true], [-0.23, 0.44, 0.05, 0.16, false], [0.23, 0.44, 0.05, 0.16, false]]:

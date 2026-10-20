@@ -16,14 +16,14 @@ const TAP_SLOP := 12.0
 const GUEST_KINDS := ["bunny", "bear", "pig", "duck"]
 const SHIRTS := [Color("f09db0"), Color("9ad7bd"), Color("f5d77a"), Color("b9a1e0"), Color("7fb8e0")]
 
-const C_GRASS := Color("6aa843")
-const C_GRASS_LT := Color("82bd50")
-const C_SAND := Color("dfc48e")
-const C_WET := Color("cdb27e")
-const C_SEABED := Color("1d5f73")
+const C_GRASS := Color("6fa646")
+const C_GRASS_LT := Color("93bd58")
+const C_SAND := Color("ecd4a0")
+const C_WET := Color("c9ab78")
+const C_SEABED := Color("2a8a96")
 const C_ROAD := Color("c9a274")
-const C_STONE := Color("c2b49a")
-const C_DIRT := Color("9c6b45")
+const C_STONE := Color("cfc2a8")
+const C_DIRT := Color("b39064")
 
 var lay: SceneLayout
 var g: WorldGrid
@@ -31,8 +31,11 @@ var game: Node2D                    # the 2D controller and HUD (scenes/world.ts
 var camera: Camera3D
 var target := Vector3(18, 0, 14)
 var dist := 15.0
-var mat: StandardMaterial3D
+var mat: Material
 var static_mesh: MeshInstance3D
+var grass_mm: MultiMeshInstance3D   # grass tufts and flowers on the open lawns
+var flower_mm: MultiMeshInstance3D
+var glow_mesh: MeshInstance3D       # lantern lights
 var dynamic_mesh: MeshInstance3D    # plots and crops: rebuilt when a crop grows a stage
 var ghost_mesh: MeshInstance3D      # the thing being placed, see-through green (fits) or red
 var mark_mesh: MeshInstance3D       # the selection outline
@@ -62,6 +65,15 @@ func _ready() -> void:
 	_rebuild()
 	_overlays()
 	_animals()
+	var shade := CanvasLayer.new()
+	shade.layer = -1
+	var vig := ColorRect.new()
+	vig.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vig.material = ShaderMaterial.new()
+	(vig.material as ShaderMaterial).shader = load("res://shaders/vignette.gdshader")
+	shade.add_child(vig)
+	add_child(shade)
 	game = load("res://scenes/world.tscn").instantiate()
 	game.host_3d = self
 	add_child(game)
@@ -79,17 +91,30 @@ func _environment() -> void:
 	sky.sky_material = sky_mat
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR   # a fixed soft sky-blue fill: the sky as a light source washes out in the web renderer
-	env.ambient_light_color = Color("c4d9e6")
-	env.ambient_light_energy = 0.45
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR   # a fixed cool sky fill (shadows lean blue): the sky as a light source washes out in the web renderer
+	env.ambient_light_color = Color("a9c4dc")
+	env.ambient_light_energy = 0.5
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 1.05
+	env.glow_enabled = true                                       # a soft bloom on bright things (foam, lanterns, white walls)
+	env.glow_intensity = 0.25
+	env.glow_strength = 0.8
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.3
+	env.adjustment_enabled = true                                  # a warm, rich grade
+	env.adjustment_saturation = 1.05
+	env.adjustment_contrast = 1.06
+	env.fog_enabled = true                                         # a light haze far off, so the distance softens
+	env.fog_light_color = Color("cfe3ee")
+	env.fog_density = 0.0025
+	env.fog_sky_affect = 0.0
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, -38, 0)
-	sun.light_color = Color("fff1dc")
-	sun.light_energy = 0.78
+	sun.light_color = Color("ffe6c4")                             # warm afternoon sun
+	sun.light_energy = 1.0
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
@@ -183,7 +208,10 @@ func _ground() -> void:
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	mi.material_override = mat
+	var gm := ShaderMaterial.new()
+	gm.shader = load("res://shaders/ground3d.gdshader")
+	gm.set_shader_parameter("water_y", WATER_Y)
+	mi.material_override = gm
 	add_child(mi)
 
 func _sea() -> void:
@@ -220,6 +248,7 @@ func _rebuild() -> void:
 	if static_mesh != null:
 		static_mesh.queue_free()
 	static_mesh = _add_mesh(_static_batch())
+	_lawn()
 	_crop_key = ""
 	_dynamic_world()
 
@@ -231,9 +260,12 @@ func _static_batch() -> MeshBatch:
 		for x in lay.cells.x:
 			var t := lay.tile_at(Vector2i(x, y))
 			if t == SceneLayout.Tile.FLOOR:
-				var plank := Props3D.WOOD_LT if (y % 2 == 0) else Props3D.WOOD
-				b.box(Vector3(x - 0.5, 0.0, y - 0.5), Vector3(x + 0.5, 0.1, y), plank)
-				b.box(Vector3(x - 0.5, 0.0, y), Vector3(x + 0.5, 0.1, y + 0.5), plank.lerp(Props3D.WOOD_DK, 0.12))
+				# four boards a cell, each its own shade, with a dark gap between them
+				b.box(Vector3(x - 0.5, 0.0, y - 0.5), Vector3(x + 0.5, 0.085, y + 0.5), Color("7a5538"))
+				for k in 4:
+					var tone := Color("b98a62").lerp(Color("d2a67a"), Noise2D.hash2(x * 4 + k, y * 7 + k, 21))   # honey boards
+					var z0 := y - 0.5 + k * 0.25
+					b.box(Vector3(x - 0.5, 0.0, z0 + 0.012), Vector3(x + 0.5, 0.1, z0 + 0.238), tone)
 			elif t == SceneLayout.Tile.PAVEMENT:
 				var tone := C_STONE.lerp(Color("bcae94"), Noise2D.hash2(x, y, 9) * 0.6)
 				b.box(Vector3(x - 0.47, 0.0, y - 0.47), Vector3(x + 0.47, 0.06, y + 0.47), tone)
@@ -254,6 +286,7 @@ func _static_batch() -> MeshBatch:
 		b.box(Vector3(door_x + 0.95, 0.5, shop.position.y - 0.95), Vector3(door_x + 1.5, 1.05, shop.position.y - 0.9), Props3D.STEEL)
 		b.box(Vector3(door_x + 1.0, 0.55, shop.position.y - 0.951), Vector3(door_x + 1.45, 0.6, shop.position.y - 0.95), Props3D.WHITE)
 		_beach(b, shop)
+		_shop_front(b, shop)
 	# placed things that never change shape (plots are dynamic)
 	for origin in g.objects:
 		var id: String = g.objects[origin]
@@ -290,6 +323,42 @@ func _static_batch() -> MeshBatch:
 				b.ball(Vector3(mid.x, h + 0.78, mid.y + 0.05), Vector3(0.09, 0.09, 0.02), Color("f3c445"))
 	return b
 
+# Lanterns along the terrace and the path to the door, flower planters along the front: a café that looks lived in.
+func _shop_front(b: MeshBatch, shop: Rect2) -> void:
+	var glow := MeshBatch.new()
+	var door_x := shop.position.x + shop.size.x * 0.5
+	var spots: Array[Vector2] = [Vector2(shop.position.x - 0.2, shop.end.y + 2.6), Vector2(shop.end.x + 0.2, shop.end.y + 2.6),
+		Vector2(door_x - 1.6, shop.position.y - 1.8), Vector2(door_x + 1.6, shop.position.y - 1.8)]
+	for p in spots:
+		b.cyl(Vector3(p.x, 0, p.y), 0.05, 1.7, Color("3b3f45"))
+		b.box(Vector3(p.x - 0.14, 1.7, p.y - 0.14), Vector3(p.x + 0.14, 1.74, p.y + 0.14), Color("3b3f45"))
+		b.cone(Vector3(p.x, 2.0, p.y), 0.17, 0.12, Color("3b3f45"))
+		glow.ball(Vector3(p.x, 1.87, p.y), Vector3(0.11, 0.13, 0.11), Color("ffd27a"))
+	for i in 5:                                                      # planters just outside the low front wall
+		var x := shop.position.x + 1.3 + i * (shop.size.x - 2.6) / 4.0
+		if absf(x - door_x) < 1.0:
+			continue
+		var z := shop.end.y + 0.32
+		b.box(Vector3(x - 0.45, 0, z - 0.15), Vector3(x + 0.45, 0.3, z + 0.15), Props3D.WOOD)
+		b.box(Vector3(x - 0.42, 0.3, z - 0.12), Vector3(x + 0.42, 0.32, z + 0.12), Props3D.SOIL)
+		for k in 5:
+			var fx := x - 0.34 + k * 0.17
+			b.ball(Vector3(fx, 0.4, z), Vector3(0.1, 0.09, 0.1), MeshBatch.swaying(Props3D.LEAF, 0.2), 0.3, i * 5 + k)
+			b.ball(Vector3(fx + 0.02, 0.47, z + 0.05), Vector3.ONE * 0.045, [Props3D.RED, Props3D.GOLD, Props3D.WHITE, Color("f09db0")][(i + k) % 4])
+	if glow_mesh != null:
+		glow_mesh.queue_free()
+	glow_mesh = MeshInstance3D.new()
+	glow_mesh.mesh = glow.mesh()
+	var gm := StandardMaterial3D.new()
+	gm.vertex_color_use_as_albedo = true
+	gm.vertex_color_is_srgb = true
+	gm.emission_enabled = true
+	gm.emission = Color("ffcf70")
+	gm.emission_energy_multiplier = 1.6
+	glow_mesh.material_override = gm
+	glow_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(glow_mesh)
+
 func _object(b: MeshBatch, id: String, at: Vector3, w: float, d: float, facing: int, turned_fp: bool) -> void:
 	# the model is built facing the front; a footprint already turned sideways is turned back first
 	var mw := d if (turned_fp and facing % 2 == 1) else w
@@ -325,6 +394,91 @@ func _add_mesh(b: MeshBatch, m: Material = null) -> MeshInstance3D:
 	mi.material_override = m if m != null else mat
 	add_child(mi)
 	return mi
+
+# Grass tufts (a few per open grass cell) and flowers, as two MultiMeshes: thousands of them in two draw calls.
+func _lawn() -> void:
+	var tufts: Array[Transform3D] = []
+	var flowers: Array[Transform3D] = []
+	var flower_cols: Array[Color] = []
+	var petals := [Color("fbf7ef"), Color("f3cd5a"), Color("f09db0"), Color("b9a1e0")]
+	for y in range(-6, lay.cells.y + 6):
+		for x in range(-6, lay.cells.x + 6):
+			var c := Vector2i(x, y)
+			if _tile(c) != SceneLayout.Tile.GRASS or g.blocked.has(c) or g.cell_occupied(c):
+				continue
+			if lay.in_bounds(c) and lay.edge_distance(c) < 2:
+				continue
+			for k in 3:
+				var ox := Noise2D.hash2(x * 3 + k, y, 31) - 0.5
+				var oz := Noise2D.hash2(x, y * 3 + k, 37) - 0.5
+				var px := x + ox * 0.9
+				var pz := y + oz * 0.9
+				var h := _corner_height(roundi(px), roundi(pz))
+				var s := 0.7 + Noise2D.hash2(x + k, y - k, 41) * 0.6
+				tufts.append(Transform3D(Basis(Vector3.UP, ox * 9.0).scaled(Vector3.ONE * s), Vector3(px, h, pz)))
+			if Noise2D.hash2(x, y, 43) < 0.12:
+				var fx := x + Noise2D.hash2(x, y, 47) - 0.5
+				var fz := y + Noise2D.hash2(x, y, 53) - 0.5
+				flowers.append(Transform3D(Basis(Vector3.UP, fx * 3.0), Vector3(fx, _corner_height(roundi(fx), roundi(fz)), fz)))
+				flower_cols.append(petals[int(Noise2D.hash2(x, y, 59) * 4.0) % 4])
+	if grass_mm == null:
+		grass_mm = MultiMeshInstance3D.new()
+		grass_mm.material_override = mat
+		grass_mm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(grass_mm)
+		flower_mm = MultiMeshInstance3D.new()
+		flower_mm.material_override = mat
+		flower_mm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(flower_mm)
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = _tuft_mesh()
+	mm.instance_count = tufts.size()
+	for i in tufts.size():
+		mm.set_instance_transform(i, tufts[i])
+	grass_mm.multimesh = mm
+	var fm := MultiMesh.new()
+	fm.transform_format = MultiMesh.TRANSFORM_3D
+	fm.use_colors = true
+	fm.mesh = _flower_mesh()
+	fm.instance_count = flowers.size()
+	for i in flowers.size():
+		fm.set_instance_transform(i, flowers[i])
+		fm.set_instance_color(i, flower_cols[i])
+	flower_mm.multimesh = fm
+
+# Five thin blades leaning out from a point: each blade is a triangle drawn from both sides (few vertices, it is everywhere).
+func _tuft_mesh() -> ArrayMesh:
+	var v := PackedVector3Array()
+	var n := PackedVector3Array()
+	var col := PackedColorArray()
+	for i in 5:
+		var a := i * TAU / 5.0 + 0.3
+		var d := Vector3(cos(a), 0, sin(a))
+		var side := Vector3(-d.z, 0, d.x) * 0.025
+		var tip := d * 0.07 + Vector3(0, 0.16 + 0.04 * (i % 2), 0)
+		var base_c := Color(0.36, 0.55, 0.22, 0.0)                      # alpha 0: sways freely
+		var tip_c := Color(0.62, 0.78, 0.36, 0.0) if i % 2 == 0 else Color(0.5, 0.7, 0.3, 0.0)
+		for tri in [[-side, side, tip], [side, -side, tip]]:
+			for k in 3:
+				v.append(tri[k])
+				n.append(Vector3(0, 1, 0))
+				col.append(tip_c if k == 2 else base_c)
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = v
+	arr[Mesh.ARRAY_NORMAL] = n
+	arr[Mesh.ARRAY_COLOR] = col
+	var m := ArrayMesh.new()
+	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	return m
+
+func _flower_mesh() -> ArrayMesh:
+	var b := MeshBatch.new()
+	b.rod(Vector3.ZERO, Vector3(0, 0.16, 0), 0.008, MeshBatch.swaying(Color(0.4, 0.62, 0.28), 1.0))
+	b.ball(Vector3(0, 0.17, 0), Vector3(0.06, 0.02, 0.06), MeshBatch.swaying(Color.WHITE, 1.0))
+	b.ball(Vector3(0, 0.185, 0), Vector3.ONE * 0.02, MeshBatch.swaying(Color(1.0, 0.85, 0.4), 1.0))
+	return b.mesh()
 
 # Plots and crops: rebuilt only when a crop moves to the next stage.
 func _plot_stage(origin: Vector2i) -> int:
