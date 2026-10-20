@@ -78,6 +78,58 @@ func run() -> void:
 	check(world.guests.is_empty(), "a customer who left is no longer a guest")
 	check(c.has("seat_cell"), "customers carry their seat")
 
+	# tapping a seated guest cooks their dish, and once it is ready, serves it
+	gs.clock_override = 50000.0
+	check(gs.place_object("restaurant", Vector2i(27, 14), "rest_stove_01") == "ok", "a stove for the kitchen")
+	gs.inventory.add("wheat", 4)
+	check(gs.restaurant._spawn(), "a guest sits down")
+	var guest: Dictionary = gs.restaurant.customers[0]
+	guest.dish = "wheat_porridge"
+	await process_frame
+	var animal = world.guests[guest.id]
+	animal.path.clear()                               # skip the walk to the seat
+	animal.position = world._seat_of(guest)
+	world.target = animal.position
+	world._place_camera()
+	await process_frame
+	var bubble: Node3D = world.labels[guest.id]
+	check(bubble.visible and (bubble.get_node("State") as Label3D).text.contains(loc_t(gs, "ORDER_TAP_COOK")), "the bubble says to tap to cook")
+	var on_guest: Vector2 = world.camera.unproject_position(animal.position + Vector3(0, 0.7, 0))
+	check(world.guest_at(on_guest) == guest.id, "a tap on the guest finds them")
+	check(world.guest_at(on_guest + Vector2(400, 0)) == -1, "a tap beside them does not")
+	world._tap(on_guest)
+	check(gs.restaurant.is_cooking("wheat_porridge"), "the tap starts their dish on the stove")
+	gs.clock_override += 100.0
+	gs.restaurant.tick(0.0)
+	check(gs.restaurant.counter.has("wheat_porridge"), "the dish is ready on the counter")
+	var coins_before: int = gs.coins
+	world._tap(on_guest)
+	check(gs.coins > coins_before and gs.restaurant.customers.is_empty(), "a second tap serves it and they pay")
+
+	# while placing, a drag that starts on the ghost moves it (and does not pan the view)
+	world.game.start_placement("rest_table_small_01")
+	world.tap_ground(Vector3(18.0, 0, 12.0))
+	var ghost_before: Vector2i = world.game.ghost_cell
+	var target_before: Vector3 = world.target
+	var from: Vector2 = world.camera.unproject_position(Vector3(18.2, 0, 12.2))   # grabbed off its middle: it keeps the grip
+	var to: Vector2 = world.camera.unproject_position(Vector3(20.2, 0, 13.2))
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = from
+	world._unhandled_input(press)
+	var move := InputEventMouseMotion.new()
+	move.position = to
+	move.relative = to - from
+	world._unhandled_input(move)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.position = to
+	world._unhandled_input(release)
+	check(world.game.ghost_cell == ghost_before + Vector2i(4, 2), "dragging the ghost moves it: %s -> %s" % [ghost_before, world.game.ghost_cell])
+	check(world.target == target_before, "and leaves the view where it was")
+	world.game.cancel_placement()
+
 	world.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(gs.save_path))
 	if failures == 0:
@@ -85,3 +137,6 @@ func run() -> void:
 	else:
 		printerr("%d check(s) failed" % failures)
 	quit(failures)
+
+func loc_t(_gs, key: String) -> String:
+	return root.get_node("/root/Loc").t(key)
